@@ -1,0 +1,361 @@
+@font-face {
+    font-family: "barlow";
+    src: url("Barlow-Light.ttf");
+}
+.pCont .delete {
+    position: absolute;
+    top: 1.25vh;
+    text-align: center;
+    width: ;
+    left: 0px;
+    color: white;
+    background: black;
+    height: 16pt;
+    padding: 5pt;
+    padding-bottom: 2.5pt;
+    padding-top: 2.5pt;
+    display: none;
+    cursor: pointer;
+    background-size: cover;
+}
+.delete:hover {
+    background: white;
+    color: black;
+    text-decoration: line-through;
+}
+.pCont {
+    position: relative;
+    height: calc(100% - 2.5vh);
+    width: auto;
+    display: inline-block;
+    padding: 1.25vh;
+    padding-left: 0px;
+    user-drag: none;
+    user-select: none;
+    -moz-user-select: none;
+    -webkit-user-drag: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    cursor: move;
+}
+.pCont img {
+    height: 100%;
+    pointer-events: none;
+    display: inline-block !important;
+}
+.pCont video {
+    height: 100%;
+    pointer-events: none;
+    display: inline-block !important;
+}
+.inline {
+    position: relative;
+    display: inline-block;
+    white-space: nowrap;
+}
+.cat{
+    height:10vh !important;
+}
+.cat .dataColumn{
+    flex:1;
+}
+.cat input{
+    width: 70% !important;
+    text-align: left !important;
+}
+.dataColumn {
+    margin-top: 2.5vh;
+    padding: 1.25vh;
+    /*position: absolute;*/
+    overflow: auto;
+    font-size: 10pt;
+    line-height: 18pt;
+    /*height: calc(100vw - 5vh - 2px);*/
+    width: calc(100% / 6 - 2.5vh);
+    flex:0.4;
+}
+.dataColumn button{
+    width:100%;
+}
+.picColumn {
+    height: 100%;
+    overflow-x: auto;
+    white-space: nowrap;
+    flex:1;
+
+}
+.row:not(:last-child){
+    border-bottom: 1px solid grey;
+}
+.row {
+    position: relative;
+    height: 25vh;
+    overflow-y: hidden;
+    overflow-x: auto;
+    display: flex;
+}
+#still{
+    right: 0px;
+}
+.category:not(:last-child){
+    border-right: 1px solid black;
+}
+.category {
+    position: absolute;
+    top: 10vh;
+    height: 90vh;
+    width: 50vw;
+    display: flex;
+    flex-direction: column;
+
+}
+.category_title{
+    padding: 10pt;
+    font-size:25pt;
+    border-bottom: 1px solid black;
+
+}
+.category_title button{
+    float:right;
+}
+.table{
+    flex: 1;
+    overflow: auto;
+}
+* {
+    font-family: barlow;
+    position: relative;
+}
+body {
+    overflow: hidden;
+    background: #f2f2f2;
+    margin: 0px;
+    padding: 0px;
+}
+.row input {
+    width: calc(50% - 0.6125vh);
+    text-align: right;
+    position: absolute;
+    right: 0px;
+    font-size: 10pt;
+    line-height: 16pt;
+    height: 16pt;
+    top: 0px;
+}
+a {
+    color: white;
+    transform-origin: center center;
+    transition: transform 2s, opacity 0.01s;
+}
+#intro {
+    color: black;
+    padding-left: 1.25vh;
+    height: 10vh;
+    font-size: 3vh;
+    line-height: 5vh;
+}
+#loadBar {
+    background: black;
+    color: white;
+    position: absolute;
+    bottom: 0px;
+    left: 0px;
+    z-index: 10;
+}
+#loadbar>div {
+    padding: 2.5pt;
+}
+.handle {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    width: 50%;
+    height: 100%;
+    font-size: 2vh;
+    line-height: 2.5vh;
+    text-align: center;
+    border: 1px solid black;
+    border-top: 0px;
+    border-left: 0px;
+    background: white;
+    cursor: move;
+    color: black;
+}
+.deleteProject {
+    width: 50%;
+    border: 0px;
+    padding: 0px;
+    margin: 0px;
+    text-align: center;
+    position: absolute;
+    right: 0px;
+    font-size: 2vh;
+    line-height: 2.5vh;
+    height: 100%;
+    background: black;
+    color: white;
+    cursor: pointer;
+}
+.deleteProject:hover {
+    background: white;
+    color: black;
+    text-decoration: line-through;
+}
+.handle {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    width: 50%;
+    height: 100%;
+    font-size: 2vh;
+    line-height: 2.5vh;
+    text-align: center;
+    border: 1px solid black;
+    border-top: 0px;
+    border-left: 0px;
+    background: white;
+    cursor: move;
+    color: black;
+    font-size: 2vh;
+}
+.topGUI {
+    position: absolute;
+    top: 0px;
+    left: 2px;
+    width: calc(100% / 3.46);
+    height: 2.5vh;
+    font-size: 2vh;
+    line-height: 2.5vh;
+    text-align: center;
+    border: 1px solid black;
+    border-top: 0px;
+    border-left: 0px;
+    background: white;
+    cursor: move;
+    color: black;
+}
+button {
+    width: 10vh;
+    height: calc(5vh - 1px);
+}
+#general {
+    position: absolute;
+    top: 2.5vh;
+    right: 2.5vh;
+}
+/*.textButton {
+    width: 100%;
+}*/
+.textClose {
+    top: 0px;
+    left: 0px;
+    width: 100vw;
+    height: 100vh;
+    position: fixed;
+    z-index: 5;
+}
+.calendar .calRow:last-child{
+    padding-bottom: 5px;
+}
+.calendar .labels {
+	line-height: 20pt;
+	padding-bottom: 1px;
+    position: sticky;
+    top: 0px;
+    border-bottom: 1px solid black;
+    background: #f2f2f2;
+    user-select: none;
+    -moz-user-select: none;
+    -webkit-user-drag: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+}
+.calendar .calRow>*:not(button) {
+    width: calc(15% - 5px);
+}
+.calendar .calRow .date {
+    width: calc(12% - 7px);
+}
+.calendar .calRow .country {
+    width: calc(11% - 5px);
+}
+.calendar .inputs button {
+    padding: 0px;
+    margin: 0px !important;
+    margin-left: 0px;
+    background: none;
+    border: none;
+    margin-left: 5px !important;
+    color: gray;
+}
+.calendar .inputs button:hover {
+    color: black;
+    cursor: pointer;
+}
+.calendar .calRow>div {
+    margin-left: 5px;
+}
+.calendar .calRow>input {
+    padding: 5px;
+    margin-left: 5px;
+}
+.calendar .calRow>*:last-child {
+    margin-right: 5px;
+}
+.calendar .calRow {
+    display: inline-block;
+    padding-top: 5px;
+    width: 100%;
+}
+.calendar .calRow>* {
+    display: inline-block;
+}
+
+.calendar #buttons {
+    position: absolute;
+    right: 0px;
+}
+.calendar #buttons button {
+    float: right;
+    padding: 0px;
+    padding-right: 0px;
+    padding-left: 0px;
+    padding-left: 5px;
+    padding-right: 5px;
+    margin-left: 5px;
+    height: 18pt;
+}
+.calendar #inputs {
+    overflow: auto;
+}
+.calendar>div {
+    padding: 0px !important;
+    display: flex;
+    flex-direction: column;
+    overflow: auto;
+}
+.overlay>textarea {
+    background: white;
+}
+.overlay>div:not(.textClose) {
+    background: #f2f2f2;
+}
+.overlay>textarea,
+.overlay>div:not(.textClose) {
+    position: fixed;
+    z-index: 6;
+    padding: 1.25vh;
+    left: 50vw;
+    top: 50vh;
+    transform: translate(-50%, -50%);
+    max-height: 95vh;
+    max-width: 95vw;
+    width: 75vw;
+    height: 75vh;
+}
+.overlay {
+    display: none;
+    position: fixed;
+    display: none;
+    z-index: 5;
+}

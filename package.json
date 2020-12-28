@@ -1,0 +1,31 @@
+{
+  "name": "queer",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {
+    "@tweenjs/tween.js": "^17.3.0",
+    "core-js": "^3.8.1",
+    "event-target-shim": "^5.0.1",
+    "iphone-inline-video": "^2.2.2",
+    "lodash": "^4.17.19",
+    "normalize-wheel": "^1.0.1",
+    "regenerator-runtime": "^0.13.7",
+    "three": "^0.124.0"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.12.10",
+    "@babel/core": "^7.12.10",
+    "@babel/preset-env": "^7.12.11",
+    "babel-loader": "^8.2.2",
+    "node-composer-runner": "^0.3.0",
+    "webpack": "^4.28.4",
+    "webpack-bundle-analyzer": "^3.3.2",
+    "webpack-cli": "^3.2.1"
+  },
+  "scripts": {
+    "dev": "webpack --mode development --watch "
+  },
+  "author": "",
+  "license": "ISC"
+}
