@@ -3,9 +3,6 @@ import ThreeManager from "./3D/ThreeManager"
 import InteractionManager from "./3D/InteractionManager"
 import MenuManager from "./MenuManager"
 import * as THREE from "three"
-
-//modules
-import TWEEN from '@tweenjs/tween.js'
 ////console.log("HALLO");
 window.THREE = THREE;
 ////console.log(THREE);
@@ -28,9 +25,7 @@ class Application {
             interaction: {
                 timeStap: performance.now()
             },
-            about: {
-                isOpen: false
-            },
+            infoMode: false,
             cursor: {
                 x: null,
                 y: null,
@@ -85,34 +80,28 @@ class Application {
 
     render() {
         requestAnimationFrame(this.render.bind(this));
-        if (this.state.stopAnimation)
+        if (this.state.stopAnimation || document.hidden)
             return;
 
-
-
+        this.threeManager.render();
         this.state.now = performance.now();
-        if (this.state.now - this.state.textures.timeStap > (1000 / 30)) {
-            for (let key in this.state.textures.update) {
-                let texture = this.state.textures.update[key];
-                texture.needsUpdate = true;
+        if (!this.threeManager.tweenManager.update(this.state.now)) {
+            if (this.state.now - this.state.textures.timeStap > (1000 / 30)) {
+                for (let key in this.state.textures.update) {
+                    // console.log(this.state.textures.update[key].image)
+                    if (this.state.textures.update[key].image.readyState >=
+                        this.state.textures.update[key].image.HAVE_CURRENT_DATA) {
+                        this.state.textures.update[key].needsUpdate = true;
+                    }
+                }
+                this.state.textures.timeStap = this.state.now;
             }
-            this.state.textures.timeStap = this.state.now;
-        }
-
-        if (!this.state.tween.isTweening) {
             if (this.state.now - this.state.interaction.timeStap > (1000 / 10)) {
                 this.interactionManager.update(this.state);
                 this.state.interaction.timeStap = this.state.now;
             }
             this.menuManager.rotateMenu(this.state);
-        } else {
-            TWEEN.update();
         }
-
-        this.threeManager.render();
-
-
-
     }
 }
 

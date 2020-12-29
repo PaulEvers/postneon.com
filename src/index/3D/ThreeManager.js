@@ -150,8 +150,10 @@ class ThreeManager {
                 order: 0,
                 oldProject: _p.title,
                 directory: _p.directory,
-                infoBig: _p.info.big ? _p.info.big.replace(/\n/g, "<br>") : "",
-                infoSmall: _p.info.small ? _p.info.small.replace(/\n/g, "<br>") : "",
+                info: {
+                    big: _p.info.big ? _p.info.big.replace(/\n/g, "<br>") : "",
+                    small: _p.info.small ? _p.info.small.replace(/\n/g, "<br>") : "",
+                },
                 medias: _p.medias
             }
 
@@ -177,11 +179,6 @@ class ThreeManager {
 
             this.addToProjects(project);
             let media = await this.mediaManager.create({ _media: _m, _project: _p });
-            if (_m.type === 'video') {
-                setTimeout(() => {
-                    media.material.map.pause()
-                }, 1000);
-            }
 
             project.add(media);
             this.app.state.objects.push(media);

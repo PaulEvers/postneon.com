@@ -243,6 +243,10 @@ body {
     display: inline-block;
 }
 
+.UI-container.project-mode .project-title {
+    display: inline-block !important;
+}
+
 /* info-mode */
 
 .UI-container.info-mode .info-buttons {
@@ -416,8 +420,7 @@ input::selection {
     font-size: 2.5vh;
 }
 
-#about {
-    display: none;
+.text-container {
     position: absolute;
     z-index: 0;
     height: 100vh;
@@ -427,17 +430,13 @@ input::selection {
     color: black;
 }
 
-#about>* {
+.text-container>* {
     margin-right: -20px;
     overflow: auto;
     height: 100vh;
 }
 
-/*a {
-    color: black;
-}*/
-
-#about>*>* {
+.text-container>*>* {
     padding: 5vh;
     padding-right: calc(5vh + 20px);
 }
@@ -447,7 +446,7 @@ input::selection {
     white-space: normal !important;
 }
 
-.gui:hover {
+.gui:hover, .gui.active {
     filter: invert(1);
 }
 
@@ -492,13 +491,13 @@ input::selection {
 .cross {
     display: none;
     width: 200px;
-    transform: translate(-50%, -50%) rotateZ(-45deg);
+    transform: translate(-50%, -50%) rotateZ(-45deg) rotateY(-180deg);
 }
 
 .pointer {
     width: 200px;
     display: inline-block;
-    transform: translate(-100%, -40%) rotateZ(-150deg);
+    transform: translate(-100%, -40%) rotateZ(-135deg);
     transform-origin: right center;
     width: 200px;
 }

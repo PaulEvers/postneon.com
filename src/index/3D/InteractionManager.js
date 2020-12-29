@@ -1,7 +1,5 @@
 import CursorManager from "./CursorManager"
 import KeyManager from "./KeyManager"
-import openCloseAbout from "../GUI/openCloseAbout"
-
 
 
 export default class InteractionManager {

@@ -26,9 +26,12 @@ export default class MenuManager {
         this.state.now = performance.now();
         if (state.menu.isOpen && this.state.lastTick) {
 
-            this.state.delta = this.state.now - this.state.lastTick;
+            this.state.delta = Math.min(10, this.state.now - this.state.lastTick);
             if (this.state.delta < (100 / 120))
                 return
+
+
+
             this.threeManager.state.projects.rotation.y += (this.state.speed * this.state.delta / 25 * state.menu.direction) * 0.9 + (this.app.state.menu.lerpTo) * 0.1;
             this.app.state.menu.lerpTo = this.app.state.menu.lerpTo * 0.975;
             this.state.lastTick = this.state.now;

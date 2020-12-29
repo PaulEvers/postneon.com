@@ -27,8 +27,7 @@ export default class MediaManager {
                     return new THREE.Texture({
                         minFilter: THREE.LinearFilter,
                         magFilter: THREE.LinearFilter,
-                        encoding: THREE.sRGBEncoding,
-                        generateMipMaps: false,
+                        // generateMipMaps: true,
 
                     })
                 },
@@ -36,9 +35,9 @@ export default class MediaManager {
                     return new THREE.Texture(video,
                         {
                             minFilter: THREE.LinearFilter,
-                            magFilter: THREE.NearestFilter,
+                            magFilter: THREE.LinearFilter,
                             generateMipMaps: false,
-                            encoding: THREE.sRGBEncoding,
+                            // encoding: THREE.sRGBEncoding,
                             // map: video
                         })
                 }
@@ -46,15 +45,38 @@ export default class MediaManager {
             loader: new THREE.TextureLoader()
         }
     }
+
+    async isReady(video) {
+        let canvas = document.createElement('canvas');
+        canvas.width = 1;
+        canvas.height = 1;
+        let ctx = canvas.getContext("2d");
+
+        return new Promise((resolve) => {
+            const pingVideo = (video) => {
+                ctx.drawImage(video, 0, 0, 1, 1);
+                var p = ctx.getImageData(0, 0, 1, 1).data;
+                console.log(p.reduce((a, b) => a + b));
+                if (p.reduce((a, b) => a + b) > 0.5)
+                    resolve()
+                else
+                    requestAnimationFrame(() => { pingVideo(video) });
+            }
+            console.log('video is', video);
+            pingVideo(video);
+        })
+    }
+
     async createVideoTexture(url) {
         return new Promise(async (resolve) => {
             let src = url.split("/")[url.split("/").length - 1];
             let video = await createVideo({ url, src });
             let texture = this.resources.texture.video(video);
-            texture.play = (callback) => {
-                this.app.state.textures.update[src] = texture;
-                const video = document.getElementById(src);
+
+            texture.play = async (callback) => {
+                // const video = document.getElementById(src);
                 video.play();
+                this.app.state.textures.update[src] = texture;
                 texture.playing = true;
 
                 if (callback) {
@@ -69,29 +91,27 @@ export default class MediaManager {
                 }
             }
             texture.pause = () => {
-                ////console.log("PAUSE!");
-                document.getElementById(src).pause();
+
+                video.pause();
                 texture.playing = false;
                 delete this.app.state.textures.update[src];
             }
 
             this.app.state.textures["videos"][src] = texture;
 
-            video.oncanplaythrough = function () {
+            const init = async () => {
                 if (texture.playing)
                     return
                 texture.play();
-                function hasAudio(video) {
-                    return video.mozHasAudio ||
-                        Boolean(video.webkitAudioDecodedByteCount) ||
-                        Boolean(video.audioTracks && video.audioTracks.length);
-                }
-
-                ////console.log(`video width is ${video.videoWidth} ${video.videoHeight}`);
+                await this.isReady(video);
+                texture.pause();
+                video.removeEventListener('playthrough', init);
                 setTimeout(() => {
                     resolve(texture);
                 }, 125)
             }
+
+            video.addEventListener('canplaythrough', init.bind(this));
             // this.DOM.videos.append(video);
         })
 
@@ -143,7 +163,8 @@ export default class MediaManager {
         if (_media.type === 'image') {
             let _oldTex = media.material.map;
             let tex = await this.loadTexture(url);
-            _oldTex.dispose();
+            console.log(tex);
+            // _oldTex.dispose();
             project.children[0].material.map = tex;
             project.children[0].material.needsUpdate = true;
         } else {
@@ -152,7 +173,9 @@ export default class MediaManager {
             }
             if (!this.app.state.textures["videos"][_media.src]) {
                 let texture = await this.createVideoTexture(url);
-                await new Promise((res) => { setTimeout(() => { res() }, 500) });
+                console.log(texture);
+
+                // await new Promise((res) => { setTimeout(() => { res() }, 500) });
                 console.log(texture)
                 this.app.state.textures["videos"][_media.src] = texture;
                 media.material.map = texture;
@@ -165,12 +188,13 @@ export default class MediaManager {
 
             }
         }
+
     }
 
     async create({ _media, _project }) {
         // let distance = 1.03 * _media.scale.y * (Math.tan(((50) * Math.PI / 180)));
         let media = new THREE.Mesh(this.resources.geo, new this.resources.mat());
-        media.frustumCulled = false;
+        media.frustumCulled = true;
         media.name = `${_project.title}_media`;
         let url = `projects/${_project.directory}/${this.capitalize(_media.type)}/${this.app.state.opt}/${_media.src}`;
         media.userData = _media
@@ -191,8 +215,13 @@ export default class MediaManager {
             media.material.needsUpdate = true;
         } else {
             let texture = await this.createVideoTexture(url);
+            texture.pause();
+            // texture..painitializing = 0;
             media.material.map = texture;
             media.material.needsUpdate = true;
+            /* setTimeout(() => {
+                texture.pause()
+            }, 100); */
         }
         return media;
 

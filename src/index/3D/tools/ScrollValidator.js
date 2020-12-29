@@ -8,6 +8,7 @@ export default class ScrollValidator {
             sumDeltay: 0,
             lastFalse: 1000,
             lastDidScrollUp: null,
+            normalized: null,
             direction: null,
             now: null,
             skipAveraging: false,
@@ -60,14 +61,14 @@ export default class ScrollValidator {
     }
     detect(event) {
 
-        if (this.app.state.about.isOpen)
+        if (!this.app.state.infoMode)
             return false;
 
-        const normalized = normalizeWheel(event);
+        this.state.normalized = normalizeWheel(event);
         this.state.direction = event.deltaY > 0;
         this.state.lastDirection = this.state.direction;
         let realScroll = Math.abs(normalized.pixelY) > 25;
 
-        return { success: realScroll, y: normalized.pixelY };
+        return { success: realScroll, y: this.state.normalized.pixelY };
     }
 }

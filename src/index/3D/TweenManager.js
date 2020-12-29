@@ -1,4 +1,3 @@
-import TWEEN from '@tweenjs/tween.js'
 import getPosFromPic from "./tools/getPosFromPic"
 import checkIfFits from "./tools/checkIfFits"
 
@@ -9,38 +8,107 @@ class TweenManager {
         this.threeManager = threeManager;
         this.camera = threeManager.camera;
         this.DOM = {
+            canvas: document.querySelector("#threejs"),
             buttons: {
-                volume: document.querySelector("#volume")
-            }
+                volume: document.querySelector(".volume-button")
+            },
+            projectTitle: document.querySelector(".project-title")
         }
+        this.easings = {
+            sine_in: (x) => 1 - Math.cos((x * Math.PI) / 2),
+            linear: (x) => x
+        }
+
+        this.resources = {
+            quat: new THREE.Quaternion()
+        }
+        this.initState();
+    }
+    lerp(a, alpha) {
+        return (1 - alpha) * a.now + alpha * a.next;
+    }
+    initState() {
         this.state = {
-            fov: {
-                now: this.camera.fov,
-                next: null,
-                shouldChange: true
-            },
-            quat: {
-                now: () => { return new THREE.Quaternion().copy(this.camera.quaternion) },
-                next: new THREE.Quaternion()
-            },
-            pos: {
-                now: this.camera.position,
-                next: new THREE.Vector3(),
-                temp: null
-            },
-            scale: {
-                now: new THREE.Vector3(),
-                next: new THREE.Vector3(),
-                temp: null,
-                shouldChange: true
-            },
-            tweenCamera: {
-                duration: 500,
-                easing: TWEEN.Easing.Quadratic.InOut
-            },
-            scaleMedia: {
-                duration: 500,
-                easing: TWEEN.Easing.Quadratic.In
+            tweens: {
+                tweenCanvas: {
+                    easing: this.easings.linear,
+                    duration: 500,
+                    isTweening: false,
+                    start: null,
+                    open: false,
+                    values: {
+                        canvas: {
+                            now: null,
+                            next: null
+                        },
+                        projectTitle: {
+                            now: null,
+                            next: null
+                        }
+                    },
+                    update: (delta, tween) => {
+                        this.DOM.canvas.style.left = this.lerp(tween.values.canvas, delta) + "vw";
+
+                        this.DOM.projectTitle.style.left = this.lerp(tween.values.projectTitle, delta) + "%";
+                    }
+                },
+                tweenCamera: {
+                    easing: this.easings.sine_in,
+                    duration: 500,
+                    isTweening: false,
+                    start: null,
+                    values: {
+                        fov: {
+                            now: this.camera.fov,
+                            next: null,
+                            shouldChange: true
+                        },
+                        quat: {
+                            now: () => { return new THREE.Quaternion().copy(this.camera.quaternion) },
+                            next: new THREE.Quaternion()
+                        },
+                        pos: {
+                            now: this.camera.position,
+                            next: new THREE.Vector3(),
+                            temp: null
+                        },
+                    },
+                    update: (delta, tween) => {
+                        console.log("OK?");
+                        THREE.Quaternion.slerp(tween.values.quat.now, tween.values.quat.next, this.resources.quat, delta);
+                        this.camera.quaternion.set(this.resources.quat.x, this.resources.quat.y, this.resources.quat.z, this.resources.quat.w);
+                        tween.values.pos.temp.lerpVectors(tween.values.pos.now, tween.values.pos.next, delta)
+                        this.camera.position.set(tween.values.pos.temp.x, tween.values.pos.temp.y, tween.values.pos.temp.z);
+                        if (tween.values.fov.now != tween.values.fov.next) {
+                            this.camera.fov = this.lerp(tween.values.fov, delta);
+                            this.camera.updateProjectionMatrix();
+                        }
+                    }
+                },
+                scaleMedia: {
+                    easing: this.easings.linear,
+                    duration: 500,
+                    isTweening: false,
+                    media: null,
+                    values: {
+                        fov: {
+                            now: this.camera.fov,
+                            next: null
+                        },
+                        scale: {
+                            now: new THREE.Vector3(),
+                            next: new THREE.Vector3(),
+                            temp: null,
+                        }
+                    },
+                    update: (delta, tween) => {
+                        tween.values.scale.temp = tween.values.scale.now.clone();
+                        tween.values.scale.temp.lerp(tween.values.scale.next.clone(), delta);
+                        tween.media.scale.copy(tween.values.scale.temp);
+                        this.camera.fov = this.lerp(tween.values.fov, delta);
+                        this.camera.updateProjectionMatrix();
+                    }
+                }
             },
             menu: {
                 pos: () => new THREE.Vector3(0, 0, this.threeManager.state.centerDistance),
@@ -49,9 +117,6 @@ class TweenManager {
             },
             tween: null,
             screenRatio: () => { return (window.innerWidth / window.innerHeight) }
-        }
-        this.resources = {
-            quat: new THREE.Quaternion()
         }
     }
 
@@ -93,44 +158,54 @@ class TweenManager {
         }
     }
 
-    scaleMedia(media, ratio) {
-        this.app.state.tween.isTweening = true;
-
-        this.state.scale.now = media.scale.clone();
-        this.state.fov.now = this.camera.fov;
-
-        if (ratio < 1) {
-            this.state.fov.next = 50;
-            this.state.scale.next = new THREE.Vector3(30 * ratio, 30, 1);
+    tweenCanvas() {
+        console.log("TWEEEEEEEEEn");
+        let tween = this.state.tweens.tweenCanvas;
+        let t_values = tween.values;
+        tween.start = performance.now();
+        if (tween.open) {
+            t_values.canvas.next = 0;
+            t_values.canvas.now = window.innerWidth < 600 ? 100 : 50;
+            t_values.projectTitle.next = 50;
+            t_values.projectTitle.now = window.innerWidth < 600 ? 50 : 75;
+            tween.open = false;
         } else {
-            this.state.scale.next = new THREE.Vector3(30, 30 / ratio, 1);
-            this.state.fov.next = 50 / (Math.min(ratio, this.state.screenRatio()) * 0.96);
+            t_values.canvas.next = window.innerWidth < 600 ? 100 : 50;
+            t_values.canvas.now = 0;
+            t_values.projectTitle.now = 50;
+            t_values.projectTitle.next = window.innerWidth < 600 ? 50 : 75;
+            tween.open = true;
         }
 
-        this.state.scale.shouldChange = this.state.scale.now !== this.state.scale.next;
-        this.state.fov.shouldChange = this.state.fov.now !== this.state.fov.next;
 
 
-        if (!this.state.scale.shouldChange && !this.state.fov.shouldChange) return;
-        this.state.alpha = { t: 0 };
+        tween.isTweening = true;
+    }
+
+    scaleMedia(media, ratio) {
+        let tween = this.state.tweens.scaleMedia;
+        let t_values = tween.values;
+
+        tween.start = performance.now();
+        tween.isTweening = true;
+        tween.media = media;
+        t_values.scale.now = media.scale.clone();
+        t_values.fov.now = this.camera.fov;
 
 
-        this.state.tween = new TWEEN.Tween(this.state.alpha)
-            .to({ t: 1 }, this.state.scaleMedia.duration)
-            .easing(this.state.scaleMedia.easing) // Use an easing function to make the animation smooth.
-            .onUpdate(() => {
-                if (this.state.scale.shouldChange) {
-                    this.state.scale.temp = this.state.scale.now.clone();
-                    this.state.scale.temp.lerp(this.state.scale.next.clone(), this.state.alpha.t);
-                    media.scale.set(this.state.scale.temp.x, this.state.scale.temp.y, this.state.scale.temp.y);
-                    this.camera.fov = this.state.fov.now * (1 - this.state.alpha.t) + this.state.fov.next * this.state.alpha.t;
-                    this.camera.updateProjectionMatrix();
-                }
-            })
-            .onComplete(() => {
-                this.app.state.tween.isTweening = false;
-            })
-            .start();
+        if (ratio < 1) {
+            t_values.fov.next = 50;
+            t_values.scale.next = new THREE.Vector3(30 * ratio, 30, 1);
+        } else {
+            t_values.scale.next = new THREE.Vector3(30, 30 / ratio, 1);
+            t_values.fov.next = 50 / (Math.min(ratio, this.state.screenRatio()) * 0.96);
+        }
+
+        t_values.scale.shouldChange = t_values.scale.now !== t_values.scale.next;
+        t_values.fov.shouldChange = t_values.fov.now !== t_values.fov.next;
+        if (!t_values.scale.now !== t_values.scale.next &&
+            t_values.fov.now !== t_values.fov.next) return;
+
     }
 
     toggleMedia(media, duration) {
@@ -155,64 +230,66 @@ class TweenManager {
         }, duration);
     }
     tweenCamera(nextProject) {
-        this.app.state.tween.isTweening = true;
-        // this.threeManager.renderer.antialias = false;
+        let tween = this.state.tweens.tweenCamera;
+        if (tween.isTweening)
+            return false;
+        tween.start = performance.now();
+        tween.isTweening = true;
 
         if (this.app.state.focus.media)
             this.pauseMedia(this.app.state.focus.media, 0);
-
-        let changeFOV = true;
         if (nextProject) {
             let viewpoint = nextProject.children[1];
-            changeFOV = (!this.app.state.focus.project || nextProject != this.app.state.focus.project.name) ? true : false;
-
-            viewpoint.getWorldPosition(this.state.pos.next);
-            nextProject.children[0].getWorldQuaternion(this.state.quat.next);
+            viewpoint.getWorldPosition(tween.values.pos.next);
+            nextProject.children[0].getWorldQuaternion(tween.values.quat.next);
             let media = nextProject.children[0];
-            this.playMedia(media, (this.state.tweenCamera.duration / 2));
+            this.playMedia(media, tween.duration);
             if (media.userData.ratio < 1) {
-                this.state.fov.next = 50
+                tween.values.fov.next = 50
             } else {
                 let _ratio = this.state.screenRatio();
-                this.state.fov.next = 50 / Math.min(media.userData.ratio, _ratio);
+                tween.values.fov.next = 50 / Math.min(media.userData.ratio, _ratio);
             }
 
         } else {
-            this.state.fov.next = this.state.menu.fov;
-            this.state.pos.next = this.state.menu.pos();
-            this.state.quat.next = new THREE.Quaternion();
+            tween.values.fov.next = this.state.menu.fov;
+            tween.values.pos.next = this.state.menu.pos();
+            tween.values.quat.next = new THREE.Quaternion();
 
         }
+        tween.values.fov.now = this.camera.fov;
+        tween.values.pos.now = this.camera.position.clone();
+        tween.values.quat.now = new THREE.Quaternion().copy(this.camera.quaternion);
+        tween.values.pos.temp = tween.values.pos.now.clone();
+        return true;
+    }
+
+    updateDelta() {
+
+    }
+
+    isTweening() {
+        for (let tween in Object.values(this.state.tweens)) {
+            if (tween.isTweening) return true;
+        }
+        return false;
+    }
 
 
+    update(now) {
+        for (let name in this.state.tweens) {
+            let tween = this.state.tweens[name];
+            if (tween.isTweening && now !== tween.start) {
+                let delta = (now - tween.start) / tween.duration;
+                delta = tween.easing(delta);
+                delta = Math.min(delta, 1);
+                if (delta == 1)
+                    tween.isTweening = false;
 
-        this.state.fov.now = this.camera.fov;
-        this.state.pos.now = this.camera.position.clone();
-        this.state.quat.now = new THREE.Quaternion().copy(this.camera.quaternion);
+                tween.update(delta, tween);
+            };
 
-        this.state.fov.shouldChange = this.state.fov.now !== this.state.fov.next;
-
-        this.state.alpha = { t: 0 };
-        this.state.pos.temp = this.state.pos.now.clone();
-        this.state.tween = new TWEEN.Tween(this.state.alpha)
-            .to({ t: 1 }, this.state.tweenCamera.duration)
-            .easing(TWEEN.Easing.Quadratic.In) // Use an easing function to make the animation smooth.
-            .onUpdate(() => {
-                THREE.Quaternion.slerp(this.state.quat.now, this.state.quat.next, this.resources.quat, this.state.alpha.t);
-                this.camera.quaternion.set(this.resources.quat.x, this.resources.quat.y, this.resources.quat.z, this.resources.quat.w);
-                this.state.pos.temp.lerpVectors(this.state.pos.now, this.state.pos.next, this.state.alpha.t)
-                this.camera.position.set(this.state.pos.temp.x, this.state.pos.temp.y, this.state.pos.temp.z);
-                if (this.state.fov.shouldChange) {
-                    this.camera.fov = this.state.fov.now * (1 - this.state.alpha.t) + this.state.fov.next * this.state.alpha.t;
-                    this.camera.updateProjectionMatrix();
-                }
-            })
-            .onComplete(() => {
-                this.app.state.tween.isTweening = false;
-                // this.threeManager.renderer.antialias = true;
-
-            })
-            .start();
+        }
     }
 }
 
