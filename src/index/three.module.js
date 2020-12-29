@@ -8356,10 +8356,10 @@ class Color {
 
 }
 
-    Color.NAMES = _colorKeywords;
-    Color.prototype.r = 1;
-    Color.prototype.g = 1;
-    Color.prototype.b = 1;
+Color.NAMES = _colorKeywords;
+Color.prototype.r = 1;
+Color.prototype.g = 1;
+Color.prototype.b = 1;
 
 class Face3 {
 
@@ -10034,7 +10034,7 @@ BufferGeometry.prototype = Object.assign(Object.create(EventDispatcher.prototype
 
     setFromObject: function (object) {
 
-        // console.log( 'THREE.BufferGeometry.setFromObject(). Converting', object, this );
+        // //console.log( 'THREE.BufferGeometry.setFromObject(). Converting', object, this );
 
         const geometry = object.geometry;
 
@@ -16779,7 +16779,7 @@ function getShaderErrors(gl, shader, type) {
     if (status && log === '') return '';
 
     // --enable-privileged-webgl-extension
-    // console.log( '**' + type + '**', gl.getExtension( 'WEBGL_debug_shaders' ).getTranslatedShaderSource( shader ) );
+    // //console.log( '**' + type + '**', gl.getExtension( 'WEBGL_debug_shaders' ).getTranslatedShaderSource( shader ) );
 
     const source = gl.getShaderSource(shader);
 
@@ -16879,7 +16879,7 @@ function fetchAttributeLocations(gl, program) {
         const info = gl.getActiveAttrib(program, i);
         const name = info.name;
 
-        // console.log( 'THREE.WebGLProgram: ACTIVE VERTEX ATTRIBUTE:', name, i );
+        // //console.log( 'THREE.WebGLProgram: ACTIVE VERTEX ATTRIBUTE:', name, i );
 
         attributes[name] = gl.getAttribLocation(program, name);
 
@@ -17424,8 +17424,8 @@ function WebGLProgram(renderer, cacheKey, parameters, bindingStates) {
     const vertexGlsl = versionString + prefixVertex + vertexShader;
     const fragmentGlsl = versionString + prefixFragment + fragmentShader;
 
-    // console.log( '*VERTEX*', vertexGlsl );
-    // console.log( '*FRAGMENT*', fragmentGlsl );
+    // //console.log( '*VERTEX*', vertexGlsl );
+    // //console.log( '*FRAGMENT*', fragmentGlsl );
 
     const glVertexShader = WebGLShader(gl, 35633, vertexGlsl);
     const glFragmentShader = WebGLShader(gl, 35632, fragmentGlsl);
@@ -23909,7 +23909,7 @@ function WebGLRenderer(parameters) {
 
         event.preventDefault();
 
-        console.log('THREE.WebGLRenderer: Context Lost.');
+        //console.log('THREE.WebGLRenderer: Context Lost.');
 
         _isContextLost = true;
 
@@ -23917,7 +23917,7 @@ function WebGLRenderer(parameters) {
 
     function onContextRestore( /* event */) {
 
-        console.log('THREE.WebGLRenderer: Context Restored.');
+        //console.log('THREE.WebGLRenderer: Context Restored.');
 
         _isContextLost = false;
 
@@ -25739,7 +25739,7 @@ Object.assign(InterleavedBufferAttribute.prototype, {
 
         if (data === undefined) {
 
-            console.log('THREE.InterleavedBufferAttribute.clone(): Cloning an interlaved buffer attribute will deinterleave buffer data.');
+            //console.log('THREE.InterleavedBufferAttribute.clone(): Cloning an interlaved buffer attribute will deinterleave buffer data.');
 
             const array = [];
 
@@ -25781,7 +25781,7 @@ Object.assign(InterleavedBufferAttribute.prototype, {
 
         if (data === undefined) {
 
-            console.log('THREE.InterleavedBufferAttribute.toJSON(): Serializing an interlaved buffer attribute will deinterleave buffer data.');
+            //console.log('THREE.InterleavedBufferAttribute.toJSON(): Serializing an interlaved buffer attribute will deinterleave buffer data.');
 
             const array = [];
 
@@ -28343,7 +28343,7 @@ Geometry.prototype = Object.assign(Object.create(EventDispatcher.prototype), {
 
             } else {
 
-                //console.log('Duplicate vertex found. ', i, ' could be using ', verticesMap[key]);
+                ////console.log('Duplicate vertex found. ', i, ' could be using ', verticesMap[key]);
                 changes[i] = changes[verticesMap[key]];
 
             }
@@ -30874,7 +30874,7 @@ class ExtrudeBufferGeometry extends BufferGeometry {
 
                 splineTube = extrudePath.computeFrenetFrames(steps, false);
 
-                // console.log(splineTube, 'splineTube', splineTube.normals.length, 'steps', steps, 'extrudePts', extrudePts.length);
+                // //console.log(splineTube, 'splineTube', splineTube.normals.length, 'steps', steps, 'extrudePts', extrudePts.length);
 
                 binormal = new Vector3();
                 normal = new Vector3();
@@ -31055,14 +31055,14 @@ class ExtrudeBufferGeometry extends BufferGeometry {
 
                     if (direction_eq) {
 
-                        // console.log("Warning: lines are a straight sequence");
+                        // //console.log("Warning: lines are a straight sequence");
                         v_trans_x = - v_prev_y;
                         v_trans_y = v_prev_x;
                         shrink_by = Math.sqrt(v_prev_lensq);
 
                     } else {
 
-                        // console.log("Warning: lines are a straight spike");
+                        // //console.log("Warning: lines are a straight spike");
                         v_trans_x = v_prev_x;
                         v_trans_y = v_prev_y;
                         shrink_by = Math.sqrt(v_prev_lensq / 2);
@@ -31084,7 +31084,7 @@ class ExtrudeBufferGeometry extends BufferGeometry {
                 if (k === il) k = 0;
 
                 //  (j)---(i)---(k)
-                // console.log('i,j,k', i, j , k)
+                // //console.log('i,j,k', i, j , k)
 
                 contourMovements[i] = getBevelVec(contour[i], contour[j], contour[k]);
 
@@ -31361,7 +31361,7 @@ class ExtrudeBufferGeometry extends BufferGeometry {
                     let k = i - 1;
                     if (k < 0) k = contour.length - 1;
 
-                    //console.log('b', i,j, i-1, k,vertices.length);
+                    ////console.log('b', i,j, i-1, k,vertices.length);
 
                     for (let s = 0, sl = (steps + bevelSegments * 2); s < sl; s++) {
 
@@ -36344,7 +36344,7 @@ const Cache = {
 
         if (this.enabled === false) return;
 
-        // console.log( 'THREE.Cache', 'Adding key:', key );
+        // //console.log( 'THREE.Cache', 'Adding key:', key );
 
         this.files[key] = file;
 
@@ -36354,7 +36354,7 @@ const Cache = {
 
         if (this.enabled === false) return;
 
-        // console.log( 'THREE.Cache', 'Checking key:', key );
+        // //console.log( 'THREE.Cache', 'Checking key:', key );
 
         return this.files[key];
 
@@ -42293,7 +42293,7 @@ Object.assign(ShapePath.prototype, {
         let holesFirst = !isClockWise(subPaths[0].getPoints());
         holesFirst = isCCW ? !holesFirst : holesFirst;
 
-        // console.log("Holes first", holesFirst);
+        // //console.log("Holes first", holesFirst);
 
         const betterShapeHoles = [];
         const newShapes = [];
@@ -42321,13 +42321,13 @@ Object.assign(ShapePath.prototype, {
                 if (holesFirst) mainIdx++;
                 newShapeHoles[mainIdx] = [];
 
-                //console.log('cw', i);
+                ////console.log('cw', i);
 
             } else {
 
                 newShapeHoles[mainIdx].push({ h: tmpPath, p: tmpPoints[0] });
 
-                //console.log('ccw', i);
+                ////console.log('ccw', i);
 
             }
 
@@ -42386,11 +42386,11 @@ Object.assign(ShapePath.prototype, {
                 }
 
             }
-            // console.log("ambiguous: ", ambiguous);
+            // //console.log("ambiguous: ", ambiguous);
 
             if (toChange.length > 0) {
 
-                // console.log("to change: ", toChange);
+                // //console.log("to change: ", toChange);
                 if (!ambiguous) newShapeHoles = betterShapeHoles;
 
             }
@@ -42413,7 +42413,7 @@ Object.assign(ShapePath.prototype, {
 
         }
 
-        //console.log("shape", shapes);
+        ////console.log("shape", shapes);
 
         return shapes;
 
@@ -49460,7 +49460,7 @@ function Float64Attribute(array, itemSize) {
 
 Curve.create = function (construct, getPoint) {
 
-    console.log('THREE.Curve.create() has been deprecated');
+    //console.log('THREE.Curve.create() has been deprecated');
 
     construct.prototype = Object.create(Curve.prototype);
     construct.prototype.constructor = construct;

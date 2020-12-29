@@ -4,7 +4,7 @@ export default class MenuManager {
         this.intersectionManager = threeManager.intersectionManager;
         this.app = app;
         this.DOM = {
-            sub: document.querySelector("#subTitle"),
+            sub: document.querySelector("#projectTitle"),
             hover: document.querySelector("#hover"),
             normal: document.querySelector("#normal"),
             pointer: document.querySelector("#pointer"),

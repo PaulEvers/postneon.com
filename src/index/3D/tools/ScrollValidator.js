@@ -64,15 +64,9 @@ export default class ScrollValidator {
             return false;
 
         const normalized = normalizeWheel(event);
-        this.state.now = performance.now();
-
-
         this.state.direction = event.deltaY > 0;
-
         this.state.lastDirection = this.state.direction;
-
-
-        let realScroll = Math.abs(normalized.pixelY) > 5;
+        let realScroll = Math.abs(normalized.pixelY) > 25;
 
         return { success: realScroll, y: normalized.pixelY };
     }

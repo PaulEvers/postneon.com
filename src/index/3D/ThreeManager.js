@@ -8,9 +8,6 @@ class ThreeManager {
         // initiate
         this.app = app;
 
-
-
-
         this.resources = {
             geo: new THREE.PlaneGeometry(0, 0, 1),
             mat: new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide }),
@@ -20,40 +17,42 @@ class ThreeManager {
 
         this.state = {
             scale: 40,
-            centerDistance: 125
+            centerDistance: 125,
+            orientation: null,
+            tempOrientation: {}
         }
 
-        this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
-        this.renderer.domElement.id = "scene";
-        this.renderer.setPixelRatio(1);
-        this.renderer.autoUpdateScene = false;
-        this.renderer.gammaOutput = true;
+        this.renderer = new THREE.WebGLRenderer({
+            autoClear: false,
+            // alpha: true,
+            antialias: true,
+            // gammaInput: true,
+            outputEncoding: THREE.LinearEncoding
+        });
         this.renderer.setPixelRatio(window.devicePixelRatio);
-        this.renderer.gammaInput = true;
-        this.renderer.gammaOutput = true;
-        this.renderer.gammaFactor = 2.2;
-        this.renderer.outputEncoding = THREE.Linear;
 
         this.canvas = this.renderer.domElement;
+        this.canvas.id = "scene";
+
         this.canvasContainer = document.querySelector("#threejs");
         this.canvasContainer.appendChild(this.canvas);
 
         this.scene = new THREE.Scene();
         this.camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 1000);
-        this.camera.far = 10000000;
+        // this.camera.far = 10000000;
         this.camera.updateProjectionMatrix();
         this.camera.position.z = this.state.centerDistance;
-        console.log(this.camera.fov, this.camera.position.z);
+        ////console.log(this.camera.fov, this.camera.position.z);
 
         this.loader = new THREE.TextureLoader();
         this.tweenManager = new TweenManager({ app: app, threeManager: this });
         this.intersectionManager = new IntersectionManager();
         this.mediaManager = new MediaManager({ app: app, threeManager: this });
+        this.logoManager = new LogoManager({ app: this.app, threeManager: this });
 
         this.initProjects();
     }
     async initLogos() {
-        this.logoManager = new LogoManager({ app: this.app, threeManager: this });
         await this.logoManager.createLogos();
         return;
     }
@@ -70,45 +69,43 @@ class ThreeManager {
     }
 
 
-    checkOrientation() {
+    changeOrientation(orientation) {
         function createRandom() {
             let random = Math.random() * Math.PI / 8;
             return Math.random() < 0.5 ? random : random * -1;
         }
-        console.log("this is", this);
 
-        let orientation = window.innerWidth > window.innerHeight ? 'landscape' : 'portrait';
         if (orientation === 'landscape') {
-            if (this.app.state.orientation === orientation) return;
+            if (this.app.state.focus.media) this.app.state.focus.media.attach(this.camera);
             this.app.state.orientation = orientation;
             this.state.projectsContainer.rotation.z = 0;
             for (let project of this.state.projects.children) {
-                project.rotation.z += Math.PI / 2;
+                project.rotation.z = Math.PI / 2;
             }
-
+            if (this.app.state.focus.media) this.scene.attach(this.camera);
         } else {
-            if (this.app.state.orientation === orientation) return;
+            if (this.app.state.focus.media) this.app.state.focus.media.attach(this.camera);
             this.app.state.orientation = orientation;
-            // console.log(this.state.projectsContainer);
             this.state.projectsContainer.rotation.z = Math.PI / 2;
             for (let project of this.state.projects.children) {
-                console.log(project);
-                project.rotation.z = Math.PI / -2 + createRandom();
-                project.rotation.x = createRandom();
-                project.rotation.y = Math.PI / 2 + createRandom();
+                project.rotation.z = 0;
             }
-            this.state.centerDistance = 200;
-
+            if (this.app.state.focus.media) this.scene.attach(this.camera);
+            // this.state.centerDistance = 200;
         }
     }
 
 
     resizeCanvas(noLogo) {
 
-        this.checkOrientation();
+        this.state.tempOrientation = window.innerWidth > window.innerHeight ? 'landscape' : 'portrait';
+        if (this.app.state.orientation !== this.state.tempOrientation)
+            this.changeOrientation(this.state.tempOrientation);
+
+        this.logoManager.chooseLogo();
+
         if (this.app.state.menuOpen) {
 
-            this.LogoManager.chooseLogo();
             this.camera.position.z = this.state.centerDistance;
         } else {
             if (this.app.state.isMobile) {
@@ -132,8 +129,8 @@ class ThreeManager {
     async fetchScene(url) {
         let _data = await fetch(url, { method: 'GET', mode: 'cors' })
             .then(res => res.json());
-        console.log("FETCHED");
-        console.log(_data);
+        ////console.log("FETCHED");
+        ////console.log(_data);
 
         let _amount = _data.projects.length;
         let radius = 250;
@@ -183,7 +180,7 @@ class ThreeManager {
             if (_m.type === 'video') {
                 setTimeout(() => {
                     media.material.map.pause()
-                }, 2000);
+                }, 1000);
             }
 
             project.add(media);
@@ -191,7 +188,7 @@ class ThreeManager {
 
             let viewpoint = new THREE.Group();
             viewpoint.name = 'viewpoint';
-            viewpoint.position.set(0, 0, 40 + 75);
+            viewpoint.position.set(0, 0, 40 + 73.5);
             project.add(viewpoint);
 
         })
@@ -205,12 +202,12 @@ class ThreeManager {
 
     addToProjects(_p) {
         this.state.projects.add(_p);
-        console.log(this.scene);
+        ////console.log(this.scene);
     }
     addToScene(_m) {
-        console.log(_m);
+        ////console.log(_m);
         this.scene.add(_m);
-        console.log("add to scene! ", this.scene);
+        ////console.log("add to scene! ", this.scene);
     }
     render() {
         this.renderer.render(this.scene, this.camera);
@@ -252,7 +249,7 @@ class LogoManager {
                 let texture = new THREE.Texture(img);
                 texture.magFilter = THREE.LinearMipMapLinearFilter;
                 texture.minFilter = THREE.LinearMipMapLinearFilter;
-                texture.generateMipMaps = true;
+                // texture.generateMipMaps = true;
 
                 logo.material.alphaMap = texture;
                 logo.material.alphaTest = 0.5;
@@ -275,20 +272,20 @@ class LogoManager {
             let promises = [];
 
             if (this.app.isMobile) {
-                promises.push(this.createLogo("logo_w.png", 150, 2));
-                promises.push(this.createLogo("logo_w2.png", 125, 2));
-                promises.push(this.createLogo("logo_vertical.png", 90, -7));
+                promises.push(this.createLogo("logo_h.png", 250, 2));
+                promises.push(this.createLogo("logo_m.png", 125, 2));
+                promises.push(this.createLogo("logo_v.png", 90, -7));
             } else {
-                promises.push(this.createLogo("logo_w.png", 150, 2));
-                promises.push(this.createLogo("logo_w2.png", 90, 2));
-                promises.push(this.createLogo("logo_vertical.png", 45, 0));
+                promises.push(this.createLogo("logo_h.png", 150, 2));
+                promises.push(this.createLogo("logo_m.png", 90, 2));
+                promises.push(this.createLogo("logo_v.png", 45, 0));
             }
             Promise.all(promises).then((resolves) => {
                 resolves.forEach(res => {
                     this.logos.add(res.logo);
                     res.logo.position.y = res.y;
                 })
-                console.log("CHOOSELOG");
+                ////console.log("CHOOSELOG");
                 this.chooseLogo();
                 this.threeManager.render();
                 this.threeManager.addToScene(this.logos);

@@ -6,9 +6,9 @@ import * as THREE from "three"
 
 //modules
 import TWEEN from '@tweenjs/tween.js'
-console.log("HALLO");
+////console.log("HALLO");
 window.THREE = THREE;
-console.log(THREE);
+////console.log(THREE);
 
 class Application {
     constructor() {
@@ -16,13 +16,17 @@ class Application {
         this.JSON = {};
         this.scene = null;
         this.state = {
+            tween: {
+                isTweening: false,
+                timeStamp: performance.now()
+            },
             menu: {
                 isOpen: true,
                 direction: 1,
                 lerpTo: 0,
             },
             interaction: {
-                updateStamp: performance.now()
+                timeStap: performance.now()
             },
             about: {
                 isOpen: false
@@ -38,7 +42,7 @@ class Application {
                 preview: {},
                 uploading: [],
                 videos: {},
-                updateStamp: performance.now()
+                timeStap: performance.now()
             },
             focus: {
                 project: null,
@@ -51,10 +55,10 @@ class Application {
             projectTitle: document.querySelector("#projectTitle"),
             contactButton: document.querySelector("#contactButton"),
             aboutButton: document.querySelector("#aboutButton"),
-            subTitle: document.querySelector("#subTitle"),
+            projectTitle: document.querySelector("#projectTitle"),
             threejs: document.querySelector("#threejs"),
-            picNumber: document.querySelector("#picNumber"),
-            order: document.querySelector("#order"),
+            indexContainer: document.querySelector("#indexContainer"),
+            order: document.querySelector(".media-index"),
             projectLength: document.querySelector("#projectLength")
         }
         // initialize 
@@ -84,22 +88,29 @@ class Application {
         if (this.state.stopAnimation)
             return;
 
+
+
         this.state.now = performance.now();
-        if (this.state.now - this.state.textures.updateStamp > (1000 / 30)) {
+        if (this.state.now - this.state.textures.timeStap > (1000 / 30)) {
             for (let key in this.state.textures.update) {
                 let texture = this.state.textures.update[key];
                 texture.needsUpdate = true;
             }
-            this.state.textures.updateStamp = this.state.now;
+            this.state.textures.timeStap = this.state.now;
         }
 
-        if (this.state.now - this.state.interaction.updateStamp > (1000 / 10)) {
-            this.interactionManager.update(this.state);
-            this.state.interaction.updateStamp = this.state.now;
+        if (!this.state.tween.isTweening) {
+            if (this.state.now - this.state.interaction.timeStap > (1000 / 10)) {
+                this.interactionManager.update(this.state);
+                this.state.interaction.timeStap = this.state.now;
+            }
+            this.menuManager.rotateMenu(this.state);
+        } else {
+            TWEEN.update();
         }
-        this.menuManager.rotateMenu(this.state);
-        this.threeManager.render()
-        TWEEN.update();
+
+        this.threeManager.render();
+
 
 
     }

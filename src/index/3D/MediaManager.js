@@ -1,3 +1,4 @@
+import { Texture } from "../three.module";
 import collisionChecker from "./tools/collisionChecker"
 import createVideo from "./tools/createVideo"
 
@@ -9,7 +10,7 @@ export default class MediaManager {
         this.DOM = {
             videos: document.querySelector('#videos'),
             buttons: {
-                volume: document.querySelector('#volume')
+                volume: document.querySelector('.volume-button')
             }
         }
         this.resources = {
@@ -24,9 +25,11 @@ export default class MediaManager {
             texture: {
                 image: () => {
                     return new THREE.Texture({
-                        minFilter: THREE.LinearMipMapLinearFilter,
-                        magFilter: THREE.LinearMipMapLinearFilter,
+                        minFilter: THREE.LinearFilter,
+                        magFilter: THREE.LinearFilter,
                         encoding: THREE.sRGBEncoding,
+                        generateMipMaps: false,
+
                     })
                 },
                 video: (video) => {
@@ -49,8 +52,6 @@ export default class MediaManager {
             let video = await createVideo({ url, src });
             let texture = this.resources.texture.video(video);
             texture.play = (callback) => {
-                console.log("PLAY!");
-                console.log(this);
                 this.app.state.textures.update[src] = texture;
                 const video = document.getElementById(src);
                 video.play();
@@ -68,24 +69,17 @@ export default class MediaManager {
                 }
             }
             texture.pause = () => {
-                console.log("PAUSE!");
+                ////console.log("PAUSE!");
                 document.getElementById(src).pause();
                 texture.playing = false;
                 delete this.app.state.textures.update[src];
             }
-            console.log(texture);
-            /*  texture.color = new THREE.Color();
-             texture.color.convertSRGBToLinear(); */
-            /* texture.playing = function () {
-                return !!(this.currentTime > 0 && !this.paused && !this.ended && this.readyState > 2);
-            }
-            texture.isPlaying = false; */
-            // texture.anisotropy = 0.25;
+
             this.app.state.textures["videos"][src] = texture;
-            // texture.generateMipmaps = false;
-            // video.firstFrame = false;
-            video.onloadeddata = function () {
-                console.log('this happens')
+
+            video.oncanplaythrough = function () {
+                if (texture.playing)
+                    return
                 texture.play();
                 function hasAudio(video) {
                     return video.mozHasAudio ||
@@ -93,18 +87,18 @@ export default class MediaManager {
                         Boolean(video.audioTracks && video.audioTracks.length);
                 }
 
-                console.log(`video width is ${video.videoWidth} ${video.videoHeight}`);
-                resolve(texture);
+                ////console.log(`video width is ${video.videoWidth} ${video.videoHeight}`);
+                setTimeout(() => {
+                    resolve(texture);
+                }, 125)
             }
-            this.DOM.videos.append(video);
-            // return texture;
+            // this.DOM.videos.append(video);
         })
 
 
     }
     loadTexture(url) {
         return new Promise((resolve) => {
-            this.app.state.textures.uploading[url] = 0;
             this.resources.loader.load(url, (tex) => { resolve(tex) });
         })
     }
@@ -133,21 +127,23 @@ export default class MediaManager {
         return str.charAt(0).toUpperCase() + str.slice(1);
     }
 
-    async changeMedia(project) {
+    async changeMedia(project, direction) {
+        let order = (project.userData.order + direction) % project.userData.medias.length;
+        if (order < 0) order = project.userData.medias.length - 1;
 
-        project.userData.order = (project.userData.order + 1) % project.userData.medias.length;
         let media = project.children[0];
-        let _media = project.userData.medias[project.userData.order];
+        let _media = project.userData.medias[order];
+        project.userData.order = order;
 
         media.userData = _media;
         let url = `projects/${project.userData.directory}/${this.capitalize(_media.type)}/${this.app.state.opt}/${_media.src}`;
 
-        console.log(_media);
-        console.log('ok');
         this.tweenManager.scaleMedia(media, _media.ratio);
 
         if (_media.type === 'image') {
+            let _oldTex = media.material.map;
             let tex = await this.loadTexture(url);
+            _oldTex.dispose();
             project.children[0].material.map = tex;
             project.children[0].material.needsUpdate = true;
         } else {
@@ -156,18 +152,13 @@ export default class MediaManager {
             }
             if (!this.app.state.textures["videos"][_media.src]) {
                 let texture = await this.createVideoTexture(url);
-                await new Promise((res) => { setTimeout(() => { res() }, 125) });
-                console.log('CREATE TEXTURE');
-
-                console.log('texture', texture);
+                await new Promise((res) => { setTimeout(() => { res() }, 500) });
+                console.log(texture)
                 this.app.state.textures["videos"][_media.src] = texture;
                 media.material.map = texture;
-                media.material.dithering = true
+                setTimeout(() => { texture.play() }, 1000);
             } else {
-                console.log('PLAY TEXTURE');
-                console.log(this.app.state.textures.videos[_media.src]);
                 let texture = this.app.state.textures.videos[_media.src];
-
                 this.app.state.textures.update[_media.src] = texture;
                 media.material.map = texture;
                 texture.play();
@@ -177,15 +168,12 @@ export default class MediaManager {
     }
 
     async create({ _media, _project }) {
-        let distance = 1.03 * _media.scale.y * (Math.tan(((50) * Math.PI / 180)));
+        // let distance = 1.03 * _media.scale.y * (Math.tan(((50) * Math.PI / 180)));
         let media = new THREE.Mesh(this.resources.geo, new this.resources.mat());
+        media.frustumCulled = false;
         media.name = `${_project.title}_media`;
         let url = `projects/${_project.directory}/${this.capitalize(_media.type)}/${this.app.state.opt}/${_media.src}`;
-        media.userData = {
-            distance: distance,
-            src: _media.src,
-            type: _media.type
-        }
+        media.userData = _media
         media.updateMatrix();
         media.position.set(0, 0, 75);
         media.rotation.set(0, 0, (Math.PI / -2));
@@ -198,7 +186,6 @@ export default class MediaManager {
         if (_media.type === "image") {
             media.material.visible = false;
             let _tex = await this.loadTexture(url);
-            console.log(`map tex of image is`, _tex.image.width, _tex.image.height);
             media.material.map = _tex;
             media.material.visible = true;
             media.material.needsUpdate = true;
@@ -213,7 +200,7 @@ export default class MediaManager {
 }
 
 // export default function (data, mediaObject, project, openState) {
-//     console.log(project);
+//     ////console.log(project);
 //     function loadTexture(picture, project, src, opt, callback) {
 //         let promise = new Promise(function (resolve) {
 //             let url = "projects/" + project + "/Image/" + opt + "/" + src;
@@ -222,8 +209,8 @@ export default class MediaManager {
 //             g.loader.load(
 //                 url,
 //                 function (texture) {
-//                     console.log(texture);
-//                     console.log(picture);
+//                     ////console.log(texture);
+//                     ////console.log(picture);
 //                     picture.material.map = texture;
 //                     texture.minFilter = THREE.NearestFilter;
 //                     texture.magFilter = THREE.NearestFilter;
@@ -324,7 +311,7 @@ export default class MediaManager {
 //     // position picture
 //     project.add(picture);
 //     //
-//     console.log(mediaObject.rotation);
+//     ////console.log(mediaObject.rotation);
 //     // picture.rotation.copy(mediaObject.rotation);
 //     picture.rotation.set(mediaObject.rotation.x, mediaObject.rotation.y, mediaObject.rotation.z);
 //     let newPosition = new THREE.Vector3(mediaObject.position.x, mediaObject.position.y, mediaObject.position.z);
@@ -355,8 +342,8 @@ export default class MediaManager {
 //         collisionChecker(picture);
 //     }, 50);
 //     if (type === "video") {
-//         //////////console.log("VIDEOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO")
+//         //////////////console.log("VIDEOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO")
 //     }
-//     console.log(g.scene);
+//     ////console.log(g.scene);
 //     return picture;
 // }

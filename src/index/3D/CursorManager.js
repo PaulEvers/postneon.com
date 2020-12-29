@@ -1,9 +1,10 @@
-import ScrollValidator from "./tools/ScrollValidator"
 import getIntersects from "./tools/getIntersects";
-import changePicture from "./tools/changePicture"
+import changePicture from "./tools/changePicture";
+import normalizeWheel from 'normalize-wheel'
+
 
 class CursorManager {
-    constructor({ app, threeManager, interactionManager }) {
+    constructor({ app, threeManager }) {
 
         this.app = app;
 
@@ -11,12 +12,31 @@ class CursorManager {
         this.intersectionManager = this.threeManager.intersectionManager;
         this.mediaManager = this.threeManager.mediaManager;
 
-        this.interactionManager = interactionManager;
-        this.tweenManager = interactionManager.tweenManager;
+        this.tweenManager = threeManager.tweenManager;
 
-        this.DOM = interactionManager.DOM;
+        this.DOM = {
+            canvas: this.threeManager.renderer.domElement,
+            projectTitle: document.querySelector(".project-title"),
+            indexContainer: document.querySelector(".index-container"),
+            mediaIndex: document.querySelector(".media-index"),
+            projectLength: document.querySelector(".project-length"),
+            UIContainer: document.querySelector(".UI-container"),
+            cursor: {
+                cross: document.querySelector(".cross"),
+                pointer: document.querySelector(".pointer"),
+                container: document.querySelector(".cursor"),
+            },
+
+            buttons: {
+                about: document.querySelector(".about-button"),
+                contact: document.querySelector(".contact-button"),
+                volume: document.querySelector(".volume-button"),
+                back: document.querySelectorAll(".back-button"),
+                info: document.querySelectorAll(".info-button")
+            }
+        }
+
         this.init();
-        this.scrollValidator = new ScrollValidator({ app: this.app });
         this.state = {
             focusBack: false,
             cursor: {
@@ -29,6 +49,8 @@ class CursorManager {
                 delta: { x: null, y: null },
                 array: [],
                 vector: new THREE.Vector2(),
+                guiHover: false,
+                isDragging: false,
                 scroll
             },
             lastHover: null,
@@ -42,7 +64,8 @@ class CursorManager {
             },
             intersects: [],
             intersectedMedia: null,
-            groups: null
+            groups: null,
+            hideTitle: null
 
         }
         this.vectors = {
@@ -59,23 +82,16 @@ class CursorManager {
             this.DOM.canvas.addEventListener('mousedown', this.onMouseDown.bind(this), false);
             window.addEventListener('mousemove', this.onMouseMove.bind(this), 250);
             this.DOM.canvas.addEventListener('dblclick', this.onDoubleClick.bind(this), false);
-            this.DOM.canvas.addEventListener('mouseleave', this.hideTitle.bind(this), false);
+            // this.DOM.canvas.addEventListener('mouseleave', this.hideTitle.bind(this), false);
+            this.DOM.canvas.addEventListener("mouseout", () => {
+                this.DOM.cursor.container.classList.add('hidden');
+            })
         }
 
         this.DOM.canvas.addEventListener('touchstart', this.onTouchStart.bind(this), false);
         // document.addEventListener('touchend', this.onTouchEnd.bind(this), false);
 
         window.addEventListener('touchmove', this.onMouseMove.bind(this), 250, true);
-
-        this.DOM.canvas.addEventListener("mouseout", () => {
-            if (this.app.state.about.isOpen) {
-                this.DOM.cursor.cross.style.display = "inline-block";
-                this.DOM.cursor.pointer.style.display = "none";
-            } else {
-                this.DOM.cursor.cross.style.display = "";
-                this.DOM.cursor.pointer.style.display = "";
-            }
-        })
         document.addEventListener("mouseout", (e) => {
             if (e.clientY <= 0 || e.clientX <= 0 ||
                 (e.clientX >= window.innerWidth || e.clientY >= window.innerHeight)) {
@@ -83,34 +99,75 @@ class CursorManager {
             }
         });
 
-
-        // wheel
         window.addEventListener("wheel", this.onScroll.bind(this), 125);
+        document.querySelectorAll('button').forEach(b => {
+            b.addEventListener('mouseenter', () => {
+                this.state.cursor.guiHover = true;
+            })
+            b.addEventListener('mouseout', () => {
+                this.state.cursor.guiHover = false;
+            })
+        })
     }
 
-    scrollToNextProject() {
+    validateScroll(event) {
+        if (this.app.state.about.isOpen)
+            return false;
+        const normalized = normalizeWheel(event);
+        let realScroll = Math.abs(normalized.pixelY) > 25;
+        return { success: realScroll, y: normalized.pixelY };
+    }
+
+    initButtons() {
+        this.DOM.buttons.back.forEach(b => {
+            b.addEventListener('mouseup', () => {
+                this.focusOn(false);
+            })
+        })
+
+        this.DOM.buttons.about.onmouseup = () => {
+            openCloseAbout();
+            this.threeManager.resizeCanvas();
+        }
+        this.DOM.buttons.contact.onmouseup = () => {
+            if (this.app.state.menu.isOpen) {
+                openCloseAbout("contact");
+                this.threeManager.resizeCanvas();
+            }
+        }
+        this.DOM.buttons.volume.addEventListener("mousedown", function (event) {
+            if (this.children[0].innerHTML === "muted") {
+                this.children[0].innerHTML = "mute";
+                this.app.state.focus.media.material.map.image.volume = "1";
+            } else {
+                this.children[0].innerHTML = "muted";
+                this.app.state.focus.media.material.map.image.volume = "0";
+            }
+        });
+    }
+
+    scrollToNextProject(direction) {
         let index = this.threeManager.state.projects.children.indexOf(this.app.state.focus.project);
-        index = (index + this.app.state.cursor.direction) % (this.threeManager.state.projects.children.length);
+        index = (index + direction) % (this.threeManager.state.projects.children.length);
         index = index < 0 ? (this.threeManager.state.projects.children.length - 1) : index;
         this.focusOn(this.threeManager.state.projects.children[index].children[0], 1000);
         this.DOM.projectLength.innerHTML = this.app.state.focus.project.userData.projectLength;
-        this.DOM.order.innerHTML = this.app.state.focus.project.userData.order + 1;
-        this.DOM.subTitle.children[0].innerHTML = this.app.state.focus.project.name;
+        this.DOM.mediaIndex.innerHTML = this.app.state.focus.project.userData.order + 1;
+        this.DOM.projectTitle.innerHTML = this.app.state.focus.project.name;
     }
 
     onScroll(e) {
-
-        this.state.scroll = this.scrollValidator.detect(e);
-        if (!this.state.scroll.success || Math.abs(this.state.scroll.y) <= 1.25) return;
+        this.state.scroll = this.validateScroll(e);
+        if (!this.state.scroll.success) return;
 
         if (this.state.scroll.y > 0) {
-            this.app.state.cursor.direction = 1;
+            this.state.scroll.direction = 1;
         } else {
-            this.app.state.cursor.direction = -1;
+            this.state.scroll.direction = -1;
         }
 
         if (!this.app.state.menu.isOpen) {
-            if (!this.app.state.isTweening) {
+            if (!this.app.state.tween.isTweening) {
                 this.scrollToNextProject(this.state.scroll.direction);
             }
         } else {
@@ -120,59 +177,71 @@ class CursorManager {
 
     }
     hoverMenu() {
+        if (this.DOM.cursor.container.classList.contains('hidden')) {
+            this.DOM.cursor.container.classList.remove('hidden');
+        }
+
         this.state.cursor.array = this.getCursorPosition();
         if (!this.state.cursor.array) return;
         this.state.cursor.vector.fromArray(this.state.cursor.array);
         this.state.intersects = this.intersectionManager.getIntersects(this.threeManager.camera, this.state.cursor.vector, this.app.state.objects);
         if (this.state.intersects.length > 0) {
+
+
             this.state.intersectedMedia = this.state.intersects[0].object;
             this.state.intersectedProject = this.state.intersects[0].object.parent;
 
-            if (this.DOM.subTitle.classList.contains('hidden')) {
-                this.DOM.subTitle.classList.remove('hidden')
-                this.DOM.subTitle.children[0].innerHTML = this.state.intersectedProject.name;
-            }
-            if (this.DOM.subTitle.children[0].innerHTML != this.state.intersectedProject.name) {
-                this.DOM.subTitle.children[0].innerHTML = this.state.intersectedProject.name
+            this.DOM.projectTitle.classList.remove('hidden');
+
+            if (this.DOM.projectTitle.innerHTML != this.state.intersectedProject.name) {
+                this.DOM.projectTitle.innerHTML = this.state.intersectedProject.name
             }
         } else {
-            if (!this.DOM.subTitle.classList.contains('hidden')) {
-                this.DOM.subTitle.classList.add('hidden')
+            if (!this.DOM.projectTitle.classList.contains('hidden')) {
+                this.DOM.projectTitle.classList.add('hidden')
             }
         }
     }
 
     hoverProject() {
+        if (this.DOM.cursor.container.classList.contains('hidden')) {
+            this.DOM.cursor.container.classList.remove('hidden');
+        }
+
+        if (this.state.cursor.guiHover) {
+            this.DOM.cursor.container.classList.remove('cross-on');
+            this.DOM.cursor.container.classList.remove('pointer-left');
+            this.DOM.cursor.container.classList.remove('pointer-right');
+            return;
+        }
+
         this.state.cursor.array = this.getCursorPosition();
         if (!this.state.cursor.array) return;
         this.state.cursor.vector.fromArray(this.state.cursor.array);
         this.state.intersects = this.intersectionManager.getIntersects(this.threeManager.camera, this.state.cursor.vector, this.app.state.objects);
         if (this.state.intersects.length > 0) {
-            this.DOM.cursor.pointer.classList.remove('hidden');
-            this.DOM.cursor.cross.classList.add('hidden');
-
+            this.DOM.cursor.container.classList.remove('cross-on');
             this.state.intersectedMedia = this.state.intersects[0].object;
             this.state.intersectedProject = this.state.intersects[0].object.parent;
-            // console.log(this.app.state.cursor.isScrolling);
             if (!this.app.state.cursor.isTweening) {
                 if (this.state.intersectedMedia.userData &&
                     this.state.intersectedMedia.userData.src != this.app.state.focus.media.userData.src) {
 
-                    if (this.DOM.cursor.hover.classList.contains('hidden')) {
-                        this.DOM.cursor.normal.classList.remove('hidden');
-                        this.DOM.cursor.pointer.classList.remove('hidden');
-                    }
-
 
                     if (this.state.intersectedProject.name === this.app.state.focus.media.parent.name) return;
-                    this.DOM.subTitle.children[0].innerHTML = this.state.intersectedProject.name;
+                    this.DOM.projectTitle.innerHTML = this.state.intersectedProject.name;
                 } else {
-                    if (this.DOM.cursor.normal.classList.contains('hidden')) {
-                        this.DOM.cursor.normal.classList.remove('hidden');
+
+                    if (this.state.intersectedProject.userData.medias.length == 1) {
+                        if (this.DOM.cursor.container.classList.contains('pointer-right')) {
+                            this.DOM.cursor.container.classList.remove('pointer-right')
+                        }
+                        if (this.DOM.cursor.container.classList.contains('pointer-left')) {
+                            this.DOM.cursor.container.classList.remove('pointer-left')
+                        }
+                        return;
+
                     }
-
-                    // console.log(this.state.cursor.now.x, (window.innerWidth / 2));
-
                     if (this.state.cursor.now.x > (window.innerWidth / 2)) {
                         this.DOM.cursor.container.classList.add('pointer-left');
                         this.DOM.cursor.container.classList.remove('pointer-right');
@@ -182,7 +251,7 @@ class CursorManager {
                     }
 
                     if (this.state.intersectedProject.name === this.app.state.focus.media.parent.name) return;
-                    this.DOM.subTitle.children[0].innerHTML = this.state.intersectedProject.name;
+                    this.DOM.projectTitle.innerHTML = this.state.intersectedProject.name;
                 }
             }
 
@@ -191,11 +260,10 @@ class CursorManager {
 
             this.DOM.cursor.container.classList.remove('pointer-left');
             this.DOM.cursor.container.classList.remove('pointer-right');
-            this.DOM.cursor.cross.classList.remove('hidden');
-            this.DOM.cursor.pointer.classList.add('hidden');
+            this.DOM.cursor.container.classList.add('cross-on');
 
-            if (this.DOM.subTitle.children[0].innerHTML != this.app.state.focus.project.name) {
-                this.DOM.subTitle.children[0].innerHTML = this.app.state.focus.project.name
+            if (this.DOM.projectTitle.innerHTML != this.app.state.focus.project.name) {
+                this.DOM.projectTitle.innerHTML = this.app.state.focus.project.name
             }
 
 
@@ -207,7 +275,7 @@ class CursorManager {
             clearTimeout(this.state.focusBack);
             this.state.focusBack = false;
         }
-        this.app.state.isDragging = true;
+        this.state.cursor.isDragging = true;
 
         this.vectors.down.fromArray(this.getCursorPosition());
         this.app.state.mouseDown = performance.now();
@@ -218,6 +286,7 @@ class CursorManager {
     }
     onMouseMove(event) {
         // let cursor = {};
+
         if (!!event.touches) {
             this.state.cursor.temp.x = event.touches[0].clientX;
             this.state.cursor.temp.y = event.touches[0].clientY;
@@ -225,6 +294,7 @@ class CursorManager {
             this.state.cursor.temp.x = event.clientX;
             this.state.cursor.temp.y = event.clientY;
         }
+
 
 
         this.DOM.cursor.container.style.left = this.state.cursor.temp.x;
@@ -236,18 +306,17 @@ class CursorManager {
         }
 
         if (this.app.state.about.isOpen) {
-            this.DOM.cursor.cross.style.display = "inline-block";
-            this.DOM.cursor.pointer.style.display = "none";
+            this.DOM.cursor.container.classList.add('cross-one');
         } else {
-            this.DOM.cursor.cross.style.display = "";
-            this.DOM.cursor.pointer.style.display = "";
             if (!this.app.state.menu.isOpen) {
                 this.hoverProject();
+            } else {
+                this.DOM.cursor.container.classList.remove('cross-one');
             }
         }
 
 
-        if (this.app.state.isDragging && this.state.cursor.temp.x && this.app.state.menu.isOpen) {
+        if (this.state.cursor.isDragging && this.state.cursor.temp.x && this.app.state.menu.isOpen) {
             this.dragMenu(this.state.cursor.temp);
         }
 
@@ -258,26 +327,35 @@ class CursorManager {
         this.app.state.cursor.y = this.state.cursor.temp.y;
 
 
-        if (this.app.state.about.isOpen /* && !this.state.trans.about */) {
+        if (this.app.state.about.isOpen) {
             this.DOM.buttons.about.children[0].style.background = "white";
             this.DOM.buttons.about.children[0].style.color = "black";
         }
     }
 
     onMouseUp(event) {
-        this.app.state.isDragging = false;
+        this.state.cursor.isDragging = false;
 
         this.vectors.up.fromArray(this.getCursorPosition());
 
+
+        clearTimeout(this.state.hideTitle);
+
+
+
+        if (this.state.cursor.temp.x < window.innerWidth / 2) {
+            this.state.cursor.direction = -1;
+        } else {
+            this.state.cursor.direction = 1;
+        }
+
         if (!this.app.state.about.isOpen && !this.state.trans.about) {
-            let now = performance.now();
-            if (Math.abs(this.app.state.mouseDown - now) < 200) {
+            if (Math.abs(this.app.state.mouseDown - performance.now()) < 200) {
                 this.handleClick();
             }
         }
 
         this.app.state.mouseDown = false;
-        // document.removeEventListener('mouseup', this.onMouseUp.bind(this), false);
     }
     onTouchStart(event) {
         // this.state.cursor.now.x = false;
@@ -331,7 +409,7 @@ class CursorManager {
                             delta: 675
                         });
     
-                        this.DOM.projectTitle.children[0].innerHTML = newProject.name;
+                        this.DOM.projectTitle.innerHTML = newProject.name;
                     }
                 }
             }
@@ -367,28 +445,26 @@ class CursorManager {
         } else {
             if (!this.app.state.menu.isOpen) {
                 if (Math.abs(delta) > 75) {
-                    let count = 0;
-                    for (let project of this.threeManager.state.projects.children) {
-                        if (project.name === this.app.state.focus.project.name) {
-                            break
-                        }
-                        count++;
-                    }
-                    let index = delta < 0 ? (count + 1) % this.threeManager.state.projects.children.length :
-                        (count - 1);
-                    index = index < 0 ? this.threeManager.state.projects.children.length - 1 :
-                        index;
-                    let newProject = this.threeManager.state.projects.children[index];
-                    this.tweenManager.tween(newProject);
+                    console.log("THIS!!");
+                    this.DOM.projectTitle.classList.remove('hidden');
+                    let projects = this.threeManager.state.projects.children;
 
-                    this.app.state.focus.project = this.threeManager.state.projects.children[index];
-                    this.app.state.focus.media = this.app.state.focus.media.children[0];
-                    this.DOM.projectTitle.children[0].innerHTML = newProject.name;
+                    let index = projects.indexOf(p => p.name === this.app.state.focus.project.name);
+                    index = delta < 0 ? index + 1 : index - 1;
+                    index = index % projects.length;
+                    if (index < 0) index = projects.length - 1;
+
+                    let newProject = projects[index];
+                    this.tweenManager.tween(newProject);
+                    this.app.state.focus.project = newProject;
+                    this.app.state.focus.media = newProject.children[0];
+
+                    this.DOM.projectTitle.innerHTML = newProject.name;
                 }
             }
         }
         this.app.state.mouseDown = false;
-        document.removeEventListener('touchend', onMouseEnd, false);
+        // document.removeEventListener('touchend', onMouseEnd, false);
     }
     onDoubleClick(event) {
         this.vectors.doubleClick.fromArray(this.getCursorPosition());
@@ -408,7 +484,11 @@ class CursorManager {
 
 
     dragMenu(cursor) {
-        this.DOM.projectTitle.style.display = "none";
+        // this.DOM.projectTitle.style.display = "none";
+        this.state.hideTitle = setTimeout(() => {
+            this.DOM.projectTitle.classList.add('hidden');
+        }, 250);
+
 
         if (this.app.state.orientation === "landscape") {
             this.threeManager.canvas.style.cursor = "";
@@ -416,35 +496,30 @@ class CursorManager {
             this.threeManager.state.projects.rotation.y -= this.state.cursor.delta.x / 500;
         } else {
 
-            this.DOM.projectTitle.style.display = "none";
+            // this.DOM.projectTitle.style.display = "none";
             this.threeManager.canvas.style.cursor = "";
             this.state.cursor.delta.y = this.app.state.cursor.y - cursor.y;
             this.threeManager.state.projects.rotation.y += this.state.cursor.delta.y / 500;
         }
 
-        this.app.state.isDragging = true;
+        this.state.cursor.isDragging = true;
 
     }
 
-    hideTitle() {
-        this.DOM.cursor.pointer.children[0].style.transform = "";
-        this.DOM.buttons.contact.style.filter = "";
-        this.DOM.cursor.pointer.style.display = "";
-        this.DOM.cursor.cross.style.display = "";
-
-        if (this.app.state.menu.isOpen) {
-            this.state.lastHover = false;
-            this.DOM.projectTitle.style.display = "none";
-            this.threeManager.canvas.style.cursor = "";
-            /* for (let hideTitle of g.hideTitle) {
-                clearTimeout(hideTitle);
-            } */
-        }
-        if (this.app.state.about.isOpen) {
-            document.querySelector("#aboutButton").children[0].style.background = "";
-            document.querySelector("#aboutButton").children[0].style.color = "";
-        }
-    }
+    /*     hideTitle() {
+            this.DOM.buttons.contact.style.filter = "";
+    
+    
+            if (this.app.state.menu.isOpen) {
+                this.state.lastHover = false;
+                this.DOM.projectTitle.style.display = "none";
+                this.threeManager.canvas.style.cursor = "";
+            }
+            if (this.app.state.about.isOpen) {
+                document.querySelector("#aboutButton").children[0].style.background = "";
+                document.querySelector("#aboutButton").children[0].style.color = "";
+            }
+        } */
     async checkPNG(object) {
         if (object.userData.type === "image" && object.material.map.image.src.indexOf("png") != -1) {
             let texData;
@@ -485,11 +560,11 @@ class CursorManager {
     }
 
     projectMode() {
-        // update media counter
-        if (!this.app.state.isMobile) {
-            this.DOM.picNumber.classList.remove('hidden');
-        }
-        this.DOM.order.innerHTML = this.app.state.focus.project.userData.order + 1;
+        this.DOM.UIContainer.classList.add('project-mode');
+        this.DOM.UIContainer.classList.remove('menu-mode');
+        this.DOM.UIContainer.classList.remove('info-mode');
+
+        this.DOM.mediaIndex.innerHTML = this.app.state.focus.project.userData.order + 1;
         this.DOM.projectLength.innerHTML = this.app.state.focus.project.userData.projectLength;
 
         // video part"v
@@ -501,13 +576,30 @@ class CursorManager {
         }
     }
 
+    loadVideos(project) {
+        // console.log(this.app.state.textures);
+        Object.values(this.app.state.textures.videos).map((v) => {
+            v.dispose();
+            return null;
+        })
+        this.app.state.textures.videos = {};
+        project.userData.medias.forEach(m => {
+            if (m.type !== 'video') return;
+            let url = `projects/${project.userData.directory}/${this.mediaManager.capitalize(m.type)}/${this.app.state.opt}/${m.src}`;
+            this.mediaManager.createVideoTexture(url);
+            console.log(this.app.state.textures.videos);
+        })
+    }
+
     focusOn(media, duration = false) {
         let project = media ? media.parent : false;
-        console.log(project);
+        ////console.log(project);
         this.tweenManager.tweenCamera(project, duration);
         this.app.state.focus.project = project;
         this.app.state.focus.media = media;
+        this.DOM.projectTitle.classList.remove('hidden');
 
+        // this.loadVideos(project);
     }
 
     projectOpen() {
@@ -527,16 +619,18 @@ class CursorManager {
                 this.focusOn(media);
             } else {
                 if (media.parent.userData.medias.length > 1) {
-                    this.mediaManager.changeMedia(this.app.state.focus.project);
+                    this.mediaManager.changeMedia(this.app.state.focus.project, this.state.cursor.direction);
                 }
             }
             if (this.app.state.menu.isOpen) {
                 this.app.state.menu.isOpen = false;
-                this.DOM.picNumber.classList.remove('hidden');
+                this.DOM.UIContainer.classList.add('project-mode');
+                this.DOM.UIContainer.classList.remove('menu-mode');
+                this.DOM.UIContainer.classList.remove('info-mode');
             }
 
             this.DOM.projectLength.innerHTML = media.parent.userData.projectLength;
-            this.DOM.order.innerHTML = media.parent.userData.order + 1;
+            this.DOM.mediaIndex.innerHTML = media.parent.userData.order + 1;
 
         } else {
             if (!!this.state.lastHover) {
@@ -544,11 +638,11 @@ class CursorManager {
             } else if (!this.app.state.menu.isOpen) {
                 // back to menu
                 this.app.state.menu.isOpen = true;
-                this.DOM.picNumber.classList.add('hidden');
+                this.DOM.cursor.container.classList.remove('cross-on');
 
-                this.DOM.cursor.cross.classList.add('hidden');
-                this.DOM.cursor.pointer.classList.remove('hidden');
-
+                this.DOM.UIContainer.classList.add('menu-mode');
+                this.DOM.UIContainer.classList.remove('project-mode');
+                this.DOM.UIContainer.classList.remove('info-mode');
 
 
                 this.focusOn(false);
@@ -559,8 +653,8 @@ class CursorManager {
     }
 
     update(appState) {
-
         if (!appState.about.isOpen &&
+            !appState.tween.isTweening &&
             appState.menu.isOpen &&
             !appState.guiHover &&
             appState.cursor.x &&

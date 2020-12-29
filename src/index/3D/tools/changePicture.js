@@ -47,8 +47,8 @@ export default function (nextPic) {
             eId("order").innerHTML = nextIndex + 1;
             nextPic.parent.userData.order = nextIndex;
             let thisProject = g.sceneObject.projects.find(p => { return p.title === g.focusedProject.name });
-            console.log(thisProject);
-            // console.log(gof)
+            ////console.log(thisProject);
+            // ////console.log(gof)
             let nextMedia = thisProject.medias[nextIndex];
             nextPic.userData.type = nextMedia.type;
             nextPic.name = nextMedia.src;
@@ -79,7 +79,7 @@ export default function (nextPic) {
                 }
                 this.app.state.focus.media.userData.type === "video";
                 let texture;
-                if (!eId(nextMedia.name)) {
+                if (!src in this.app.state.textures["videos"]) {
                     texture = createVideoTexture(g.focusedProject.name, nextMedia.name, true);
                     this.app.state.textures["videos"][nextMedia.name] = texture;
                     this.app.state.focus.media.material.map = texture;

@@ -17,121 +17,36 @@
     <meta property="og:type" content="portfolio" />
     <meta property="og:description" content="Multi Media Design and Production Studio" />
     <title>Post Neon</title>
-
-    <style>
-        * {
-            cursor: none !important;
-            /*cursor: url("data:image/svg+xml,%3Csvg width='128px' height='128px' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 166.91 67.32'%3E%3Cdefs%3E%3Cstyle%3E.cls-1%7Bfill:white;%7D%3C/style%3E%3C/defs%3E%3Ctitle%3Earrow5_1%3C/title%3E%3Cg id='Layer_2' data-name='Layer 2'%3E%3Cg id='Layer_1-2' data-name='Layer 1'%3E%3Cpath class='cls-1' d='M166.91,32.63l-35.44-.11v34.8h-1.16V32.53H0V31.4H101.24c9.49-.05,26.16-1.41,26.1-17.52l3,.09V0h1.34s0,9.33,0,14c.92,11.2,10.85,15.46,23.52,16.65,4.53.43,7.49.72,11.75.76ZM130.31,14'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");*/
-            transition: background 0.5s, color 0.5s, filter 0.5s;
-        }
-
-        #cursor {
-            /*display:    none;*/
-            position: absolute;
-            z-index: 20;
-            top: 0px;
-            left: 0px;
-            /*width: 150px;*/
-            pointer-events: none;
-            opacity: 0;
-            mix-blend-mode: exclusion;
-            transition: transform 0.25s;
-
-        }
-
-        #cursor.pointer-left #pointer>div {
-            transform: rotateZ(0deg);
-        }
-
-        #cursor.pointer-right #pointer>div {
-            transform: rotateZ(-180deg);
-        }
-
-        #cursor.cross-on #cross {
-            display: inline-block;
-        }
-
-        #cursor.cross-on #pointer {
-            display: none;
-        }
-
-        #cursor.pointer-on #pointer {
-            display: inline-block;
-        }
-
-        #cursor.pointer-on #cross {
-            display: none;
-        }
-
-        #cross {
-            width: 200px;
-            transform: translate(-50%, -50%) rotateZ(-45deg);
-        }
-
-        #pointer {
-            width: 200px;
-            display: inline-block;
-            transform: translate(-100%, -40%);
-            transform-origin: right center;
-        }
-
-        #pointer>div {
-            transform-origin: right center;
-            transform: rotateZ(-150deg);
-            width: 200px;
-        }
-
-        #hover {
-            display: none;
-        }
-
-        #normal {
-            display: inline-block;
-        }
-
-        #picNumber {
-            position: absolute;
-            right: calc(100vw - 2.5vh);
-            bottom: 0px;
-            z-index: 5;
-
-            transform: translateX(100%);
-            margin: 1.25vh;
-            margin-bottom: 0px !important;
-            pointer-events: none !important;
-
-            text-align: center;
-
-            font-family: serifbabe;
-            white-space: nowrap;
-            user-select: none;
-
-        }
-
-        #volume {
-            bottom: 0px;
-            right: 0px;
-            margin-bottom: 0px !important;
-        }
-
-        .cssMedia {
-            overflow: hidden;
-        }
-
-        .cssMedia>* {
-            width: 100%;
-            height: 100%;
-            transform: scale(0.01);
-        }
-
-        .hidden {
-            display: none !important;
-        }
-    </style>
     <link id="dynamic-favicon" rel="icon" type="image/png" href="http://www.post-neon.com/favicon.png">
 </head>
 
 <body>
+    <div id="videos"></div>
+    <div class="UI-container menu-mode">
+        <div class="top-buttons">
+            <div class="menu-buttons">
+                <button class="gui middle hover about-button">about</button>
+                <button class="gui middle hover contact-button">contact</button>
+            </div>
+            <div class="project-buttons">
+                <button class="gui middle hover info-button">info</button>
+                <button class="gui middle hover back-button">menu</button>
+            </div>
+            <div class="info-buttons">
+                <button class="gui middle hover back-button">back</button>
+            </div>
+
+        </div>
+
+
+        <button class="gui small hover volume-button">muted</button>
+        <button class="gui big project-title"></button>
+        <div class="gui small index-container">
+            <div>
+                <a class="media-index"></a>/<a class="project-length"></a>
+            </div>
+        </div>
+    </div>
     <div id="scroll">
         <img src="css/cursor_LR.svg" id="cursor_LR" alt="">
         <div id="about">
@@ -155,82 +70,31 @@
                 </div>
             </div>
         </div>
-        <div id="videos"></div>
-        <div id="menu">
-        </div>
-        <div id="gui">
-            <div id="projectTag" class="gui small">
-                <div>VR</div>
-                <div>installation</div>
-                <div>big data</div>
-            </div>
-            <div id="projectInfo" class="gui small"><a>info</a></div>
-        </div>
-        <div id="topGUI">
-            <div id="aboutButton" class="gui middle hover"><a>about</a></div>
-            <div id="contactButton" class="gui middle hover"><a class="">contact</a></div>
-        </div>
+
         <div id="threejs">
-            <div id="picNumber" class="gui small hidden">
-                <div>
-                    <a id="order"></a>/<a id="projectLength"></a>
-                </div>
-            </div>
-            <div id="volume" class="gui small hover hidden">
-                <div>muted</div>
-            </div>
 
-            <div id="subTitle" class="gui big"><a></a></div>
-            <div id="projectTitle" class="gui big"><a></a></div>
-
-            <div id="menuHover" class="gui big"><a></a></div>
         </div>
-        <canvas id="uvMap"></canvas>
     </div>
-    <div id="cursor">
-        <div id="pointer">
-            <div id="normal">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 166.91 67.32">
-                    <defs>
-                        <style>
-                            .cls-1 {
-                                fill: white;
-                            }
-                        </style>
-                    </defs>
-                    <title>arrow5_1</title>
-                    <g id="Layer_2" data-name="Layer 2">
-                        <g id="Layer_1-2" data-name="Layer 1">
-                            <path class="cls-1"
-                                d="M166.91,32.63l-35.44-.11v34.8h-1.16V32.53H0V31.4H101.24c9.49-.05,26.16-1.41,26.1-17.52l3,.09V0h1.34s0,9.33,0,14c.92,11.2,10.85,15.46,23.52,16.65,4.53.43,7.49.72,11.75.76ZM130.31,14" />
-                        </g>
+    <div class="cursor">
+        <div class="pointer">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 166.91 67.32">
+                <defs>
+                    <style>
+                        .cls-1 {
+                            fill: white;
+                        }
+                    </style>
+                </defs>
+                <title>arrow5_1</title>
+                <g id="Layer_2" data-name="Layer 2">
+                    <g id="Layer_1-2" data-name="Layer 1">
+                        <path class="cls-1"
+                            d="M166.91,32.63l-35.44-.11v34.8h-1.16V32.53H0V31.4H101.24c9.49-.05,26.16-1.41,26.1-17.52l3,.09V0h1.34s0,9.33,0,14c.92,11.2,10.85,15.46,23.52,16.65,4.53.43,7.49.72,11.75.76ZM130.31,14" />
                     </g>
-                </svg>
-
-
-            </div>
-            <div id="hover">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 166.91 67.32">
-                    <defs>
-                        <style>
-                            .cls-2 {
-                                stroke: white;
-                                stroke-width: 1px;
-                            }
-                        </style>
-                    </defs>
-                    <title>arrow5_1</title>
-
-                    <g id="Layer_2" data-name="Layer 2">
-                        <g id="Layer_1-2" data-name="Layer 1">
-                            <path class="cls-1"
-                                d="M166.91,32.63l-35.44-.11v34.8h-1.16V32.53H0V31.4H101.24c9.49-.05,26.16-1.41,26.1-17.52l3,.09V0h1.34s0,9.33,0,14c.92,11.2,10.85,15.46,23.52,16.65,4.53.43,7.49.72,11.75.76ZM130.31,14" />
-                        </g>
-                    </g>
-                </svg>
-            </div>
+                </g>
+            </svg>
         </div>
-        <div id="cross" class="hidden">
+        <div class="cross" class="hidden">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 166.91 166.92">
                 <title>cross8</title>
                 <g id="Layer_2" data-name="Layer 2">

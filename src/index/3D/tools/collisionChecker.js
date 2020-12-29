@@ -115,7 +115,7 @@ export default function (thisPic) {
         if (collisions.length > 1) {
             for (let collision of collisions) {
                 if (bool) {
-                    ////console.log(collision.project +" "+ collider.parent.name +" && "+ collision.name +" "+ collider.name);
+                    ////////console.log(collision.project +" "+ collider.parent.name +" && "+ collision.name +" "+ collider.name);
                 }
                 if (collision.project === collider.parent.id && collision.id === collider.id) {
                     return index;
@@ -146,25 +146,25 @@ export default function (thisPic) {
         let colExists = findIndex(collisions, collider);
 
         if (colExists == -1) {
-            //////console.log("NEW COLLISION");
-            //////console.log(collisionData);
+            //////////console.log("NEW COLLISION");
+            //////////console.log(collisionData);
             collisions.push(collisionData);
             pic.children[0].material.color.set(new THREE.Color("#ff0f0f"));
         }
     }
     //remove from global variable containing all collisions and unhighlight collided frustums
     function removeCollision(pic, collider) {
-        ////console.log(pic);
-        ////console.log(collider);
+        ////////console.log(pic);
+        ////////console.log(collider);
 
         let collisions = pic.userData.collisions;
-        //////console.log(collisions);
+        //////////console.log(collisions);
 
 
         let index = 0;
         for (let collision of collisions) {
             let index = findIndex(collision, collider, true);
-            ////console.log(index);
+            ////////console.log(index);
             collisions.splice(index);
         }
         if (collisions.length == 0) {
@@ -185,7 +185,7 @@ export default function (thisPic) {
         let collisions = thisPic.userData.collisions;
         if (collisions) {
             collisions = thisPic.userData.collisions.slice(0);
-            //////console.log(collisions);
+            //////////console.log(collisions);
             for (let colPic of colPics) {
                 addCollision(thisPic, colPic);
                 addCollision(colPic, thisPic);
@@ -195,9 +195,9 @@ export default function (thisPic) {
             if (collisions.length) {
                 for (let collision of collisions) {
                     let otherPic = this.threeManager.state.projects.getObjectById(collision.project).getObjectById(collision.id);
-                    ////console.log(1);
+                    ////////console.log(1);
                     removeCollision(thisPic, otherPic);
-                    ////console.log(2);
+                    ////////console.log(2);
 
                     removeCollision(otherPic, thisPic);
                 }
