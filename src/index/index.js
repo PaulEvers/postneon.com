@@ -1,11 +1,10 @@
 
 import ThreeManager from "./3D/ThreeManager"
+import TweenManager from './TweenManager';
 import InteractionManager from "./3D/InteractionManager"
 import MenuManager from "./MenuManager"
 import * as THREE from "three"
-////console.log("HALLO");
 window.THREE = THREE;
-////console.log(THREE);
 
 class Application {
     constructor() {
@@ -46,29 +45,19 @@ class Application {
             opt: null,
             objects: []
         }
-        this.DOM = {
-            projectTitle: document.querySelector("#projectTitle"),
-            contactButton: document.querySelector("#contactButton"),
-            aboutButton: document.querySelector("#aboutButton"),
-            projectTitle: document.querySelector("#projectTitle"),
-            threejs: document.querySelector("#threejs"),
-            indexContainer: document.querySelector("#indexContainer"),
-            order: document.querySelector(".media-index"),
-            projectLength: document.querySelector("#projectLength")
-        }
-        // initialize 
         this.init();
 
     }
     async init() {
         this.faviconAnimator = new FaviconAnimator();
-
         let formatOptimizer = new FormatOptimizer();
 
         this.state.isMobile = formatOptimizer.isMobile;
         this.state.opt = this.state.isMobile ? 'mobile' : 'desktop';
+        console.log("STATE MOBILE IS ", this.state.isMobile);
         // this.state.opt = 'mobile';
         this.threeManager = new ThreeManager({ app: this });
+        this.tweenManager = new TweenManager({ app: this, threeManager: this.threeManager });
         this.interactionManager = new InteractionManager({ app: this, threeManager: this.threeManager });
         this.menuManager = new MenuManager({ app: this, threeManager: this.threeManager });
         this.threeManager.initLogos().then(() => {
@@ -85,17 +74,19 @@ class Application {
 
         this.threeManager.render();
         this.state.now = performance.now();
-        if (!this.threeManager.tweenManager.update(this.state.now)) {
-            if (this.state.now - this.state.textures.timeStap > (1000 / 30)) {
-                for (let key in this.state.textures.update) {
-                    // console.log(this.state.textures.update[key].image)
-                    if (this.state.textures.update[key].image.readyState >=
-                        this.state.textures.update[key].image.HAVE_CURRENT_DATA) {
-                        this.state.textures.update[key].needsUpdate = true;
-                    }
+        this.tweenManager.update(this.state.now);
+
+        if (this.state.now - this.state.textures.timeStap > (1000 / 30)) {
+            for (let key in this.state.textures.update) {
+                if (this.state.textures.update[key].image.readyState >=
+                    this.state.textures.update[key].image.HAVE_CURRENT_DATA) {
+                    this.state.textures.update[key].needsUpdate = true;
                 }
-                this.state.textures.timeStap = this.state.now;
             }
+            this.state.textures.timeStap = this.state.now;
+        }
+
+        if (!this.tweenManager.tweens.tweenCamera.state.isTweening) {
             if (this.state.now - this.state.interaction.timeStap > (1000 / 10)) {
                 this.interactionManager.update(this.state);
                 this.state.interaction.timeStap = this.state.now;
@@ -131,10 +122,9 @@ class FaviconAnimator {
 class FormatOptimizer {
     constructor() {
         this.hasTouch = this.checkTouch();
-        this.isMobile = navigator.userAgent.match(/Mobi/) ||
+        this.isMobile = (!!navigator.userAgent.match(/Mobi/)) ||
             (navigator.userAgent.match(/Mac/) && this.hasTouch);
         this.optimizeDOM();
-        return this.isMobile;
     }
     checkTouch() {
         try {
@@ -146,8 +136,9 @@ class FormatOptimizer {
     }
     optimizeDOM() {
         if (this.isMobile) {
-            document.querySelector("#topGUI").style.position = "fixed";
-            document.querySelector("#cursor").style.display = "none";
+            // document.querySelector("#topGUI").style.position = "fixed";
+            document.querySelector(".cursor").style.display = "none";
+            document.body.classList.add('mobile');
 
         } else {
             document.querySelector("#scroll").setAttribute("class", "noMobile");

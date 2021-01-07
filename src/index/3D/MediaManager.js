@@ -1,12 +1,9 @@
-import { Texture } from "../three.module";
-import collisionChecker from "./tools/collisionChecker"
 import createVideo from "./tools/createVideo"
 
 export default class MediaManager {
     constructor({ threeManager, app }) {
         this.app = app;
         this.threeManager = threeManager;
-        this.tweenManager = this.threeManager.tweenManager;
         this.DOM = {
             videos: document.querySelector('#videos'),
             buttons: {
@@ -27,8 +24,6 @@ export default class MediaManager {
                     return new THREE.Texture({
                         minFilter: THREE.LinearFilter,
                         magFilter: THREE.LinearFilter,
-                        // generateMipMaps: true,
-
                     })
                 },
                 video: (video) => {
@@ -37,34 +32,50 @@ export default class MediaManager {
                             minFilter: THREE.LinearFilter,
                             magFilter: THREE.LinearFilter,
                             generateMipMaps: false,
-                            // encoding: THREE.sRGBEncoding,
-                            // map: video
                         })
                 }
             },
-            loader: new THREE.TextureLoader()
+            loader: new THREE.TextureLoader(),
         }
+        this.initVideoTester();
+        console.log('VIDEO TESTER', this.videoTester);
     }
-
-    async isReady(video) {
+    initVideoTester() {
         let canvas = document.createElement('canvas');
         canvas.width = 1;
         canvas.height = 1;
         let ctx = canvas.getContext("2d");
+        this.videoTester = ctx;
+    }
+
+    async isReady(video) {
+        let p = null;
 
         return new Promise((resolve) => {
             const pingVideo = (video) => {
-                ctx.drawImage(video, 0, 0, 1, 1);
-                var p = ctx.getImageData(0, 0, 1, 1).data;
-                console.log(p.reduce((a, b) => a + b));
+                this.videoTester.drawImage(video, 0, 0, 1, 1);
+                p = this.videoTester.getImageData(0, 0, 1, 1).data;
                 if (p.reduce((a, b) => a + b) > 0.5)
                     resolve()
                 else
                     requestAnimationFrame(() => { pingVideo(video) });
             }
-            console.log('video is', video);
             pingVideo(video);
         })
+    }
+
+    pauseIfVideo(media, duration) {
+        if (media.userData.type !== 'video') return;
+        setTimeout(() => {
+            media.material.map.pause();
+        }, duration);
+    }
+
+    playIfVideo(media, duration) {
+        if (media.userData.type !== 'video') return;
+        setTimeout(() => {
+            media.material.map.play();
+        }, duration);
     }
 
     async createVideoTexture(url) {
@@ -123,26 +134,6 @@ export default class MediaManager {
         })
     }
 
-
-    changeScale(nextPic, nextMedia) {
-        let scaleNow = nextPic.scale;
-        let ratio = nextMedia.ratio;
-        let scaleNext = { x: ratio, y: 1, z: 1 };
-        let t = { t: 0 };
-        var tween = new TWEEN.Tween(scaleNow)
-            .to(scaleNext, 250)
-            .onUpdate(function () {
-                nextPic.scale.copy(scaleNow);
-                let fov = checkIfFits(nextPic);
-                if (fov != g.camera.fov) {
-                    g.camera.fov = fov;
-                    this.threeManager.renderer.render(g.scene, g.camera);
-                }
-            })
-            .onComplete(function () { })
-            .start();
-    }
-
     capitalize(str) {
         return str.charAt(0).toUpperCase() + str.slice(1);
     }
@@ -158,13 +149,12 @@ export default class MediaManager {
         media.userData = _media;
         let url = `projects/${project.userData.directory}/${this.capitalize(_media.type)}/${this.app.state.opt}/${_media.src}`;
 
-        this.tweenManager.scaleMedia(media, _media.ratio);
+        this.app.tweenManager.tweens.scaleMedia.tween(media, _media.ratio);
 
         if (_media.type === 'image') {
             let _oldTex = media.material.map;
             let tex = await this.loadTexture(url);
-            console.log(tex);
-            // _oldTex.dispose();
+            _oldTex.dispose();
             project.children[0].material.map = tex;
             project.children[0].material.needsUpdate = true;
         } else {
@@ -173,22 +163,40 @@ export default class MediaManager {
             }
             if (!this.app.state.textures["videos"][_media.src]) {
                 let texture = await this.createVideoTexture(url);
-                console.log(texture);
-
-                // await new Promise((res) => { setTimeout(() => { res() }, 500) });
-                console.log(texture)
-                this.app.state.textures["videos"][_media.src] = texture;
-                media.material.map = texture;
-                setTimeout(() => { texture.play() }, 1000);
+                texture.play()
+                setTimeout(() => {
+                    this.app.state.textures["videos"][_media.src] = texture;
+                    media.material.map = texture;
+                }, 250)
             } else {
-                let texture = this.app.state.textures.videos[_media.src];
-                this.app.state.textures.update[_media.src] = texture;
-                media.material.map = texture;
-                texture.play();
-
+                setTimeout(() => {
+                    const texture = this.app.state.textures.videos[_media.src];
+                    this.app.state.textures.update[_media.src] = texture;
+                    media.material.map = texture;
+                    texture.play();
+                }, 250);
             }
         }
 
+    }
+
+    getScreenRatio() { return window.innerWidth / window.innerHeight }
+
+    getScaleMedia(ratio) {
+        let _ratio = this.getScreenRatio();
+        if (ratio < 1 /* && ratio < _ratio */) {
+            return new THREE.Vector3(30 * ratio, 30, 1);
+        } else {
+            return new THREE.Vector3(30, 30 / ratio, 1);
+        }
+    }
+    updateScaleMedias() {
+        for (let project of this.threeManager.state.projects.children) {
+            let media = project.children[0];
+            if (!media) return;
+            console.log('media', media.userData.ratio);
+            media.scale.copy(this.getScaleMedia(media.userData.ratio));
+        }
     }
 
     async create({ _media, _project }) {
@@ -201,11 +209,13 @@ export default class MediaManager {
         media.updateMatrix();
         media.position.set(0, 0, 75);
         media.rotation.set(0, 0, (Math.PI / -2));
-        if (_media.ratio < 1) {
-            media.scale.set(30 * _media.ratio, 30, 1);
-        } else {
-            media.scale.set(30, 30 / _media.ratio, 1);
-        }
+        media.scale.copy(this.getScaleMedia(_media.ratio));
+
+        /*         if (_media.ratio < 1) {
+                    media.scale.set(30 * _media.ratio, 30, 1);
+                } else {
+                    media.scale.set(30, 30 / _media.ratio, 1);
+                } */
 
         if (_media.type === "image") {
             media.material.visible = false;

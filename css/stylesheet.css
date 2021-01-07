@@ -209,7 +209,7 @@ body {
 }
 
 .UI-container {
-    position: absolute;
+    position: fixed;
     top: 0px;
     left: 0px;
     right: 0px;
@@ -231,6 +231,10 @@ body {
 
 .UI-container.menu-mode .menu-buttons {
     display: inline-block;
+}
+
+.mobile .UI-container.menu-mode .project-title {
+    display: none !important;
 }
 
 /* project-mode */

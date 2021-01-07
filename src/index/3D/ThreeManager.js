@@ -1,7 +1,5 @@
-import checkIfFits from "./tools/checkIfFits"
 import MediaManager from "./MediaManager"
 import IntersectionManager from "./IntersectionManager"
-import TweenManager from './TweenManager';
 
 class ThreeManager {
     constructor({ app }) {
@@ -45,7 +43,6 @@ class ThreeManager {
         ////console.log(this.camera.fov, this.camera.position.z);
 
         this.loader = new THREE.TextureLoader();
-        this.tweenManager = new TweenManager({ app: app, threeManager: this });
         this.intersectionManager = new IntersectionManager();
         this.mediaManager = new MediaManager({ app: app, threeManager: this });
         this.logoManager = new LogoManager({ app: this.app, threeManager: this });
@@ -107,12 +104,6 @@ class ThreeManager {
         if (this.app.state.menuOpen) {
 
             this.camera.position.z = this.state.centerDistance;
-        } else {
-            if (this.app.state.isMobile) {
-                let fov = checkIfFits(this.app.state.focus.media);
-                this.camera.fov = fov;
-                this.camera.updateProjectionMatrix();
-            }
         }
 
         // update camera
@@ -124,6 +115,7 @@ class ThreeManager {
         if (!!this.app.state.menu.isOpen) {
             this.logoManager.chooseLogo();
         }
+        this.mediaManager.updateScaleMedias();
     }
 
     async fetchScene(url) {
@@ -185,9 +177,9 @@ class ThreeManager {
 
             let viewpoint = new THREE.Group();
             viewpoint.name = 'viewpoint';
-            viewpoint.position.set(0, 0, 40 + 73.5);
-            project.add(viewpoint);
-
+            media.add(viewpoint);
+            viewpoint.position.set(0, 0, 32.167);
+            project.attach(viewpoint);
         })
 
         this.render();
