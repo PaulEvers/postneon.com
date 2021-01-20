@@ -5,43 +5,13 @@ class CursorManager {
     constructor({ app, threeManager }) {
 
         this.app = app;
-
         this.threeManager = threeManager;
         this.intersectionManager = this.threeManager.intersectionManager;
         this.mediaManager = this.threeManager.mediaManager;
-
         this.tweenManager = app.tweenManager;
 
-        this.DOM = {
-            canvas: this.threeManager.renderer.domElement,
-            projectTitle: document.querySelector(".project-title"),
-            indexContainer: document.querySelector(".index-container"),
-            mediaIndex: document.querySelector(".media-index"),
-            projectLength: document.querySelector(".project-length"),
-            UIContainer: document.querySelector(".UI-container"),
-            cursor: {
-                cross: document.querySelector(".cross"),
-                pointer: document.querySelector(".pointer"),
-                container: document.querySelector(".cursor"),
-            },
-
-            buttons: {
-                about: document.querySelector(".about-button"),
-                contact: document.querySelector(".contact-button"),
-                volume: document.querySelector(".volume-button"),
-                back: document.querySelector(".back-button"),
-                menu: document.querySelector(".back-button"),
-                info: document.querySelector(".info-button")
-            },
-            info: {
-                big: document.querySelector(".info-container").querySelector('.big'),
-                small: document.querySelector(".info-container").querySelector('.small'),
-                container: document.querySelector(".info-container")
-            },
-            about: document.querySelector(".about-container")
-        }
-
-        this.init();
+        this.scrollManager = new ScrollManager();
+        this.clickManager = new ClickManager();
 
         this.vectors = {
             down: new THREE.Vector2(),
@@ -49,6 +19,41 @@ class CursorManager {
             doubleClick: new THREE.Vector2(),
             move: new THREE.Vector2()
         }
+
+        this.init();
+    }
+
+    DOM = {
+        canvas: this.threeManager.renderer.domElement,
+        projectTitle: document.querySelector(".project-title"),
+        indexContainer: document.querySelector(".index-container"),
+        mediaIndex: document.querySelector(".media-index"),
+        projectLength: document.querySelector(".project-length"),
+        UIContainer: document.querySelector(".UI-container"),
+        scroll: {
+            container: document.querySelector(".scroll-container"),
+            content: document.querySelector(".scroll-content")
+        },
+        cursor: {
+            cross: document.querySelector(".cross"),
+            pointer: document.querySelector(".pointer"),
+            container: document.querySelector(".cursor"),
+        },
+
+        buttons: {
+            about: document.querySelector(".about-button"),
+            contact: document.querySelector(".contact-button"),
+            volume: document.querySelector(".volume-button"),
+            back: document.querySelector(".back-button"),
+            menu: document.querySelector(".back-button"),
+            info: document.querySelector(".info-button")
+        },
+        info: {
+            big: document.querySelector(".info-container").querySelector('.big'),
+            small: document.querySelector(".info-container").querySelector('.small'),
+            container: document.querySelector(".info-container")
+        },
+        about: document.querySelector(".about-container")
     }
 
     state = {
@@ -73,80 +78,22 @@ class CursorManager {
                 this.DOM.UIContainer.classList.add('info-mode');
             }
         },
-        cursor: {
-            temp: { x: null, y: null },
-            now: { x: null, y: null },
-            down: {
-                value: { x: null, y: null },
-                timestamp: null
-            },
-            delta: { x: null, y: null },
-            array: [],
-            vector: new THREE.Vector2(),
-            guiHover: false,
-            isDragging: false,
-            pointerMode: () => {
-                this.DOM.cursor.container.classList.remove('cross-on');
-                this.DOM.cursor.container.classList.remove('pointer-left');
-                this.DOM.cursor.container.classList.remove('pointer-right');
-            },
-            leftMode: () => {
-                this.DOM.cursor.container.classList.remove('cross-on');
-                this.DOM.cursor.container.classList.add('pointer-left');
-                this.DOM.cursor.container.classList.remove('pointer-right');
-            },
-            rightMode: () => {
-                this.DOM.cursor.container.classList.remove('cross-on');
-                this.DOM.cursor.container.classList.add('pointer-right');
-                this.DOM.cursor.container.classList.remove('pointer-left');
-            },
-            crossMode: () => {
-                this.DOM.cursor.container.classList.add('cross-on');
-                this.DOM.cursor.container.classList.remove('pointer-left');
-                this.DOM.cursor.container.classList.remove('pointer-right');
-            },
-            scroll: {
-                isHot: false,
-                isCold: false
-            }
-        },
+
         lastHover: null,
         trans: { about: null },
         click: {
             intersects: [],
             isNewProject: false
         },
-        menu: {
-            canHover: false,
-        },
-        intersects: [],
-        intersectedMedia: null,
+
         groups: null,
-        hideTitle: null
 
     }
 
     init() {
+        this.DOM.scroll.container.addEventListener('click', this.onCursorDown.bind(this), false);
+        this.DOM.scroll.container.scrollTop = this.DOM.scroll.content.offsetHeight / 2;
 
-
-        if (!this.app.state.isMobile) {
-            this.DOM.canvas.addEventListener('dblclick', this.onDoubleClick.bind(this), false);
-            window.addEventListener('mousemove', this.onCursorMove.bind(this), false);
-            this.DOM.canvas.addEventListener('mousedown', this.onCursorDown.bind(this), false);
-            window.addEventListener('mouseup', this.onCursorUp.bind(this), false);
-            window.addEventListener("mouseout", () => {
-                this.DOM.cursor.container.classList.add('hidden');
-            })
-        } else {
-            this.DOM.canvas.addEventListener('touchstart', this.onCursorDown.bind(this), false);
-            window.addEventListener('touchmove', this.onCursorMove.bind(this), false);
-            window.addEventListener('touchend', this.onCursorUp.bind(this), false);
-        }
-
-        // this.DOM.canvas.addEventListener('touchstart', this.onTouchStart.bind(this), false);
-        // document.addEventListener('touchend', this.onTouchEnd.bind(this), false);
-
-        // window.addEventListener('touchmove', this.onCursorMove.bind(this), 250, true);
         document.addEventListener("mouseout", (e) => {
             if (e.clientY <= 0 || e.clientX <= 0 ||
                 (e.clientX >= window.innerWidth || e.clientY >= window.innerHeight)) {
@@ -166,35 +113,6 @@ class CursorManager {
         })
         this.initButtons();
     }
-
-    validateScroll(event) {
-        if (this.app.state.infoMode)
-            return false;
-        const normalized = normalizeWheel(event);
-
-        let realScroll = this.state.cursor.scroll.isHot
-            ? Math.abs(normalized.pixelY) > 50
-            : Math.abs(normalized.pixelY) > 13;
-
-        let hotZone = Math.abs(normalized.pixelY) > 75;
-        if (hotZone && !this.state.cursor.scroll.isHot) {
-            console.log('is hot!');
-            this.state.cursor.scroll.isHot = true;
-            if (this.state.cursor.scroll.isCold) {
-                clearTimeout(this.state.cursor.scroll.isCold);
-                this.state.cursor.isCold = false;
-            }
-            this.state.cursor.isCold = setTimeout(() => {
-                this.state.cursor.scroll.isHot = false;
-                this.state.cursor.scroll.isCold = false;
-                console.log('is cold!');
-            }, 1000)
-        }
-
-        return { success: realScroll, y: normalized.pixelY };
-    }
-
-
 
     initButtons() {
         let closeInfo = () => {
@@ -231,7 +149,7 @@ class CursorManager {
             this.state.topMenu.infoMode();
             this.tweenManager.tweens.tweenCanvas.tween()
         });
-        console.log(this.DOM.buttons);
+        //console.log(this.DOM.buttons);
         this.DOM.buttons.info.addEventListener('mouseup', () => {
             this.DOM.canvas.addEventListener('mouseup', closeInfo);
 
@@ -264,24 +182,141 @@ class CursorManager {
         });
     }
 
+
+
+    projectMode() {
+        this.DOM.UIContainer.classList.add('project-mode');
+        this.DOM.UIContainer.classList.remove('menu-mode');
+        this.DOM.UIContainer.classList.remove('info-mode');
+
+        this.DOM.mediaIndex.innerHTML = this.app.state.focus.project.userData.order + 1;
+        this.DOM.projectLength.innerHTML = this.app.state.focus.project.userData.projectLength;
+
+        // video part"v
+        if (this.app.state.focus.media.userData.type === "video") {
+            if (this.app.state.focus.media.material.map.image) {
+                this.app.state.focus.media.material.map.image.play();
+                this.app.state.textures.update[this.app.state.focus.media.name] = this.app.state.focus.media.material.map;
+            }
+        }
+    }
+
+    loadVideos(project) {
+        // ////console.log(this.app.state.textures);
+        Object.values(this.app.state.textures.videos).map((v) => {
+            v.dispose();
+            return null;
+        })
+        this.app.state.textures.videos = {};
+        project.userData.medias.forEach(m => {
+            if (m.type !== 'video') return;
+            let url = `projects/${project.userData.directory}/${this.mediaManager.capitalize(m.type)}/${this.app.state.opt}/${m.src}`;
+            this.mediaManager.createVideoTexture(url);
+            ////console.log(this.app.state.textures.videos);
+        })
+    }
+
+    focusOn(media, duration = false) {
+        let project = media ? media.parent : false;
+        ////////console.log(project);
+        //console.log(project);
+        let canTween = this.tweenManager.tweens.tweenCamera.tween(project);
+
+        if (canTween) {
+            this.app.state.focus.project = project;
+            this.app.state.focus.media = media;
+            if (!this.app.state.focus.project) return;
+            this.DOM.projectLength.innerHTML = this.app.state.focus.project.userData.projectLength;
+            this.DOM.mediaIndex.innerHTML = this.app.state.focus.project.userData.order + 1;
+            this.DOM.projectTitle.innerHTML = this.app.state.focus.project.name;
+            this.DOM.projectTitle.classList.remove('hidden');
+            this.mediaManager.preloadVideos(project);
+        }
+
+
+        // this.loadVideos(project);
+    }
+
+    update(appState) {
+
+        if (!this.app.state.isMobile &&
+            !appState.infoMode &&
+            !appState.tween.isTweening &&
+            appState.menu.isOpen &&
+            !appState.guiHover &&
+            this.state.cursor.now.x &&
+            this.state.cursor.now.y &&
+            !appState.mouseDown &&
+            !this.state.pause
+        ) {
+            this.hoverMenu()
+        };
+    }
+}
+
+class ScrollManager {
+    validateScroll(event) {
+        if (this.app.state.infoMode)
+            return false;
+        const normalized = normalizeWheel(event);
+
+        /* let realScroll = this.state.cursor.scroll.isHot
+            ? Math.abs(normalized.pixelY) > 50
+            : Math.abs(normalized.pixelY) > 20; */
+
+        let realScroll = this.app.state.menu.isOpen ? true : Math.abs(normalized.pixelY) > 75;
+
+        // let hotZone = realScroll;
+        // if (hotZone && !this.state.cursor.scroll.isHot) {
+        //     console.log('is hot!');
+        //     this.state.cursor.scroll.isHot = true;
+        //     /*            if (this.state.cursor.scroll.isCold) {
+        //                    clearTimeout(this.state.cursor.scroll.isCold);
+        //                    this.state.cursor.isCold = false;
+        //                }
+        //                this.state.cursor.isCold = setTimeout(() => {
+        //                    this.state.cursor.scroll.isHot = false;
+        //                    this.state.cursor.scroll.isCold = false;
+        //                    //console.log('is cold!');
+        //                }, 1000) */
+        // }
+        if (realScroll) {
+            // console.log("YES! ", Math.abs(normalized.pixelY), this.state.cursor.scroll.isHot);
+        } else {
+            // console.log("NO! ", Math.abs(normalized.pixelY));
+        }
+
+        // console.log(normalized);
+
+        return { success: realScroll, y: normalized.pixelY };
+    }
+
     scrollToNextProject(direction) {
         let index = this.threeManager.state.projects.children.indexOf(this.app.state.focus.project);
         index = (index + direction) % (this.threeManager.state.projects.children.length);
         index = index < 0 ? (this.threeManager.state.projects.children.length - 1) : index;
+        console.log(index, this.threeManager.state.projects.children[index].children[0]);
         this.focusOn(this.threeManager.state.projects.children[index].children[0], 1000);
 
     }
 
     onScroll(e) {
+        sx = window.pageXOffset;
+        sy = window.pageYOffset;
+
         if (this.state.pause) return;
 
         if (this.tweenManager.state.isTweening) return;
         this.state.scroll = this.validateScroll(e);
+        // console.log(this.state.scroll);
         if (!this.state.scroll.success) return;
         if (this.state.scroll.y > 0) {
             this.state.scroll.direction = 1;
+            this.app.state.menu.direction = 1;
         } else {
             this.state.scroll.direction = -1;
+            this.app.state.menu.direction = -1;
+
         }
         if (!this.app.state.menu.isOpen) {
             if (!this.tweenManager.tweens.tweenCamera.state.isTweening) {
@@ -292,74 +327,81 @@ class CursorManager {
         }
     }
 
-    hoverMenu() {
-        if (this.tweenManager.state.isTweening) return;
+}
 
-
-        this.state.cursor.array = this.getCursorArray();
-        if (!this.state.cursor.array) return;
-        this.state.cursor.vector.fromArray(this.state.cursor.array);
-        this.state.intersects = this.intersectionManager.getIntersects(this.threeManager.camera, this.state.cursor.vector, this.app.state.objects);
-        if (this.state.intersects.length > 0) {
-            this.state.intersectedMedia = this.state.intersects[0].object;
-            this.state.intersectedProject = this.state.intersects[0].object.parent;
-
-            this.DOM.projectTitle.classList.remove('hidden');
-
-            if (this.DOM.projectTitle.innerHTML != this.state.intersectedProject.name) {
-                this.DOM.projectTitle.innerHTML = this.state.intersectedProject.name
-            }
-        } else {
-            if (!this.DOM.projectTitle.classList.contains('hidden')) {
-                this.DOM.projectTitle.classList.add('hidden')
+class ClickManager {
+    constructor() {
+        this.init();
+        this.state = {
+            intersects: [],
+            intersectedMedia: null,
+            hideTitle: null,
+            cursor: {
+                temp: { x: null, y: null },
+                now: { x: null, y: null },
+                down: {
+                    value: { x: null, y: null },
+                    timestamp: null
+                },
+                delta: { x: null, y: null },
+                array: [],
+                vector: new THREE.Vector2(),
+                guiHover: false,
+                isDragging: false,
+                pointerMode: () => {
+                    this.DOM.cursor.container.classList.remove('cross-on');
+                    this.DOM.cursor.container.classList.remove('pointer-left');
+                    this.DOM.cursor.container.classList.remove('pointer-right');
+                },
+                leftMode: () => {
+                    this.DOM.cursor.container.classList.remove('cross-on');
+                    this.DOM.cursor.container.classList.add('pointer-left');
+                    this.DOM.cursor.container.classList.remove('pointer-right');
+                },
+                rightMode: () => {
+                    this.DOM.cursor.container.classList.remove('cross-on');
+                    this.DOM.cursor.container.classList.add('pointer-right');
+                    this.DOM.cursor.container.classList.remove('pointer-left');
+                },
+                crossMode: () => {
+                    this.DOM.cursor.container.classList.add('cross-on');
+                    this.DOM.cursor.container.classList.remove('pointer-left');
+                    this.DOM.cursor.container.classList.remove('pointer-right');
+                },
+                scroll: {
+                    isHot: false,
+                    isCold: false
+                }
             }
         }
     }
 
-    hoverProject() {
-        if (this.state.pause) return;
-        if (this.tweenManager.state.isTweening) return;
-        if (this.DOM.cursor.container.classList.contains('hidden')) {
-            this.DOM.cursor.container.classList.remove('hidden');
+    init() {
+        if (!this.app.state.isMobile) {
+            window.addEventListener('mousemove', this.onCursorMove.bind(this), false);
+            this.DOM.canvas.addEventListener('mousedown', this.onCursorDown.bind(this), false);
+            window.addEventListener('mouseup', this.onCursorUp.bind(this), false);
+            window.addEventListener("mouseout", () => {
+                this.DOM.cursor.container.classList.add('hidden');
+            })
+        } else {
+            this.DOM.canvas.addEventListener('touchstart', this.onCursorDown.bind(this), false);
+            window.addEventListener('touchmove', this.onCursorMove.bind(this), false);
+            window.addEventListener('touchend', this.onCursorUp.bind(this), false);
         }
 
-        if (this.state.cursor.guiHover) {
-            this.state.cursor.pointerMode();
-            return;
-        }
+    }
 
-        this.state.cursor.array = this.getCursorArray();
-        if (!this.state.cursor.array) return;
-        this.state.cursor.vector.fromArray(this.state.cursor.array);
-        this.state.intersects = this.intersectionManager.getIntersects(this.threeManager.camera, this.state.cursor.vector, this.app.state.objects);
-
-        if (this.state.intersects.length > 0) {
-            this.state.intersectedMedia = this.state.intersects[0].object;
-            this.state.intersectedProject = this.state.intersects[0].object.parent;
-            if (this.state.intersectedMedia.userData &&
-                !this.app.state.focus.media ||
-                this.state.intersectedMedia.userData.src != this.app.state.focus.media.userData.src) {
-                this.DOM.projectTitle.innerHTML = this.state.intersectedProject.name;
-                this.state.cursor.pointerMode();
-                return;
-            }
-            if (this.state.intersectedProject.userData.medias.length == 1) {
-                this.state.cursor.pointerMode();
-                return;
-            }
-            if (this.state.cursor.now.x > (window.innerWidth / 2)) {
-                this.state.cursor.leftMode();
-            } else {
-                this.state.cursor.rightMode();
-            }
-            return
+    getCursorPosition(event) {
+        if (!!event.touches) {
+            return { x: event.touches[0].clientX, y: event.touches[0].clientY };
+        } else {
+            return { x: event.clientX, y: event.clientY };
         }
+    }
 
-        this.state.isHoverProject = false;
-        this.state.cursor.crossMode();
-        if (this.DOM.projectTitle.innerHTML != this.app.state.focus.project.name) {
-            this.DOM.projectTitle.innerHTML = this.app.state.focus.project.name
-        }
+    getCursorArray() {
+        return [(this.state.cursor.now.x) / window.innerWidth, (this.state.cursor.now.y) / window.innerHeight];
     }
 
     onCursorDown(event) {
@@ -374,14 +416,6 @@ class CursorManager {
 
         if (this.app.state.isMobile)
             this.state.cursor.start = this.state.cursor.now;
-    }
-
-    getCursorPosition(event) {
-        if (!!event.touches) {
-            return { x: event.touches[0].clientX, y: event.touches[0].clientY };
-        } else {
-            return { x: event.clientX, y: event.clientY };
-        }
     }
 
     onCursorMove(event) {
@@ -450,20 +484,19 @@ class CursorManager {
                     this.handleClick();
                 }
             } else {
-                console.log(this.state.cursor.start.y - this.state.cursor.now.y);
+                //console.log(this.state.cursor.start.y - this.state.cursor.now.y);
                 if (this.app.state.orientation === 'landscape' &&
                     Math.abs(this.state.cursor.start.x - this.state.cursor.now.x) > 125) {
                     let direction = this.state.cursor.start.x > this.state.cursor.now.x ? -1 : 1;
                     this.scrollToNextProject(direction);
-                    console.log('swipe landscape');
+                    //console.log('swipe landscape');
 
                 } else if (this.app.state.orientation === 'portrait' &&
                     Math.abs(this.state.cursor.start.y - this.state.cursor.now.y) > 125) {
                     let direction = this.state.cursor.start.y > this.state.cursor.now.y ? -1 : 1;
-                    console.log(Math.abs(this.state.cursor.start.y - this.state.cursor.now.y),
-                        this.state.cursor.start.y, this.state.cursor.now.y);
+                    //console.log(Math.abs(this.state.cursor.start.y - this.state.cursor.now.y),this.state.cursor.start.y, this.state.cursor.now.y);
                     this.scrollToNextProject(direction);
-                    console.log('swipe portrait');
+                    //console.log('swipe portrait');
                     return
                 } else if (Math.abs(this.app.state.mouseDown - performance.now()) < 200) {
                     this.handleClick();
@@ -475,29 +508,75 @@ class CursorManager {
 
     }
 
-    onTouchStart(event) {
-        // this.state.cursor.now.x = false;
+    hoverMenu() {
+        if (this.tweenManager.state.isTweening) return;
 
-        this.state.cursor.down.value = {
-            x: event.touches[0].clientX,
-            y: event.touches[0].clientY
+
+        this.state.cursor.array = this.getCursorArray();
+        if (!this.state.cursor.array) return;
+        this.state.cursor.vector.fromArray(this.state.cursor.array);
+        this.state.intersects = this.intersectionManager.getIntersects(this.threeManager.camera, this.state.cursor.vector, this.app.state.objects);
+        if (this.state.intersects.length > 0) {
+            this.state.intersectedMedia = this.state.intersects[0].object;
+            this.state.intersectedProject = this.state.intersects[0].object.parent;
+
+            this.DOM.projectTitle.classList.remove('hidden');
+
+            if (this.DOM.projectTitle.innerHTML != this.state.intersectedProject.name) {
+                this.DOM.projectTitle.innerHTML = this.state.intersectedProject.name
+            }
+        } else {
+            if (!this.DOM.projectTitle.classList.contains('hidden')) {
+                this.DOM.projectTitle.classList.add('hidden')
+            }
         }
-        this.state.cursor.down.timestamp = performance.now();
-
     }
 
-    onDoubleClick(event) {
-        this.vectors.doubleClick.fromArray(this.getCursorArray());
-        let intersects = getIntersects(this.threeManager.camera, this.vectors.doubleClick, this.app.state.objects);
-        if (intersects.length > 0) {
-            let intersect = intersects[0];
+    hoverProject() {
+        if (this.state.pause) return;
+        if (this.tweenManager.state.isTweening) return;
+        if (this.DOM.cursor.container.classList.contains('hidden')) {
+            this.DOM.cursor.container.classList.remove('hidden');
+        }
+
+        if (this.state.cursor.guiHover) {
+            this.state.cursor.pointerMode();
+            return;
+        }
+
+        this.state.cursor.array = this.getCursorArray();
+        if (!this.state.cursor.array) return;
+        this.state.cursor.vector.fromArray(this.state.cursor.array);
+        this.state.intersects = this.intersectionManager.getIntersects(this.threeManager.camera, this.state.cursor.vector, this.app.state.objects);
+
+        if (this.state.intersects.length > 0) {
+            let intersectedMedia = this.state.intersects[0].object;
+            let intersectedProject = this.state.intersects[0].object.parent;
+            this.DOM.projectTitle.innerHTML = intersectedProject.name;
+
+            if (intersectedMedia.userData && !this.app.state.focus.media ||
+                intersectedMedia.userData.src != this.app.state.focus.media.userData.src) {
+                this.state.cursor.pointerMode();
+                return;
+            }
+            if (intersectedProject.userData.medias.length == 1) {
+                this.state.cursor.pointerMode();
+                return;
+            }
+            if (this.state.cursor.now.x > (window.innerWidth / 2)) {
+                this.state.cursor.leftMode();
+            } else {
+                this.state.cursor.rightMode();
+            }
+            return
+        }
+
+        this.state.isHoverProject = false;
+        this.state.cursor.crossMode();
+        if (this.DOM.projectTitle.innerHTML != this.app.state.focus.project.name) {
+            this.DOM.projectTitle.innerHTML = this.app.state.focus.project.name
         }
     }
-
-    getCursorArray() {
-        return [(this.state.cursor.now.x) / window.innerWidth, (this.state.cursor.now.y) / window.innerHeight];
-    }
-
 
     dragMenu(cursor) {
         // this.DOM.projectTitle.style.display = "none";
@@ -509,7 +588,7 @@ class CursorManager {
         if (this.app.state.orientation === "landscape") {
             this.threeManager.canvas.style.cursor = "";
             this.state.cursor.delta.x = this.state.cursor.now.x - cursor.x;
-            console.log(this.state.cursor.delta.x / 500);
+            //console.log(this.state.cursor.delta.x / 500);
 
             this.threeManager.state.projects.rotation.y -= this.state.cursor.delta.x / 500;
         } else {
@@ -517,172 +596,14 @@ class CursorManager {
             // this.DOM.projectTitle.style.display = "none";
             this.threeManager.canvas.style.cursor = "";
             this.state.cursor.delta.y = this.state.cursor.now.y - cursor.y;
-            console.log(this.state.cursor.delta.y / 500);
+            //console.log(this.state.cursor.delta.y / 500);
 
             this.threeManager.state.projects.rotation.y += this.state.cursor.delta.y / 500;
         }
 
         this.state.cursor.isDragging = true;
-
-    }
-
-
-    async checkPNG(object) {
-        if (object.userData.type === "image" && object.material.map.image.src.indexOf("png") != -1) {
-            let texData;
-            if (!this.state.lastClick || this.state.lastClick != object.name) {
-                let img = object.material.map.image;
-                g.uvMap.canvas.width = img.width;
-                g.uvMap.canvas.height = img.height;
-                g.uvMap.drawImage(img, 0, 0);
-                this.state.lastClick = object.name
-                texData = g.uvMap.getImageData(0, 0, img.width, img.height);
-            }
-            let u = object.uv.x;
-            let v = object.uv.y;
-            var tx = Math.min(emod(u, 1) * texData.width | 0, texData.width - 1);
-            var ty = Math.min(emod(v, 1) * texData.height | 0, texData.height - 1);
-            ty = texData.height - ty;
-            var offset = (ty * texData.width + tx) * 4;
-            let color = {};
-
-            color.r = texData.data[offset + 0];
-            color.g = texData.data[offset + 1];
-            color.b = texData.data[offset + 2];
-            color.a = texData.data[offset + 3];
-
-            if (color.a == 0) {
-                if (intersects.length > (index - 1)) {
-                    // checkPNG((index + 1));
-                    return (object);
-                } else {
-                    return (false);
-                }
-            } else {
-                return (object);
-            }
-        } else {
-            return (object);
-        }
-    }
-
-    projectMode() {
-        this.DOM.UIContainer.classList.add('project-mode');
-        this.DOM.UIContainer.classList.remove('menu-mode');
-        this.DOM.UIContainer.classList.remove('info-mode');
-
-        this.DOM.mediaIndex.innerHTML = this.app.state.focus.project.userData.order + 1;
-        this.DOM.projectLength.innerHTML = this.app.state.focus.project.userData.projectLength;
-
-        // video part"v
-        if (this.app.state.focus.media.userData.type === "video") {
-            if (this.app.state.focus.media.material.map.image) {
-                this.app.state.focus.media.material.map.image.play();
-                this.app.state.textures.update[this.app.state.focus.media.name] = this.app.state.focus.media.material.map;
-            }
-        }
-    }
-
-    loadVideos(project) {
-        // //console.log(this.app.state.textures);
-        Object.values(this.app.state.textures.videos).map((v) => {
-            v.dispose();
-            return null;
-        })
-        this.app.state.textures.videos = {};
-        project.userData.medias.forEach(m => {
-            if (m.type !== 'video') return;
-            let url = `projects/${project.userData.directory}/${this.mediaManager.capitalize(m.type)}/${this.app.state.opt}/${m.src}`;
-            this.mediaManager.createVideoTexture(url);
-            //console.log(this.app.state.textures.videos);
-        })
-    }
-
-    focusOn(media, duration = false) {
-        let project = media ? media.parent : false;
-        //////console.log(project);
-        console.log(project);
-        let canTween = this.tweenManager.tweens.tweenCamera.tween(project);
-
-        if (canTween) {
-            this.app.state.focus.project = project;
-            this.app.state.focus.media = media;
-            if (!this.app.state.focus.project) return;
-            this.DOM.projectLength.innerHTML = this.app.state.focus.project.userData.projectLength;
-            this.DOM.mediaIndex.innerHTML = this.app.state.focus.project.userData.order + 1;
-            this.DOM.projectTitle.innerHTML = this.app.state.focus.project.name;
-            this.DOM.projectTitle.classList.remove('hidden');
-        }
-
-
-        // this.loadVideos(project);
-    }
-
-    projectOpen() {
-
-    }
-
-    handleClick() {
-        this.state.click.intersects = this.intersectionManager.getIntersects(this.threeManager.camera, this.vectors.up, this.app.state.objects);
-        //console.log("HANDE CLIKC MEDIA!");
-
-        if (this.state.click.intersects.length > 0) {
-            let media = this.state.click.intersects[0].object;
-            this.state.click.isNewProject = !this.app.state.focus.project
-                || media.parent.name != this.app.state.focus.project.name;
-
-            if (this.state.click.isNewProject) {
-                this.focusOn(media);
-            } else {
-                if (media.parent.userData.medias.length > 1) {
-                    this.mediaManager.changeMedia(this.app.state.focus.project, this.state.cursor.direction);
-                }
-            }
-            if (this.app.state.menu.isOpen) {
-                this.app.state.menu.isOpen = false;
-                this.state.topMenu.projectMode();
-            }
-
-            this.DOM.projectLength.innerHTML = media.parent.userData.projectLength;
-            this.DOM.mediaIndex.innerHTML = media.parent.userData.order + 1;
-
-        } else {
-            console.log("THIS HAPPENS!!!");
-            if (!!this.state.lastHover) {
-                this.focusOn(this.state.lastHover);
-                this.state.topMenu.projectMode();
-
-            } else if (!this.app.state.menu.isOpen) {
-                // back to menu
-                this.app.state.menu.isOpen = true;
-                this.DOM.cursor.container.classList.remove('cross-on');
-
-                this.DOM.UIContainer.classList.add('menu-mode');
-                this.DOM.UIContainer.classList.remove('project-mode');
-                this.DOM.UIContainer.classList.remove('info-mode');
-                this.focusOn(false);
-                this.state.topMenu.menuMode();
-                console.log("MENU!!!");
-
-            }
-        }
-
-        return this.state.click.isNewProject;
-    }
-
-    update(appState) {
-        if (!this.app.state.isMobile &&
-            !appState.infoMode &&
-            !appState.tween.isTweening &&
-            appState.menu.isOpen &&
-            !appState.guiHover &&
-            appState.cursor.x &&
-            appState.cursor.y &&
-            !appState.mouseDown &&
-            !this.state.pause
-        ) {
-            this.hoverMenu()
-        };
     }
 }
+
+
 export default CursorManager

@@ -175,37 +175,22 @@ body {
 }
 
 .big {
-    font-size: 6.25vh;
-    line-height: 10vh;
-}
-
-.big>* {
-    padding: 0px;
-    padding-left: 3.75vh;
-    padding-right: 3.75vh;
+    font-size: 24pt;
+    line-height: 5vh;
 }
 
 .middle {
-    margin: 2.5vh;
-    font-size: 25pt;
-    line-height: 40pt;
-}
-
-.middle>* {
-    padding: 0px;
-    padding-left: 2.5vh;
-    padding-right: 2.5vh;
+    font-size: 16pt;
+    line-height: 5vh;
+    padding-left: 12pt;
+    padding-right: 12pt;
 }
 
 .small {
-    font-size: 3.5vh;
+    font-size: 12pt;
     line-height: 5vh;
-    margin: 2.5vh;
-}
-
-.small>* {
-    padding-left: 15px;
-    padding-right: 15px;
+    padding-left: 8pt;
+    padding-right: 8pt;
 }
 
 .UI-container {
@@ -259,8 +244,20 @@ body {
 
 /* buttons general styling */
 
-.top-buttons button {
-    width: 125px;
+.top-buttons {
+    position: absolute;
+    top: 1.1125vh;
+    width: 100vw;
+}
+
+button:not(:first-child) {
+    margin-left: 5px;
+}
+
+.bottom-buttons {
+    position: absolute;
+    bottom: 1.1125vh;
+    width: 100vw;
 }
 
 button:active, button:focus {
@@ -284,12 +281,8 @@ button:active, button:focus {
     color: white;
     background: black;
     border-radius: 7.5vh;
-    margin-bottom: 1.25vh;
     text-decoration: none;
     border: none;
-    margin: 2.5vh;
-    padding-left: 2.5vh;
-    padding-right: 2.5vh;
     font-family: serifbabe;
     white-space: nowrap;
 }
@@ -305,35 +298,6 @@ button:active, button:focus {
     left: 50%;
 }
 
-#topGUI {
-    transform: translate(-50%);
-    left: 50%;
-    position: fixed;
-    top: 0px;
-    z-index: 10;
-    white-space: nowrap;
-    pointer-events: none;
-}
-
-#topGUI>* {
-    display: inline-block;
-    position: relative;
-}
-
-#menu {
-    position: absolute;
-    z-index: 10;
-    width: 100vw;
-    text-align: center;
-    top: 55vh;
-    transform: translateY(-50%);
-    display: none;
-}
-
-#menuHover {
-    transform: translate(-50%, -50%);
-}
-
 .project-title {
     position: absolute;
     z-index: 5;
@@ -343,18 +307,10 @@ button:active, button:focus {
     pointer-events: none;
     margin-left: 0px !important;
     margin-right: 0px !important;
+    padding-left: 2.5vh;
+    padding-right: 2.5vh;
+    line-height: 5vh;
 }
-
-/* #projectCursor>* {
-    transform: translateY(50%);
-}
-
-#projectTitle>*, #projectCursor>* {
-    padding-top: 0px;
-    padding-bottom: 0px;
-    cursor: pointer;
-    pointer-events: none !important;
-} */
 
 #projectInfo {
     right: 0px;
@@ -368,26 +324,6 @@ button:active, button:focus {
 #projectInfo>* {
     padding-left: 25px;
     padding-right: 25px;
-}
-
-#projectTag {
-    background: transparent;
-    border-radius: 0px;
-    padding: 0px;
-    border: 0px solid white;
-    display: flex;
-    flex-direction: column;
-    font-size: 2.5vh;
-    display: none;
-}
-
-#projectTag>* {
-    display: inline-block;
-    z-index: 5;
-    border-radius: 7.5vh;
-    margin-left: 1.25vh;
-    align-self: flex-start;
-    margin-bottom: 1.25vh;
 }
 
 .link {
@@ -461,7 +397,6 @@ input::selection {
 
 * {
     cursor: none !important;
-    /*cursor: url("data:image/svg+xml,%3Csvg width='128px' height='128px' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 166.91 67.32'%3E%3Cdefs%3E%3Cstyle%3E.cls-1%7Bfill:white;%7D%3C/style%3E%3C/defs%3E%3Ctitle%3Earrow5_1%3C/title%3E%3Cg id='Layer_2' data-name='Layer 2'%3E%3Cg id='Layer_1-2' data-name='Layer 1'%3E%3Cpath class='cls-1' d='M166.91,32.63l-35.44-.11v34.8h-1.16V32.53H0V31.4H101.24c9.49-.05,26.16-1.41,26.1-17.52l3,.09V0h1.34s0,9.33,0,14c.92,11.2,10.85,15.46,23.52,16.65,4.53.43,7.49.72,11.75.76ZM130.31,14'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");*/
     transition: background 0.5s, color 0.5s, filter 0.5s;
 }
 
@@ -514,25 +449,10 @@ input::selection {
     display: inline-block;
 }
 
-#picNumber {
-    position: absolute;
-    right: calc(100vw - 2.5vh);
-    bottom: 0px;
-    z-index: 5;
-    transform: translateX(100%);
-    margin: 1.25vh;
-    margin-bottom: 0px !important;
-    pointer-events: none !important;
-    text-align: center;
-    font-family: serifbabe;
-    white-space: nowrap;
-    user-select: none;
-}
-
 .index-container {
-    left: 0px;
+    left: 5px;
     position: absolute;
-    bottom: 1.5vh;
+    bottom: 0px;
 }
 
 .volume-button {
@@ -541,18 +461,21 @@ input::selection {
     bottom: 1.5vh;
 }
 
-.cssMedia {
-    overflow: hidden;
-}
-
-.cssMedia>* {
-    width: 100%;
-    height: 100%;
-    transform: scale(0.01);
-}
-
 .hidden {
     display: none !important;
+}
+
+.scroll-container {
+    position: fixed;
+    height: 100vh;
+    width: 100vw;
+    z-index: 5;
+    overflow: auto;
+}
+
+.scroll-content {
+    height: 10000vh;
+    width: 100vw;
 }
 
 @media only screen and (max-width: 600px) {

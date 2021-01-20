@@ -1,5 +1,3 @@
-import { Scene } from "three";
-
 class TweenManager {
     constructor({ app, threeManager }) {
         this.tweens = {
@@ -10,21 +8,25 @@ class TweenManager {
         this.state = {
             isTweening: false,
         }
+        this.delta = null;
     }
 
 
     update(now) {
         let isTweening = false;
         for (let name in this.tweens) {
-            let tween = this.tweens[name];
-            if (tween.state.isTweening && now !== tween.state.start) {
+            if (this.tweens[name].state.isTweening && now !== this.tweens[name].state.start) {
                 isTweening = true;
-                let delta = (now - tween.state.start) / tween.state.duration;
-                delta = tween.state.easing(delta);
-                delta = Math.min(delta, 1);
-                if (delta == 1)
-                    tween.state.isTweening = false;
-                tween.update(delta);
+                this.delta = (now - this.tweens[name].state.start) / this.tweens[name].state.duration;
+                this.delta = this.tweens[name].state.easing(this.delta);
+                this.delta = Math.min(this.delta, 1);
+                if (this.delta == 1) {
+                    this.tweens[name].state.isTweening = false;
+                    setTimeout(() => {
+                        this.tweens[name].complete();
+                    }, 10);
+                }
+                this.tweens[name].update(this.delta);
             };
         }
         this.state.isTweening = isTweening;
@@ -51,29 +53,24 @@ class TweenTemplate {
         let _ratio = this.getScreenRatio();
 
         let fov = 50;
-
-        let height = 30 + 2.5;
+        let height = 35;
 
         if (ratio > 1) {
             height = height / ratio;
         }
+
         if (ratio > _ratio) {
             height = height + (ratio * height - _ratio * height) * 1 / _ratio;
         }
-        // height *= 0.5;
-
 
         let distance = (height / 2) / Math.tan(fov * Math.PI / 360);
-
-
-
-        console.log(ratio, _ratio);
 
         media.attach(viewpoint);
         viewpoint.position.set(0, 0, distance);
         project.attach(viewpoint);
     }
-
+    complete() {
+    }
 }
 
 
@@ -127,6 +124,8 @@ class TweenCanvas extends TweenTemplate {
         this.DOM.canvas.style.left = this.lerp(this.state.values.canvas, delta) + "vw";
         this.DOM.projectTitle.style.left = this.lerp(this.state.values.projectTitle, delta) + "%";
     }
+
+
 }
 
 class TweenCamera extends TweenTemplate {
@@ -139,7 +138,7 @@ class TweenCamera extends TweenTemplate {
 
         this.state = {
             easing: this.easings.sine_in,
-            duration: 500,
+            duration: 750,
             isTweening: false,
             start: null,
             values: {
@@ -182,8 +181,10 @@ class TweenCamera extends TweenTemplate {
         values.pos.now = this.camera.position.clone();
         values.pos.temp = new THREE.Vector3();
 
-        if (this.app.state.focus.media)
-            this.threeManager.mediaManager.pauseIfVideo(this.app.state.focus.media, 0);
+        for (let src in this.app.state.textures.update) {
+            this.app.state.textures.update[src].pause();
+        }
+
         if (nextProject) {
             let media = nextProject.children[0];
             let viewpoint = nextProject.children[1];
@@ -201,7 +202,7 @@ class TweenCamera extends TweenTemplate {
             // values.fov.next = 25 * Math.max(ratio, _ratio);
             values.fov.next = 50;
 
-            console.log("FOV NEST", values.fov.next, ratio, _ratio);
+            //console.log("FOV NEST", values.fov.next, ratio, _ratio);
 
         } else {
             values.fov.next = values.fov.menu;
@@ -217,10 +218,11 @@ class TweenCamera extends TweenTemplate {
 
         this.state.values.pos.temp.lerpVectors(this.state.values.pos.now, this.state.values.pos.next, delta);
         this.camera.position.copy(this.state.values.pos.temp);
-        if (this.state.values.fov.now != this.state.values.fov.next) {
-            this.camera.fov = this.lerp(this.state.values.fov, delta);
-            this.camera.updateProjectionMatrix();
-        }
+        // console.log(this.state.values.pos.temp);
+    }
+
+    complete() {
+        this.app.interactionManager.cursorManager.hoverProject();
     }
 }
 
@@ -229,6 +231,7 @@ class ScaleMedia extends TweenTemplate {
         super();
         this.threeManager = threeManager;
         this.camera = threeManager.camera;
+        this.app = app;
         this.state = {
             easing: this.easings.linear,
             duration: 500,
@@ -257,6 +260,9 @@ class ScaleMedia extends TweenTemplate {
     }
 
     tween(media, ratio) {
+        for (let src in this.app.state.textures.update) {
+            this.app.state.textures.update[src].pause();
+        }
         let state = this.state;
         let values = state.values;
         this.updateViewpointPosition(media.parent);
@@ -293,11 +299,14 @@ class ScaleMedia extends TweenTemplate {
         values.scale.temp = values.scale.now.clone();
         values.scale.temp.lerp(values.scale.next.clone(), delta);
         this.state.media.scale.copy(values.scale.temp);
-        this.camera.fov = this.lerp(values.fov, delta);
-        // console.log(/* values.pos.temp, */ values.pos.now, values.pos.next);
-        // values.pos.temp.lerpVectors(values.pos.now, values.pos.next, delta);
-        // this.camera.position.copy(values.pos.temp);
-        this.camera.updateProjectionMatrix();
+        // this.camera.fov = this.lerp(values.fov, delta);
+        // //console.log(/* values.pos.temp, */ values.pos.now, values.pos.next);
+        values.pos.temp.lerpVectors(values.pos.now, values.pos.next, delta);
+        this.camera.position.copy(values.pos.temp);
+        // this.camera.updateProjectionMatrix();
+    }
+    complete() {
+        this.app.interactionManager.cursorManager.hoverProject();
     }
 }
 

@@ -53,3 +53,15 @@ body {
 }
 
 #subTitle {}
+
+.scroll-container {
+	position: fixed;
+	height: 100vh;
+	width: 100vw;
+	z-index: 5;
+}
+
+.scroll-content {
+	height: 200vh;
+	width: 100vw;
+}

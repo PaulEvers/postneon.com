@@ -17,7 +17,9 @@ class ThreeManager {
             scale: 40,
             centerDistance: 125,
             orientation: null,
-            tempOrientation: {}
+            tempOrientation: {},
+            radius: 250
+
         }
 
         this.renderer = new THREE.WebGLRenderer({
@@ -67,10 +69,6 @@ class ThreeManager {
 
 
     changeOrientation(orientation) {
-        function createRandom() {
-            let random = Math.random() * Math.PI / 8;
-            return Math.random() < 0.5 ? random : random * -1;
-        }
 
         if (orientation === 'landscape') {
             if (this.app.state.focus.media) this.app.state.focus.media.attach(this.camera);
@@ -92,10 +90,19 @@ class ThreeManager {
         }
     }
 
+    updateCameraRatio() {
+        this.camera.aspect = window.innerWidth / window.innerHeight;
+        this.camera.updateProjectionMatrix();
+        this.renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    getOrientation() {
+        return window.innerWidth > window.innerHeight ? 'landscape' : 'portrait';
+    }
 
     resizeCanvas(noLogo) {
 
-        this.state.tempOrientation = window.innerWidth > window.innerHeight ? 'landscape' : 'portrait';
+        this.state.tempOrientation = this.getOrientation();
         if (this.app.state.orientation !== this.state.tempOrientation)
             this.changeOrientation(this.state.tempOrientation);
 
@@ -106,16 +113,66 @@ class ThreeManager {
             this.camera.position.z = this.state.centerDistance;
         }
 
-        // update camera
-        this.camera.aspect = window.innerWidth / window.innerHeight;
-        this.camera.updateProjectionMatrix();
-        this.renderer.setSize(window.innerWidth, window.innerHeight);
+        this.updateCameraRatio();
 
         this.render();
         if (!!this.app.state.menu.isOpen) {
             this.logoManager.chooseLogo();
         }
         this.mediaManager.updateScaleMedias();
+    }
+
+    async fetchProject(_p) {
+        console.log(_p);
+        let project = new THREE.Group();
+        project.name = _p.title;
+        this.state.projects.add(project);
+
+        project.userData = {
+            projectLength: _p.medias.length,
+            order: 0,
+            oldProject: _p.title,
+            directory: _p.directory,
+            info: {
+                big: _p.info.big ? _p.info.big.replace(/\n/g, "<br>") : "",
+                small: _p.info.small ? _p.info.small.replace(/\n/g, "<br>") : "",
+            },
+            medias: _p.medias
+        }
+
+        project.scale.set(1, 1, 1);
+
+
+        let _m = _p.medias[0];
+
+        _m.rotation = {
+            x: Math.random() * Math.PI / 8 - Math.PI / 16,
+            y: Math.PI / 2 + (Math.random() * Math.PI / 4 - Math.PI / 8),
+            z: Math.random() * Math.PI / 8 - Math.PI / 16
+        }
+        _m.position = {
+            x: 0,
+            y: 0,
+            z: this.state.radius
+        }
+        _m.scale = _m.ratio > 1 ?
+            { x: this.state.scale, y: this.state.scale / _m.ratio } :
+            { x: this.state.scale * _m.ratio, y: this.state.scale };
+
+        this.addToProjects(project);
+        let media = await this.mediaManager.create({ _media: _m, _project: _p });
+        console.log(media);
+
+        project.add(media);
+        this.app.state.objects.push(media);
+
+        let viewpoint = new THREE.Group();
+        viewpoint.name = 'viewpoint';
+        media.add(viewpoint);
+        viewpoint.position.set(0, 0, 32.167);
+        project.attach(viewpoint);
+        // return project;
+        return project;
     }
 
     async fetchScene(url) {
@@ -125,66 +182,43 @@ class ThreeManager {
         ////console.log(_data);
 
         let _amount = _data.projects.length;
-        let radius = 250;
 
         _data.about.big = _data.about.big.replace(/\n/g, "<br>");
         _data.about.small = _data.about.small.replace(/\n/g, "<br>");
         _data.contact.big = _data.contact.big.replace(/\n/g, "<br>");
         _data.contact.small = _data.contact.small.replace(/\n/g, "<br>");
 
-        _data.projects.forEach(async (_p, i) => {
-            let project = new THREE.Group();
-            project.name = _p.title;
-            this.state.projects.add(project);
 
-            project.userData = {
-                projectLength: _p.medias.length,
-                order: 0,
-                oldProject: _p.title,
-                directory: _p.directory,
-                info: {
-                    big: _p.info.big ? _p.info.big.replace(/\n/g, "<br>") : "",
-                    small: _p.info.small ? _p.info.small.replace(/\n/g, "<br>") : "",
-                },
-                medias: _p.medias
-            }
-
-            project.rotation.set(0, i * Math.PI * 2 / _amount, 0)
-            project.scale.set(1, 1, 1);
+        this.updateCameraRatio();
+        let orientation = this.getOrientation();
+        [..._data.projects].forEach(async (p, i) => {
+            let project = await this.fetchProject(p);
+            console.log(project);
+            project.rotation.set(0, i * Math.PI * 2 / _amount, 0);
+            project.rotation.z = orientation === 'landscape' ? Math.PI / 2 : 0;
+        });
 
 
-            let _m = _p.medias[0];
 
-            _m.rotation = {
-                x: Math.random() * Math.PI / 8 - Math.PI / 16,
-                y: Math.PI / 2 + (Math.random() * Math.PI / 4 - Math.PI / 8),
-                z: Math.random() * Math.PI / 8 - Math.PI / 16
-            }
-            _m.position = {
-                x: 0,
-                y: 0,
-                z: radius
-            }
-            _m.scale = _m.ratio > 1 ?
-                { x: this.state.scale, y: this.state.scale / _m.ratio } :
-                { x: this.state.scale * _m.ratio, y: this.state.scale };
+        /* await [..._data.projects].reduce((p, _, i) => {
+            return p.then(_ => new Promise(async (resolve) => {
+                console.log(_data.projects[i]);
+                // console.log(this.fetchProject(_data.projects[i]));
+                let project = await this.fetchProject(_data.projects[i]);
+                console.log(project);
+                project.rotation.set(0, i * Math.PI * 2 / _amount, 0);
+                resolve();
+                // setTimeout(function () {
+                //     console.log(p, _, i);
 
-            this.addToProjects(project);
-            let media = await this.mediaManager.create({ _media: _m, _project: _p });
-
-            project.add(media);
-            this.app.state.objects.push(media);
-
-            let viewpoint = new THREE.Group();
-            viewpoint.name = 'viewpoint';
-            media.add(viewpoint);
-            viewpoint.position.set(0, 0, 32.167);
-            project.attach(viewpoint);
-        })
+                //     resolve();
+                // }, Math.random() * 1000)
+            }))
+        }, Promise.resolve()); */
 
         this.render();
 
-        // this.resizeCanvas();
+        this.resizeCanvas();
 
         return _data;
     }

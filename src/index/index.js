@@ -64,20 +64,21 @@ class Application {
             this.render();
         })
 
-        this.threeManager.fetchScene("http://www.post-neon.com/JSON/data.json");
+        this.threeManager.fetchScene("http://www.post-neon.com/new/JSON/data.json");
     }
 
     render() {
         requestAnimationFrame(this.render.bind(this));
-        if (this.state.stopAnimation || document.hidden)
+
+        if (this.state.stopAnimation || document.hidden || !document.visibilityState)
             return;
 
-        this.threeManager.render();
         this.state.now = performance.now();
         this.tweenManager.update(this.state.now);
 
-        if (this.state.now - this.state.textures.timeStap > (1000 / 30)) {
+        if (this.state.now - this.state.textures.timeStap > (1000 / 29.97)) {
             for (let key in this.state.textures.update) {
+                // console.log(this.state.textures.update[key].image.readyState);
                 if (this.state.textures.update[key].image.readyState >=
                     this.state.textures.update[key].image.HAVE_CURRENT_DATA) {
                     this.state.textures.update[key].needsUpdate = true;
@@ -86,6 +87,8 @@ class Application {
             this.state.textures.timeStap = this.state.now;
         }
 
+        this.threeManager.render();
+
         if (!this.tweenManager.tweens.tweenCamera.state.isTweening) {
             if (this.state.now - this.state.interaction.timeStap > (1000 / 10)) {
                 this.interactionManager.update(this.state);
@@ -93,6 +96,7 @@ class Application {
             }
             this.menuManager.rotateMenu(this.state);
         }
+
     }
 }
 
@@ -147,4 +151,4 @@ class FormatOptimizer {
 
 }
 
-window.application = new Application();
+let app = new Application();

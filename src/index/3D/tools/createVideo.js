@@ -25,24 +25,39 @@ const createVideo = ({ url, src }) => {
     return new Promise(async (resolve) => {
         var video = document.createElement("video");
         var source = document.createElement("source");
-        source.src = url;
+        source.src = `${url}`;
         video.setAttribute("loop", "");
         video.id = src;
         video.volume = 0;
         video.setAttribute("playsinline", "true");
         enableInlineVideo(video);
         video.appendChild(source);
-        document.querySelector("#videos").appendChild(video);
-        // video.play();
-        // await isReady(video);
         resolve(video);
-        /* isReady(video).then(() => {
-            
-        }) */
-        // video.pause();
-        // video.addEventListener('loadedmetadata', () => {
-        //     resolve(video);
-        // })
+
+        /*         var video = document.createElement("video");
+                video.setAttribute("loop", "");
+        
+                var xhr = new XMLHttpRequest();
+                xhr.open("GET", `${url}.mp4`, true);
+                xhr.responseType = "arraybuffer";
+                xhr.onload = function (oEvent) {
+        
+                    var blob = new Blob([oEvent.target.response], { type: "video/mp4" });
+                    console.log("LOADED!!!!!!!!!! ", `${src}.mp4`);
+                    video.src = URL.createObjectURL(blob);
+                    resolve(video);
+                    //video.play()  if you want it to play on load
+                }; 
+
+        xhr.onprogress = function (oEvent) {
+
+            if (oEvent.lengthComputable) {
+                var percentComplete = oEvent.loaded / oEvent.total;
+                // do something with this
+            }
+        }
+
+        xhr.send();*/
     })
 
 }

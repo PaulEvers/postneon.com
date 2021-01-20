@@ -24,7 +24,7 @@
     "webpack-cli": "^3.2.1"
   },
   "scripts": {
-    "dev": "webpack --mode development --watch "
+    "build": "webpack --mode development --watch "
   },
   "author": "",
   "license": "ISC"
