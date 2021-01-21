@@ -1,8 +1,9 @@
-export default class IntersectionManager {
+export default class RayCastManager {
     constructor() {
         this.raycaster = new THREE.Raycaster();
         this.cursor = new THREE.Vector2();
-        this.intersects = []
+        this.intersects = [];
+
     }
     getIntersects(camera, point, objects) {
         this.cursor.set((point.x * 2) - 1, -(point.y * 2) + 1);

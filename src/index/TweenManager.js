@@ -222,7 +222,7 @@ class TweenCamera extends TweenTemplate {
     }
 
     complete() {
-        this.app.interactionManager.cursorManager.hoverProject();
+        this.app.interactionManager.navigationManager.hoverProject();
     }
 }
 
@@ -306,7 +306,7 @@ class ScaleMedia extends TweenTemplate {
         // this.camera.updateProjectionMatrix();
     }
     complete() {
-        this.app.interactionManager.cursorManager.hoverProject();
+        this.app.interactionManager.navigationManager.hoverProject();
     }
 }
 

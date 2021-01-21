@@ -1,5 +1,5 @@
 import MediaManager from "./MediaManager"
-import IntersectionManager from "./IntersectionManager"
+import RayCastManager from "./RayCastManager"
 
 class ThreeManager {
     constructor({ app }) {
@@ -45,7 +45,6 @@ class ThreeManager {
         ////console.log(this.camera.fov, this.camera.position.z);
 
         this.loader = new THREE.TextureLoader();
-        this.intersectionManager = new IntersectionManager();
         this.mediaManager = new MediaManager({ app: app, threeManager: this });
         this.logoManager = new LogoManager({ app: this.app, threeManager: this });
 
@@ -54,6 +53,24 @@ class ThreeManager {
     async initLogos() {
         await this.logoManager.createLogos();
         return;
+    }
+
+    focusOn(project, duration = false) {
+        if (!project)
+            this.tweenManager.tweens.tweenCamera.tween(project);
+        else {
+            let media = project.children[0];
+            let project = media ? media.parent : false;
+
+            let canTween = this.tweenManager.tweens.tweenCamera.tween(project);
+            if (canTween) {
+                this.app.state.focus.project = project;
+                this.app.state.focus.media = media;
+                if (!this.app.state.focus.project) return;
+                this.mediaManager.preloadVideos(project);
+            }
+            return canTween;
+        }
     }
 
     initProjects() {
@@ -67,6 +84,12 @@ class ThreeManager {
         this.addToScene(this.state.projectsContainer);
     }
 
+    getNextProject(direction) {
+        let index = this.state.projects.children.indexOf(this.app.state.focus.project);
+        index = (index + direction) % (this.state.projects.children.length);
+        index = index < 0 ? (this.state.projects.children.length - 1) : index;
+        return this.state.projects.children[index];
+    }
 
     changeOrientation(orientation) {
 

@@ -1,7 +1,7 @@
 
 import ThreeManager from "./3D/ThreeManager"
+import InteractionManager from "./NAV/InteractionManager"
 import TweenManager from './TweenManager';
-import InteractionManager from "./3D/InteractionManager"
 import MenuManager from "./MenuManager"
 import * as THREE from "three"
 window.THREE = THREE;
@@ -12,6 +12,7 @@ class Application {
         this.JSON = {};
         this.scene = null;
         this.state = {
+            pause: false,
             tween: {
                 isTweening: false,
                 timeStamp: performance.now()
@@ -152,3 +153,4 @@ class FormatOptimizer {
 }
 
 let app = new Application();
+
