@@ -141,7 +141,7 @@ body {
     z-index: 5;
     pointer-events: none;
     filter: invert(1);
-    mix-blend-mode: difference;
+    /* mix-blend-mode: difference; */
     display: none;
 }
 
@@ -407,7 +407,7 @@ input::selection {
     left: 0px;
     pointer-events: none;
     opacity: 0;
-    mix-blend-mode: exclusion;
+    /* mix-blend-mode: exclusion; */
     transition: transform 0.25s;
 }
 
@@ -471,6 +471,9 @@ input::selection {
     width: 100vw;
     z-index: 5;
     overflow: auto;
+    transform: scale(2);
+    background: black;
+    mix-blend-mode: lighten;
 }
 
 .scroll-content {

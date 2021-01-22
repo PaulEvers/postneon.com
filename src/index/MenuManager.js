@@ -1,7 +1,6 @@
 export default class MenuManager {
     constructor({ app, threeManager }) {
         this.threeManager = threeManager;
-        this.intersectionManager = threeManager.intersectionManager;
         this.app = app;
         this.DOM = {
             sub: document.querySelector("#projectTitle"),
@@ -32,9 +31,10 @@ export default class MenuManager {
                 return
             // console.log(this.app.state.menu.lerpTo);
             this.app.state.menu.lerpTo = Math.abs(this.app.state.menu.lerpTo) < 0.000001 ? 0 : this.app.state.menu.lerpTo;
-            this.state.lerpTo = this.app.state.menu.lerpTo * 0.5 + this.state.lerpTo * 0.5;
+            this.state.lerpTo = this.app.state.menu.lerpTo/*  * 0.1 + this.state.lerpTo * 0.9 */;
             this.threeManager.state.projects.rotation.y += (this.state.speed * this.state.delta / 25 * state.menu.direction) * 0.9 + (this.app.state.menu.lerpTo) * 0.1;
-            this.app.state.menu.lerpTo = this.app.state.menu.lerpTo * 0.975;
+            // this.app.state.menu.lerpTo = this.app.state.menu.lerpTo * 0.975;
+            this.app.state.menu.lerpTo
             this.state.lastTick = this.state.now;
         } else {
             this.state.lastTick = this.state.now;

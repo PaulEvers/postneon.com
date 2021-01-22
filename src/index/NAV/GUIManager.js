@@ -1,33 +1,52 @@
 class CursorModes {
-    DOM = {
-        cursor: document.querySelector(".cursor")
-    }
+    DOM = document.querySelector(".cursor")
     set = (mode) => {
         switch (mode) {
             case 'pointer':
-                this.DOM.cursor.classList.remove('cross-on');
-                this.DOM.cursor.classList.remove('pointer-left');
-                this.DOM.cursor.classList.remove('pointer-right');
+                this.DOM.classList.remove('cross-on');
+                this.DOM.classList.remove('pointer-left');
+                this.DOM.classList.remove('pointer-right');
                 break
             case 'cross':
-                this.DOM.cursor.classList.add('cross-on');
-                this.DOM.cursor.classList.remove('pointer-left');
-                this.DOM.cursor.classList.remove('pointer-right');
+                this.DOM.classList.add('cross-on');
+                this.DOM.classList.remove('pointer-left');
+                this.DOM.classList.remove('pointer-right');
                 break
             case 'left':
-                this.DOM.cursor.classList.remove('cross-on');
-                this.DOM.cursor.classList.add('pointer-left');
-                this.DOM.cursor.classList.remove('pointer-right');
+                this.DOM.classList.remove('cross-on');
+                this.DOM.classList.add('pointer-left');
+                this.DOM.classList.remove('pointer-right');
                 break
             case 'right':
-                this.DOM.cursor.classList.remove('cross-on');
-                this.DOM.cursor.classList.add('pointer-right');
-                this.DOM.cursor.classList.remove('pointer-left');
+                this.DOM.classList.remove('cross-on');
+                this.DOM.classList.add('pointer-right');
+                this.DOM.classList.remove('pointer-left');
                 break
-
         }
     }
+}
 
+class TopMenuMode {
+    DOM = document.querySelector(".UI-container")
+    set = (mode) => {
+        switch (mode) {
+            case 'menu':
+                this.DOM.classList.add('menu-mode');
+                this.DOM.classList.remove('project-mode');
+                this.DOM.classList.remove('info-mode');
+                break
+            case 'project':
+                this.DOM.classList.remove('menu-mode');
+                this.DOM.classList.add('project-mode');
+                this.DOM.classList.remove('info-mode');
+                break
+            case 'info':
+                this.DOM.classList.remove('menu-mode');
+                this.DOM.classList.remove('project-mode');
+                this.DOM.classList.add('info-mode');
+                break
+        }
+    }
 }
 
 class GUIManager {
@@ -38,11 +57,13 @@ class GUIManager {
 
         this.state = {
             cursorMode: new CursorModes(),
-            guiHover: false
+            topMenuMode: new TopMenuMode(),
+            isHovering: false
         }
 
         this.DOM = {
             cursor: document.querySelector('.cursor'),
+            canvas: document.querySelector('#threejs'),
             buttons: {
                 about: document.querySelector(".about-button"),
                 contact: document.querySelector(".contact-button"),
@@ -55,10 +76,17 @@ class GUIManager {
                 length: document.querySelector(".project-length"),
                 index: document.querySelector(".media-index"),
                 title: document.querySelector(".project-title")
+            },
+            about: document.querySelector(".about-container"),
+            info: {
+                container: document.querySelector(".info-container"),
+                big: document.querySelector(".info-container").querySelector(".big"),
+                small: document.querySelector(".info-container").querySelector(".small"),
             }
         }
         this.init();
     }
+
 
     setCursorPosition = (x, y) => {
         this.DOM.cursor.style.left = x;
@@ -68,7 +96,9 @@ class GUIManager {
     setCursorMode = (mode) => {
         this.state.cursorMode.set(mode);
     }
-
+    setTopMenuMode = (mode) => {
+        this.state.topMenuMode.set(mode);
+    }
     setProjectTitle = (project) => {
         this.DOM.project.title.classList.remove('hidden');
 
@@ -96,71 +126,99 @@ class GUIManager {
         this.DOM.project.title.classList.remove('hidden');
     }
 
-    closeInfo = () => {
+    tweenCanvas = () => {
+        let tweener = this.app.tweenManager.add(750);
+        if (!tweener) return
+
+        const max = {
+            canvas: window.innerWidth < 600 ? 100 : 50,
+            projecTitle: window.innerWidth < 600 ? 100 : 75
+        }
+
+        let infoOpen = this.app.state.infoOpen;
+
+        let canvas = {
+            now: infoOpen ? max.canvas : 0,
+            next: infoOpen ? 0 : max.canvas
+        }
+        let projectTitle = {
+            now: infoOpen ? max.projecTitle : 50,
+            next: infoOpen ? 50 : max.projecTitle
+        }
+
+        tweener.addEventListener('update', ({ detail }) => {
+            this.DOM.canvas.style.left = this.tweenManager.lerp(canvas, detail) + "vw";
+            this.DOM.project.title.style.left = this.tweenManager.lerp(projectTitle, detail) + "%";
+        })
+        tweener.addEventListener('complete', ({ detail }) => {
+            console.log("COMPLETE!!!");
+            this.app.state.infoOpen = !this.app.state.infoOpen;
+            console.log("INFO OPEN IS ", this.app.state.infoOpen);
+        })
+    }
+
+    closeInfo = e => {
+        e.stopPropagation();
         this.app.state.pause = false;
         this.app.state.info = false;
-        this.tweenManager.tweens.tweenCanvas.tween();
+        this.tweenCanvas();
         this.setCursorMode('pointer');
         if (this.app.state.menu.isOpen) {
-            this.state.topMenu.mode.menu()
+            this.setTopMenuMode('menu')
         } else {
-            this.state.topMenu.mode.project()
+            this.setTopMenuMode('project')
         }
         this.DOM.canvas.removeEventListener('mouseup', this.closeInfo);
+    }
+
+    openInfo = () => {
+        this.app.state.info = true;
+        this.app.state.pause = true;
+        this.setTopMenuMode('info');
+        this.tweenCanvas();
+        this.DOM.canvas.addEventListener('mouseup', this.closeInfo);
     }
 
     init = () => {
         this.DOM.buttons.back.addEventListener('mouseup', this.closeInfo)
         this.DOM.buttons.menu.addEventListener('mouseup', () => {
-            this.threeManager.focusOn(false);
-            this.state.topMenu.mode.menu();
+            this.threeManager.tweenToMenu(false);
+            this.setTopMenuMode('menu');
         })
 
         document.querySelectorAll('button').forEach(b => {
             b.addEventListener('mouseenter', () => {
-                this.state.guiHover = true;
+                this.state.isHovering = true;
             })
             b.addEventListener('mouseout', () => {
-                this.state.guiHover = false;
+                this.state.isHovering = false;
             })
         })
 
         this.DOM.buttons.about.addEventListener('mouseup', () => {
-            this.DOM.canvas.addEventListener('mouseup', this.closeInfo);
-
-            this.app.state.pause = true;
-            this.state.topMenu.mode.info();
-            this.app.state.info = true;
-
             this.DOM.about.classList.remove('hidden');
             this.DOM.info.container.classList.add('hidden');
 
-
-            this.tweenManager.tweens.tweenCanvas.tween()
+            this.openInfo();
         });
 
         this.DOM.buttons.info.addEventListener('mouseup', () => {
-            this.DOM.canvas.addEventListener('mouseup', closeInfo);
-
-            this.app.state.pause = true;
-            this.state.topMenu.mode.info();
-            this.app.state.info = true;
-
             this.DOM.info.container.classList.remove('hidden');
             this.DOM.about.classList.add('hidden');
+
             this.DOM.info.big.innerHTML = this.app.state.focus.project.userData.info.big;
             this.DOM.info.small.innerHTML = this.app.state.focus.project.userData.info.small;
 
-
-            this.tweenManager.tweens.tweenCanvas.tween()
+            this.openInfo();
         });
 
 
-        this.DOM.buttons.contact.onCursorUp = () => {
+        this.DOM.buttons.contact.addEventListener('mouseup', () => {
             if (this.app.state.menu.isOpen) {
                 this.threeManager.resizeCanvas();
             }
-        }
+        })
+
         this.DOM.buttons.volume.addEventListener("mousedown", function (event) {
             if (this.children[0].innerHTML === "muted") {
                 this.children[0].innerHTML = "mute";

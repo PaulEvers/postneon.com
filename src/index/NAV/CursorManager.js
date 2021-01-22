@@ -36,7 +36,6 @@ export default class CursorManager {
                 },
                 delta: { x: null, y: null },
                 array: [],
-                guiHover: false,
                 isDragging: false,
                 scroll: {
                     isHot: false,
@@ -46,10 +45,6 @@ export default class CursorManager {
         }
 
         this.init();
-    }
-
-    setGuiHover = (bool) => {
-        this.state.cursor.guiHover = bool;
     }
 
     init() {
@@ -105,10 +100,13 @@ export default class CursorManager {
         this.guiManager.showCursor();
 
         if (!this.app.state.menu.isOpen) {
+
             this.hoverProject();
         } else {
-            this.guiManager.setCursorMode('default')
+            this.guiManager.setCursorMode('pointer')
         }
+
+
 
 
         if (this.state.cursor.isDragging && cursorPosition.x && this.app.state.menu.isOpen) {
@@ -194,7 +192,7 @@ export default class CursorManager {
         if (this.tweenManager.state.isTweening) return;
         this.guiManager.showCursor();
 
-        if (this.state.cursor.guiHover) {
+        if (this.guiManager.state.isHovering) {
             this.guiManager.setCursorMode('pointer');
             return;
         }
@@ -203,7 +201,7 @@ export default class CursorManager {
         if (!cursorArray) return;
         this.state.vector.fromArray(cursorArray);
 
-        const intersects = this.rayCastManager.getIntersects(this.state.vector);
+        const intersects = this.rayCastManager.getIntersects(this.threeManager.camera, this.state.vector, this.app.state.objects);
 
         if (intersects.length > 0) {
             let intersectedMedia = intersects[0].object;
@@ -250,5 +248,47 @@ export default class CursorManager {
         }
 
         this.state.cursor.isDragging = true;
+    }
+
+    handleClick() {
+        const intersects = this.rayCastManager.getIntersects(this.threeManager.camera, this.state.vector, this.app.state.objects);
+        let isNewProject = false;
+
+        if (intersects.length > 0) {
+            const media = intersects[0].object;
+            const project = media.parent;
+            console.log(media, project);
+            isNewProject = !this.app.state.focus.project
+                || project.name != this.app.state.focus.project.name;
+
+            if (isNewProject) {
+                this.threeManager.focusOn(project);
+            } else {
+                if (project.userData.medias.length > 1) {
+                    console.log(project);
+                    this.threeManager.mediaManager.changeMedia(project, this.state.cursor.direction);
+                }
+            }
+            if (this.app.state.menu.isOpen) {
+                this.app.state.menu.isOpen = false;
+                this.guiManager.setTopMenuMode('project');
+            }
+            this.guiManager.setProjectUI(project);
+            /* this.DOM.projectLength.innerHTML = media.parent.userData.projectLength;
+            this.DOM.mediaIndex.innerHTML = media.parent.userData.order + 1; */
+        } else {
+            /* if (!!this.state.lastHover) {
+                this.threeManager.focusOn(this.state.lastHover);
+                // this.focusOn(this.state.lastHover);
+                this.guiManager.setTopMenuMode('project');
+            } else if (!this.app.state.menu.isOpen) {
+                // back to menu */
+            this.app.state.menu.isOpen = true;
+            this.threeManager.tweenToMenu();
+            this.guiManager.setCursorMode('cross');
+            this.guiManager.setTopMenuMode('menu');
+            // }
+        }
+        return isNewProject;
     }
 }

@@ -13,6 +13,7 @@ class Application {
         this.scene = null;
         this.state = {
             pause: false,
+            infoOpen: false,
             tween: {
                 isTweening: false,
                 timeStamp: performance.now()
@@ -68,35 +69,52 @@ class Application {
         this.threeManager.fetchScene("http://www.post-neon.com/new/JSON/data.json");
     }
 
-    render() {
-        requestAnimationFrame(this.render.bind(this));
+    render = () => {
+        requestAnimationFrame(this.render);
+        this.interactionManager.updateScroll();
 
         if (this.state.stopAnimation || document.hidden || !document.visibilityState)
             return;
 
         this.state.now = performance.now();
-        this.tweenManager.update(this.state.now);
 
-        if (this.state.now - this.state.textures.timeStap > (1000 / 29.97)) {
-            for (let key in this.state.textures.update) {
-                // console.log(this.state.textures.update[key].image.readyState);
-                if (this.state.textures.update[key].image.readyState >=
-                    this.state.textures.update[key].image.HAVE_CURRENT_DATA) {
-                    this.state.textures.update[key].needsUpdate = true;
-                }
+        for (let key in this.state.textures.update) {
+            // console.log(this.state.textures.update[key].image.readyState);
+            if (this.state.textures.update[key].image.readyState >=
+                this.state.textures.update[key].image.HAVE_CURRENT_DATA && (
+                    !this.state.textures.update[key].image.lastTime ||
+                    (1000 / (this.state.now - this.state.textures.update[key].image.lastTime)
+                    ) < 60)
+            ) {
+                this.state.textures.update[key].needsUpdate = true;
+                this.state.textures.update[key].image.lastTime = this.state.now;
             }
+        }
+
+        if (this.state.now - this.state.textures.timeStap > (1000 / 60)) {
+            this.tweenManager.update(this.state.now);
             this.state.textures.timeStap = this.state.now;
         }
 
-        this.threeManager.render();
 
-        if (!this.tweenManager.tweens.tweenCamera.state.isTweening) {
-            if (this.state.now - this.state.interaction.timeStap > (1000 / 10)) {
-                this.interactionManager.update(this.state);
-                this.state.interaction.timeStap = this.state.now;
-            }
-            this.menuManager.rotateMenu(this.state);
+
+        this.threeManager.render();
+        if (this.state.menu.isOpen) {
+            this.threeManager.rotateMenu(this.state.now);
         }
+
+        if (!this.tweenManager.state.isTweening) {
+            if (this.state.now - this.state.interaction.timeStap > (1000 / 10)) {
+                this.state.interaction.timeStap = this.state.now;
+                this.interactionManager.updateHover();
+            }
+        }
+
+        if (this.state.lastTime != this.state.now) {
+            window.fps2 = 1000 / (this.state.now - this.state.lastTime);
+            this.state.lastTime = this.state.now;
+        }
+
 
     }
 }
@@ -152,5 +170,5 @@ class FormatOptimizer {
 
 }
 
-let app = new Application();
+window.app = new Application();
 

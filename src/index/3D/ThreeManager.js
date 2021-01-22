@@ -18,8 +18,13 @@ class ThreeManager {
             centerDistance: 125,
             orientation: null,
             tempOrientation: {},
-            radius: 250
-
+            radius: 250,
+            menu: {
+                lastTick: null,
+                delta: 0,
+                speed: 0.00125 / 25,
+                lerpTo: 0
+            }
         }
 
         this.renderer = new THREE.WebGLRenderer({
@@ -34,8 +39,7 @@ class ThreeManager {
         this.canvas = this.renderer.domElement;
         this.canvas.id = "scene";
 
-        this.canvasContainer = document.querySelector("#threejs");
-        this.canvasContainer.appendChild(this.canvas);
+        document.querySelector("#threejs").appendChild(this.canvas);
 
         this.scene = new THREE.Scene();
         this.camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 1000);
@@ -48,55 +52,152 @@ class ThreeManager {
         this.mediaManager = new MediaManager({ app: app, threeManager: this });
         this.logoManager = new LogoManager({ app: this.app, threeManager: this });
 
+        this.init();
+
+    }
+    init = () => {
+        window.addEventListener("resize", this.resizeCanvas);
         this.initProjects();
     }
-    async initLogos() {
+    initLogos = async () => {
         await this.logoManager.createLogos();
         return;
     }
 
-    focusOn(project, duration = false) {
-        if (!project)
-            this.tweenManager.tweens.tweenCamera.tween(project);
-        else {
-            let media = project.children[0];
-            let project = media ? media.parent : false;
+    getScreenRatio() { return (window.innerWidth / window.innerHeight) }
 
-            let canTween = this.tweenManager.tweens.tweenCamera.tween(project);
-            if (canTween) {
-                this.app.state.focus.project = project;
-                this.app.state.focus.media = media;
-                if (!this.app.state.focus.project) return;
-                this.mediaManager.preloadVideos(project);
-            }
-            return canTween;
-        }
+    updateViewpointPosition(project) {
+        const media = project.children[0];
+        const viewpoint = project.children[1];
+
+        const ratio = media.userData.ratio;
+        const _ratio = this.getScreenRatio();
+
+        const fov = 50;
+        let height = ratio < 1 ? 35 : 35 / ratio;
+        height = ratio < _ratio ? height : height + (ratio * height - _ratio * height) * 1 / _ratio
+        const distance = (height / 2) / Math.tan(fov * Math.PI / 360);
+
+        media.attach(viewpoint);
+        viewpoint.position.set(0, 0, distance);
+        project.attach(viewpoint);
     }
 
-    initProjects() {
-        this.state.projectsContainer = new THREE.Group();
-        this.state.projectsContainer.name = 'projectsContainer';
+    pauseMedia = () => {
+        const media = this.app.state.focus.media;
+        if (media && media.userData.type === 'video')
+            media.material.map.pause();
+    }
+
+    tweenToProject(project) {
+        let tween = this.app.tweenManager.add(500, "sine_in");
+        const media = project.children[0];
+        const viewpoint = project.children[1];
+
+        this.pauseMedia();
+
+
+        this.updateViewpointPosition(project);
+
+        let pos = {
+            now: this.camera.position.clone(),
+            next: new THREE.Vector3(),
+            tween: new THREE.Vector3()
+        }
+        let quat = {
+            now: this.camera.quaternion.clone(),
+            next: new THREE.Quaternion(),
+            tween: new THREE.Quaternion()
+        }
+
+        project.children[1].getWorldPosition(pos.next);
+        project.children[1].getWorldQuaternion(quat.next);
+
+        tween.addEventListener('update', ({ detail }) => {
+            THREE.Quaternion.slerp(quat.now, quat.next, quat.tween, detail);
+            pos.tween.lerpVectors(pos.now, pos.next, detail);
+            this.camera.quaternion.copy(quat.tween);
+            this.camera.position.copy(pos.tween);
+        })
+
+        tween.addEventListener('complete', () => {
+            this.app.state.menu.isOpen = false;
+            if (media.userData.type === 'video') media.material.map.play();
+
+        })
+        return tween;
+    }
+
+    tweenToMenu = () => {
+        let tween = this.app.tweenManager.add(500, "sine_in");
+        if (!tween) return false;
+
+        this.pauseMedia();
+
+        let quat = {
+            now: this.camera.quaternion.clone(),
+            next: new THREE.Quaternion(),
+            tween: new THREE.Quaternion()
+        }
+        let pos = {
+            now: this.camera.position.clone(),
+            next: new THREE.Vector3(0, 0, this.state.centerDistance),
+            tween: new THREE.Vector3()
+        }
+        tween.addEventListener('update', ({ detail }) => {
+            THREE.Quaternion.slerp(quat.now, quat.next, quat.tween, detail);
+            this.camera.quaternion.copy(quat.tween);
+            pos.tween.lerpVectors(pos.now, pos.next, detail);
+            this.camera.position.copy(pos.tween);
+        })
+
+        tween.addEventListener('complete', () => {
+            this.app.state.menu.isOpen = true;
+            this.app.state.focus.project = null;
+            this.app.state.focus.media = null;
+        })
+        return true;
+    }
+
+    focusOn = (project, duration = false) => {
+        let media = project.children[0];
+        // let project = media ? media.parent : false;
+        let canTween = this.tweenToProject(project);
+        if (canTween) {
+            this.app.state.focus.project = project;
+            this.app.state.focus.media = media;
+            if (this.app.state.focus.media.userData.type === 'video')
+                this.app.state.focus.media.material.map.pause();
+            if (!this.app.state.focus.project) return;
+            // this.mediaManager.preloadVideos(project);
+        }
+        return canTween;
+    }
+
+    initProjects = () => {
+        this.state.origin = new THREE.Group();
+        this.state.origin.name = 'projectsContainer';
         this.state.projects = new THREE.Group();
         this.state.projects.name = 'projects';
         this.state.projects.userData.outlinerEnabled = false;
         this.state.projects.findProject = (name) => this.state.projects.find(p => p.name === name);
-        this.state.projectsContainer.add(this.state.projects);
-        this.addToScene(this.state.projectsContainer);
+        this.state.origin.add(this.state.projects);
+        this.addToScene(this.state.origin);
     }
 
-    getNextProject(direction) {
+    getNextProject = (direction) => {
         let index = this.state.projects.children.indexOf(this.app.state.focus.project);
         index = (index + direction) % (this.state.projects.children.length);
         index = index < 0 ? (this.state.projects.children.length - 1) : index;
         return this.state.projects.children[index];
     }
 
-    changeOrientation(orientation) {
+    changeOrientation = (orientation) => {
 
         if (orientation === 'landscape') {
             if (this.app.state.focus.media) this.app.state.focus.media.attach(this.camera);
             this.app.state.orientation = orientation;
-            this.state.projectsContainer.rotation.z = 0;
+            this.state.origin.rotation.z = 0;
             for (let project of this.state.projects.children) {
                 project.rotation.z = Math.PI / 2;
             }
@@ -104,7 +205,7 @@ class ThreeManager {
         } else {
             if (this.app.state.focus.media) this.app.state.focus.media.attach(this.camera);
             this.app.state.orientation = orientation;
-            this.state.projectsContainer.rotation.z = Math.PI / 2;
+            this.state.origin.rotation.z = Math.PI / 2;
             for (let project of this.state.projects.children) {
                 project.rotation.z = 0;
             }
@@ -113,17 +214,17 @@ class ThreeManager {
         }
     }
 
-    updateCameraRatio() {
+    updateCameraRatio = () => {
         this.camera.aspect = window.innerWidth / window.innerHeight;
         this.camera.updateProjectionMatrix();
         this.renderer.setSize(window.innerWidth, window.innerHeight);
     }
 
-    getOrientation() {
+    getOrientation = () => {
         return window.innerWidth > window.innerHeight ? 'landscape' : 'portrait';
     }
 
-    resizeCanvas(noLogo) {
+    resizeCanvas = (noLogo) => {
 
         this.state.tempOrientation = this.getOrientation();
         if (this.app.state.orientation !== this.state.tempOrientation)
@@ -145,7 +246,7 @@ class ThreeManager {
         this.mediaManager.updateScaleMedias();
     }
 
-    async fetchProject(_p) {
+    fetchProject = async (_p) => {
         console.log(_p);
         let project = new THREE.Group();
         project.name = _p.title;
@@ -198,11 +299,9 @@ class ThreeManager {
         return project;
     }
 
-    async fetchScene(url) {
+    fetchScene = async (url) => {
         let _data = await fetch(url, { method: 'GET', mode: 'cors' })
             .then(res => res.json());
-        ////console.log("FETCHED");
-        ////console.log(_data);
 
         let _amount = _data.projects.length;
 
@@ -221,24 +320,6 @@ class ThreeManager {
             project.rotation.z = orientation === 'landscape' ? Math.PI / 2 : 0;
         });
 
-
-
-        /* await [..._data.projects].reduce((p, _, i) => {
-            return p.then(_ => new Promise(async (resolve) => {
-                console.log(_data.projects[i]);
-                // console.log(this.fetchProject(_data.projects[i]));
-                let project = await this.fetchProject(_data.projects[i]);
-                console.log(project);
-                project.rotation.set(0, i * Math.PI * 2 / _amount, 0);
-                resolve();
-                // setTimeout(function () {
-                //     console.log(p, _, i);
-
-                //     resolve();
-                // }, Math.random() * 1000)
-            }))
-        }, Promise.resolve()); */
-
         this.render();
 
         this.resizeCanvas();
@@ -246,17 +327,24 @@ class ThreeManager {
         return _data;
     }
 
-    addToProjects(_p) {
+    addToProjects = (_p) => {
         this.state.projects.add(_p);
-        ////console.log(this.scene);
     }
-    addToScene(_m) {
-        ////console.log(_m);
+    addToScene = (_m) => {
         this.scene.add(_m);
-        ////console.log("add to scene! ", this.scene);
     }
-    render() {
+    render = () => {
         this.renderer.render(this.scene, this.camera);
+    }
+    lerp = (a, b, alpha) => a * alpha + b * (1 - alpha)
+    rotateMenu = (now) => {
+
+        if (!this.state.menu.lastTick) this.state.menu.lastTick = now;
+        this.state.menu.delta = Math.min(10, now - this.state.menu.lastTick);
+        this.state.menu.lerpTo = this.lerp(this.app.state.menu.lerpTo, this.state.menu.lerpTo, 0.5);
+        this.state.projects.rotation.y += this.state.menu.speed * this.state.menu.delta * this.app.state.menu.direction * 0.9 + this.state.menu.lerpTo * this.state.menu.delta;
+        this.state.menu.lastTick = now;
+        this.app.state.menu.lerpTo = 0
     }
 }
 
@@ -266,7 +354,6 @@ class LogoManager {
         this.app = app;
         this.threeManager = threeManager;
         this.canvas = this.threeManager.canvas;
-        this.canvasContainer = this.threeManager.canvasContainer;
         this.logos = new THREE.Group();
         this.logos.name = 'logos';
 
@@ -333,7 +420,7 @@ class LogoManager {
                 })
                 ////console.log("CHOOSELOG");
                 this.chooseLogo();
-                this.threeManager.render();
+                this.threeManager.render(performance.now);
                 this.threeManager.addToScene(this.logos);
                 this.state.isInitialized = true;
                 resolve();
@@ -344,12 +431,12 @@ class LogoManager {
 
     chooseLogo() {
         if (!this.state.isInitialized) return;
-        if ((this.canvasContainer.offsetWidth / window.innerHeight) > 1.6) {
+        if ((this.canvas.offsetWidth / window.innerHeight) > 1.6) {
             this.logos.children[0].material.visible = true;
             this.logos.children[1].material.visible = false;
             this.logos.children[2].material.visible = false;
         } else {
-            if ((this.canvasContainer.offsetWidth / window.innerHeight) > 1) {
+            if ((this.canvas.offsetWidth / window.innerHeight) > 1) {
                 this.logos.children[0].material.visible = false;
                 this.logos.children[1].material.visible = true;
                 this.logos.children[2].material.visible = false;

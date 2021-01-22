@@ -1,4 +1,4 @@
-import createVideo from "./tools/createVideo"
+import enableInlineVideo from 'iphone-inline-video';
 
 export default class MediaManager {
     constructor({ threeManager, app }) {
@@ -22,15 +22,16 @@ export default class MediaManager {
             texture: {
                 image: () => {
                     return new THREE.Texture({
-                        minFilter: THREE.LinearFilter,
-                        magFilter: THREE.LinearFilter,
+                        minFilter: THREE.NearestFilter,
+                        magFilter: THREE.NearestFilter,
+                        generateMipMaps: false,
                     })
                 },
                 video: (video) => {
                     return new THREE.Texture(video,
                         {
                             minFilter: THREE.LinearFilter,
-                            // magFilter: THREE.LinearFilter,
+                            magFilter: THREE.LinearFilter,
                             generateMipMaps: false,
                         })
                 }
@@ -38,24 +39,21 @@ export default class MediaManager {
             loader: new THREE.TextureLoader(),
         }
         this.initVideoTester();
-        //console.log('VIDEO TESTER', this.videoTester);
     }
-    initVideoTester() {
+    initVideoTester = () => {
         let canvas = document.createElement('canvas');
         canvas.width = 1;
         canvas.height = 1;
-        let ctx = canvas.getContext("2d");
-        this.videoTester = ctx;
+        this.videoTester = canvas.getContext("2d");
     }
 
-    async isReady(video) {
+    isReady = async (video) => {
         let p = null;
 
         return new Promise((resolve) => {
             const pingVideo = (video) => {
                 this.videoTester.drawImage(video, 0, 0, 1, 1);
                 p = this.videoTester.getImageData(0, 0, 1, 1).data;
-                //console.log(p.reduce((a, b) => a + b));
                 if (p.reduce((a, b) => a + b) > 0.5)
                     resolve()
                 else
@@ -65,26 +63,42 @@ export default class MediaManager {
         })
     }
 
-    pauseIfVideo(media, duration) {
+    pauseIfVideo = (media, duration) => {
         if (media.userData.type !== 'video') return;
         setTimeout(() => {
             media.material.map.pause();
         }, duration);
     }
 
-    playIfVideo(media, duration) {
+    playIfVideo = (media, duration) => {
         if (media.userData.type !== 'video') return;
         setTimeout(() => {
             media.material.map.play();
         }, duration);
     }
 
-    async createVideoTexture(url) {
+    createVideo = async ({ url, src }) => {
+        return new Promise(async (resolve) => {
+            var video = document.createElement("video");
+            var source = document.createElement("source");
+            source.src = `${url}`;
+            video.setAttribute("loop", "");
+            video.id = src;
+            video.volume = 0;
+            video.setAttribute("playsinline", "true");
+            enableInlineVideo(video);
+            video.appendChild(source);
+            resolve(video);
+        })
+    }
+
+    createVideoTexture = async (url) => {
         //console.log("CREATE VIDEO ", url);
         return new Promise(async (resolve) => {
             let src = url.split("/")[url.split("/").length - 1];
-            let video = await createVideo({ url, src });
+            let video = await this.createVideo({ url, src });
             let texture = this.resources.texture.video(video);
+            texture.generateMipMaps = false;
             // let texture = new THREE.VideoTexture(video);
             texture.play = async (callback) => {
                 // const video = document.getElementById(src);
@@ -103,12 +117,11 @@ export default class MediaManager {
                     texture.play();
                 }
             }
-            texture.pause = () => {
 
+            texture.pause = () => {
                 video.pause();
                 texture.playing = false;
                 delete this.app.state.textures.update[src];
-
             }
 
             this.app.state.textures["videos"][src] = texture;
@@ -128,32 +141,31 @@ export default class MediaManager {
                         resolve(texture);
                     }, 125)
                 }, 500);
-
             }
             init();
         })
-
-
     }
+
     loadTexture(url) {
         return new Promise((resolve) => {
-            this.resources.loader.load(url, (tex) => { resolve(tex) });
+            this.resources.loader.load(url, (tex) => {
+                tex.minFilter = THREE.LinearMipmapLinearFilter;
+                tex.magFilter = THREE.LinearFilter;
+                tex.generateMipMaps = false;
+                resolve(tex)
+            });
         })
     }
 
     async preloadVideos(project) {
         console.log(project);
         for (let _media of project.userData.medias) {
-
             if (_media.type === 'video') {
-                // if (document.querySelector(`#${media.src}`));
-
                 if (!this.app.state.textures["videos"][_media.src]) {
                     let url = `projects/${project.userData.directory}/${this.capitalize(_media.type)}/${this.app.state.opt}/${_media.src}`;
                     let texture = await this.createVideoTexture(url);
                     console.log('preloaded texture');
                 }
-                // this.createVideoTexture(media);
             }
         }
     }
@@ -162,18 +174,65 @@ export default class MediaManager {
         return str.charAt(0).toUpperCase() + str.slice(1);
     }
 
+    scaleMedia = (media, ratio) => {
+        const camera = this.threeManager.camera;
+        const viewpoint = media.parent.children[1];
+
+        this.threeManager.updateViewpointPosition(media.parent);
+
+        for (let src in this.app.state.textures.update)
+            this.app.state.textures.update[src].pause();
+
+
+        let scale = {
+            now: media.scale.clone(),
+            next: ratio < 1 ?
+                new THREE.Vector3(30 * ratio, 30, 1) :
+                new THREE.Vector3(30, 30 / ratio, 1),
+            tween: new THREE.Vector3()
+        }
+
+        let pos = {
+            now: camera.position.clone(),
+            next: new THREE.Vector3(),
+            tween: new THREE.Vector3()
+        }
+
+        viewpoint.getWorldPosition(pos.next);
+
+        if (scale.now === scale.next) return
+
+        let tweener = this.app.tweenManager.add(500);
+        tweener.addEventListener('update', ({ detail }) => {
+            scale.tween = scale.now.clone();
+            scale.tween.lerp(scale.next.clone(), detail);
+            media.scale.copy(scale.tween);
+
+            pos.tween.lerpVectors(pos.now, pos.next, detail);
+            camera.position.copy(pos.tween);
+        })
+        tweener.addEventListener('complete', () => {
+            console.log('completed')
+        })
+
+
+
+    }
+
     async changeMedia(project, direction) {
         let order = (project.userData.order + direction) % project.userData.medias.length;
         if (order < 0) order = project.userData.medias.length - 1;
 
         let media = project.children[0];
+        console.log(project, media);
+
         let _media = project.userData.medias[order];
         project.userData.order = order;
 
         media.userData = _media;
         let url = `projects/${project.userData.directory}/${this.capitalize(_media.type)}/${this.app.state.opt}/${_media.src}`;
 
-        this.app.tweenManager.tweens.scaleMedia.tween(media, _media.ratio);
+        this.scaleMedia(media, media.userData.ratio);
 
         if (_media.type === 'image') {
             let _oldTex = media.material.map;
@@ -201,7 +260,6 @@ export default class MediaManager {
                 }, 250);
             }
         }
-
     }
 
     getScreenRatio() { return window.innerWidth / window.innerHeight }
@@ -218,14 +276,12 @@ export default class MediaManager {
         for (let project of this.threeManager.state.projects.children) {
             let media = project.children[0];
             if (!media) return;
-            //console.log('media', media.userData.ratio);
             media.scale.copy(this.getScaleMedia(media.userData.ratio));
         }
     }
 
     async create({ _media, _project }) {
         let media = new THREE.Mesh(this.resources.geo, new this.resources.mat());
-        // media.frustumCulled = true;
         media.name = `${_project.title}_media`;
         media.userData = _media
         media.updateMatrix();
@@ -247,6 +303,5 @@ export default class MediaManager {
             media.material.needsUpdate = true;
         }
         return media;
-
     }
 }
