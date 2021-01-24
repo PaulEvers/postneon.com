@@ -11,7 +11,8 @@ class Application {
         // set up some variables
         this.JSON = {};
         this.scene = null;
-        this.state = {
+        this._s = {
+            time: 0,
             pause: false,
             infoOpen: false,
             tween: {
@@ -48,74 +49,63 @@ class Application {
             objects: []
         }
         this.init();
-
     }
+
     async init() {
         this.faviconAnimator = new FaviconAnimator();
         let formatOptimizer = new FormatOptimizer();
 
-        this.state.isMobile = formatOptimizer.isMobile;
-        this.state.opt = this.state.isMobile ? 'mobile' : 'desktop';
-        console.log("STATE MOBILE IS ", this.state.isMobile);
-        // this.state.opt = 'mobile';
+        this._s.isMobile = formatOptimizer.isMobile;
+
+        this._s.opt = this._s.isMobile ? 'mobile' : 'desktop';
+        // this._s.opt = 'mobile';
         this.threeManager = new ThreeManager({ app: this });
         this.tweenManager = new TweenManager({ app: this, threeManager: this.threeManager });
         this.interactionManager = new InteractionManager({ app: this, threeManager: this.threeManager });
         this.menuManager = new MenuManager({ app: this, threeManager: this.threeManager });
         this.threeManager.initLogos().then(() => {
-            this.render();
+            this.animate();
         })
 
         this.threeManager.fetchScene("http://www.post-neon.com/new/JSON/data.json");
     }
 
-    render = () => {
-        requestAnimationFrame(this.render);
-        this.interactionManager.updateScroll();
-
-        if (this.state.stopAnimation || document.hidden || !document.visibilityState)
-            return;
-
-        this.state.now = performance.now();
-
-        for (let key in this.state.textures.update) {
-            // console.log(this.state.textures.update[key].image.readyState);
-            if (this.state.textures.update[key].image.readyState >=
-                this.state.textures.update[key].image.HAVE_CURRENT_DATA && (
-                    !this.state.textures.update[key].image.lastTime ||
-                    (1000 / (this.state.now - this.state.textures.update[key].image.lastTime)
-                    ) < 60)
-            ) {
-                this.state.textures.update[key].needsUpdate = true;
-                this.state.textures.update[key].image.lastTime = this.state.now;
+    animate = (now) => {
+        requestAnimationFrame(this.animate);
+        if (!now) return;
+        if (!this._s.lastTime)
+            this._s.lastTime = now;
+        else {
+            if ((1000 / (now - this._s.lastTime)) > 90) {
+                return;
+            } else {
+                this._s.lastTime = now;
             }
         }
 
-        if (this.state.now - this.state.textures.timeStap > (1000 / 60)) {
-            this.tweenManager.update(this.state.now);
-            this.state.textures.timeStap = this.state.now;
-        }
+        if (this._s.stopAnimation || document.hidden || !document.visibilityState)
+            return;
 
 
 
         this.threeManager.render();
-        if (this.state.menu.isOpen) {
-            this.threeManager.rotateMenu(this.state.now);
-        }
+        this.interactionManager.updateScroll();
+        this.interactionManager.updateHover();
 
-        if (!this.tweenManager.state.isTweening) {
-            if (this.state.now - this.state.interaction.timeStap > (1000 / 10)) {
-                this.state.interaction.timeStap = this.state.now;
-                this.interactionManager.updateHover();
+        this.tweenManager.update(now);
+
+        for (let key in this._s.textures.update) {
+            if (this._s.textures.update[key].image.readyState >=
+                this._s.textures.update[key].image.HAVE_CURRENT_DATA
+            ) {
+                this._s.textures.update[key].needsUpdate = true;
             }
         }
 
-        if (this.state.lastTime != this.state.now) {
-            window.fps2 = 1000 / (this.state.now - this.state.lastTime);
-            this.state.lastTime = this.state.now;
+
+        if (this._s.menu.isOpen) {
+            this.threeManager.rotateMenu(now);
         }
-
-
     }
 }
 

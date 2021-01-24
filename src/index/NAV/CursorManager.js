@@ -20,9 +20,13 @@ export default class CursorManager {
             }
         }
 
-        this.state = {
+        this._s = {
             vector: new THREE.Vector2(),
-            intersects: [],
+            intersections: [],
+            intersected: {
+                media: null,
+                project: null
+            },
             hideTitle: null,
             throttle: {
                 mousemove: true,
@@ -41,14 +45,18 @@ export default class CursorManager {
                     isHot: false,
                     isCold: false
                 }
+            },
+            menu: {
+                delta: 0
             }
+
         }
 
         this.init();
     }
 
     init() {
-        if (!this.app.state.isMobile) {
+        if (!this.app._s.isMobile) {
             window.addEventListener('mousemove', this.onCursorMove.bind(this), false);
             window.addEventListener('mousedown', this.onCursorDown.bind(this), false);
             window.addEventListener('mouseup', this.onCursorUp.bind(this), false);
@@ -72,48 +80,45 @@ export default class CursorManager {
     }
 
     getCursorArray() {
-        return [(this.state.cursor.now.x) / window.innerWidth, (this.state.cursor.now.y) / window.innerHeight];
+        return [(this._s.cursor.now.x) / window.innerWidth, (this._s.cursor.now.y) / window.innerHeight];
     }
 
     onCursorDown(event) {
-        if (this.app.state.info) return;
-        if (!!this.state.focusBack) {
-            clearTimeout(this.state.focusBack);
-            this.state.focusBack = false;
+        if (this.app._s.info) return;
+        if (!!this._s.focusBack) {
+            clearTimeout(this._s.focusBack);
+            this._s.focusBack = false;
         }
-        this.state.cursor.isDragging = true;
-        this.state.cursor.now = this.getCursorPosition(event);
-        this.app.state.mouseDown = performance.now();
+        this._s.cursor.isDragging = true;
+        this._s.cursor.now = this.getCursorPosition(event);
+        this.app._s.mouseDown = performance.now();
 
-        if (this.app.state.isMobile)
-            this.state.cursor.start = this.state.cursor.now;
+        if (this.app._s.isMobile)
+            this._s.cursor.start = this._s.cursor.now;
     }
 
     onCursorMove = (event) => {
-        if (!this.state.throttle.mousemove) return;
+        if (!this._s.throttle.mousemove) return;
 
-        this.state.throttle.mousemove = false;
+        this._s.throttle.mousemove = false;
 
-        const cursorPosition = this.getCursorPosition(event);
+        this._s.cursor.temp = this.getCursorPosition(event);
 
-        this.guiManager.setCursorPosition(cursorPosition.x, cursorPosition.y)
+        this.guiManager.setCursorPosition(this._s.cursor.temp.x, this._s.cursor.temp.y)
         this.guiManager.showCursor();
 
-        if (!this.app.state.menu.isOpen) {
+        if (!this.app._s.menu.isOpen) {
 
             this.hoverProject();
         } else {
             this.guiManager.setCursorMode('pointer')
         }
 
-
-
-
-        if (this.state.cursor.isDragging && cursorPosition.x && this.app.state.menu.isOpen) {
-            this.dragMenu(cursorPosition);
+        if (this._s.cursor.isDragging && this._s.cursor.temp.x && this.app._s.menu.isOpen) {
+            this.dragMenu(this._s.cursor.temp);
         }
 
-        if (this.app.state.info) {
+        if (this.app._s.info) {
             if (event.target.id === 'scene') {
                 this.DOM.buttons.back.classList.add('active');
                 this.guiManager.setCursorMode('cross')
@@ -122,99 +127,98 @@ export default class CursorManager {
                 this.guiManager.setCursorMode('pointer')
             }
         }
-        this.state.cursor.now = cursorPosition;
+        this._s.cursor.now = this._s.cursor.temp;
 
-        setTimeout(() => this.state.throttle.mousemove = true, 1000 / 60);
-
+        setTimeout(() => this._s.throttle.mousemove = true, 1000 / 60);
     }
 
     onCursorUp(event) {
-        if (!this.state.cursor.isDragging) return;
-        this.state.cursor.isDragging = false;
+        if (!this._s.cursor.isDragging) return;
+        this._s.cursor.isDragging = false;
 
-        this.state.vector.fromArray(this.getCursorArray());
+        this._s.vector.fromArray(this.getCursorArray());
 
-        clearTimeout(this.state.hideTitle);
+        clearTimeout(this._s.hideTitle);
 
 
-        if (this.state.cursor.temp.x < window.innerWidth / 2) {
-            this.state.cursor.direction = -1;
+        if (this._s.cursor.temp.x < window.innerWidth / 2) {
+            this._s.cursor.direction = -1;
         } else {
-            this.state.cursor.direction = 1;
+            this._s.cursor.direction = 1;
         }
 
-        if (!this.app.state.info) {
-            if (!this.app.state.isMobile || this.app.state.menu.isOpen) {
-                if (Math.abs(this.app.state.mouseDown - performance.now()) < 200) {
+        if (!this.app._s.info) {
+            if (!this.app._s.isMobile || this.app._s.menu.isOpen) {
+                if (Math.abs(this.app._s.mouseDown - performance.now()) < 200) {
                     this.handleClick();
                 }
             } else {
-                if (this.app.state.orientation === 'landscape' &&
-                    Math.abs(this.state.cursor.start.x - this.state.cursor.now.x) > 125) {
-                    let direction = this.state.cursor.start.x > this.state.cursor.now.x ? -1 : 1;
+                if (this.app._s.orientation === 'landscape' &&
+                    Math.abs(this._s.cursor.start.x - this._s.cursor.now.x) > 125) {
+                    let direction = this._s.cursor.start.x > this._s.cursor.now.x ? -1 : 1;
                     this.scrollToNextProject(direction);
 
-                } else if (this.app.state.orientation === 'portrait' &&
-                    Math.abs(this.state.cursor.start.y - this.state.cursor.now.y) > 125) {
-                    let direction = this.state.cursor.start.y > this.state.cursor.now.y ? -1 : 1;
+                } else if (this.app._s.orientation === 'portrait' &&
+                    Math.abs(this._s.cursor.start.y - this._s.cursor.now.y) > 125) {
+                    let direction = this._s.cursor.start.y > this._s.cursor.now.y ? -1 : 1;
                     this.scrollToNextProject(direction);
                     return
-                } else if (Math.abs(this.app.state.mouseDown - performance.now()) < 200) {
+                } else if (Math.abs(this.app._s.mouseDown - performance.now()) < 200) {
                     this.handleClick();
                 }
             }
         }
-        this.state.cursor.start = this.state.cursor.now;
-        this.app.state.mouseDown = false;
+        this._s.cursor.start = this._s.cursor.now;
+        this.app._s.mouseDown = false;
     }
 
     hoverMenu() {
-        if (this.tweenManager.state.isTweening) return;
+        if (this.tweenManager._s.isTweening) return;
 
-        const cursorArray = this.getCursorArray();
-        if (!cursorArray) return;
+        this._s.cursor.array = this.getCursorArray();
+        if (!this._s.cursor.array) return;
 
-        this.state.vector.fromArray(cursorArray);
+        this._s.vector.fromArray(this._s.cursor.array);
 
-        let intersects = this.rayCastManager.getIntersects(this.threeManager.camera, this.state.vector, this.app.state.objects);
+        this._s.intersections = this.rayCastManager.getIntersects(this.threeManager.camera, this._s.vector, this.app._s.objects);
 
-        if (intersects.length > 0) {
-            let intersectedMedia = intersects[0].object;
-            let intersectedProject = intersectedMedia.parent;
-            this.guiManager.setProjectTitle(intersectedProject);
+        if (this._s.intersections.length > 0) {
+            this._s.intersected.media = this._s.intersections[0].object;
+            this._s.intersected.project = this._s.intersected.media.parent;
+            this.guiManager.setProjectTitle(this._s.intersected.project);
         } else {
             this.guiManager.hideProjectTitle();
         }
     }
 
     hoverProject() {
-        if (this.app.state.pause) return;
-        if (this.tweenManager.state.isTweening) return;
+        if (this.app._s.pause) return;
+        if (this.tweenManager._s.isTweening) return;
         this.guiManager.showCursor();
 
-        if (this.guiManager.state.isHovering) {
+        if (this.guiManager._s.isHovering) {
             this.guiManager.setCursorMode('pointer');
             return;
         }
 
         const cursorArray = this.getCursorArray();
         if (!cursorArray) return;
-        this.state.vector.fromArray(cursorArray);
+        this._s.vector.fromArray(cursorArray);
 
-        const intersects = this.rayCastManager.getIntersects(this.threeManager.camera, this.state.vector, this.app.state.objects);
+        const intersects = this.rayCastManager.getIntersects(this.threeManager.camera, this._s.vector, this.app._s.objects);
 
         if (intersects.length > 0) {
             let intersectedMedia = intersects[0].object;
             let intersectedProject = intersects[0].object.parent;
             this.DOM.projectTitle.innerHTML = intersectedProject.name;
 
-            if (intersectedMedia.userData && !this.app.state.focus.media ||
-                intersectedMedia.userData.src != this.app.state.focus.media.userData.src ||
+            if (intersectedMedia.userData && !this.app._s.focus.media ||
+                intersectedMedia.userData.src != this.app._s.focus.media.userData.src ||
                 intersectedProject.userData.medias.length == 1) {
                 this.guiManager.setCursorMode('pointer');
                 return;
             }
-            if (this.state.cursor.now.x > (window.innerWidth / 2)) {
+            if (this._s.cursor.now.x > (window.innerWidth / 2)) {
                 this.guiManager.setCursorMode('left');
             } else {
                 this.guiManager.setCursorMode('right');
@@ -223,67 +227,67 @@ export default class CursorManager {
             return
         }
 
-        this.state.isHoverProject = false;
+        this._s.isHoverProject = false;
         this.guiManager.setCursorMode('cross');
-        if (this.DOM.projectTitle.innerHTML != this.app.state.focus.project.name) {
-            this.DOM.projectTitle.innerHTML = this.app.state.focus.project.name
+        if (this.DOM.projectTitle.innerHTML != this.app._s.focus.project.name) {
+            this.DOM.projectTitle.innerHTML = this.app._s.focus.project.name
         }
     }
 
     dragMenu(cursor) {
-        // this.DOM.projectTitle.style.display = "none";
-        this.state.hideTitle = setTimeout(() => {
+        this._s.hideTitle = setTimeout(() => {
             this.DOM.projectTitle.classList.add('hidden');
         }, 250);
 
+        let delta;
 
-        if (this.app.state.orientation === "landscape") {
-            this.threeManager.canvas.style.cursor = "";
-            const delta = this.state.cursor.now.x - cursor.x;
-            this.threeManager.state.projects.rotation.y -= delta / 500;
+        if (this.app._s.orientation === "landscape") {
+            delta = this._s.cursor.now.x - cursor.x;
+            this.app._s.menu.lerpTo += delta / -5000;
+
         } else {
-            this.threeManager.canvas.style.cursor = "";
-            const delta = this.state.cursor.now.y - cursor.y;
-            this.threeManager.state.projects.rotation.y += delta / 500;
+            delta = this._s.cursor.now.y - cursor.y;
+            this.threeManager._s.projects.rotation.y += delta / 500;
         }
+        this.app._s.menu.direction = delta < 0 ? 1 : -1;
 
-        this.state.cursor.isDragging = true;
+        this._s.cursor.isDragging = true;
     }
 
     handleClick() {
-        const intersects = this.rayCastManager.getIntersects(this.threeManager.camera, this.state.vector, this.app.state.objects);
+        const intersects = this.rayCastManager.getIntersects(this.threeManager.camera, this._s.vector, this.app._s.objects);
         let isNewProject = false;
 
         if (intersects.length > 0) {
             const media = intersects[0].object;
             const project = media.parent;
             console.log(media, project);
-            isNewProject = !this.app.state.focus.project
-                || project.name != this.app.state.focus.project.name;
+            isNewProject = !this.app._s.focus.project
+                || project.name != this.app._s.focus.project.name;
 
             if (isNewProject) {
                 this.threeManager.focusOn(project);
             } else {
                 if (project.userData.medias.length > 1) {
                     console.log(project);
-                    this.threeManager.mediaManager.changeMedia(project, this.state.cursor.direction);
+                    this.threeManager.mediaManager.changeMedia(project, this._s.cursor.direction);
                 }
             }
-            if (this.app.state.menu.isOpen) {
-                this.app.state.menu.isOpen = false;
+            if (this.app._s.menu.isOpen) {
+                this.app._s.menu.isOpen = false;
                 this.guiManager.setTopMenuMode('project');
             }
             this.guiManager.setProjectUI(project);
             /* this.DOM.projectLength.innerHTML = media.parent.userData.projectLength;
             this.DOM.mediaIndex.innerHTML = media.parent.userData.order + 1; */
         } else {
-            /* if (!!this.state.lastHover) {
-                this.threeManager.focusOn(this.state.lastHover);
-                // this.focusOn(this.state.lastHover);
+            /* if (!!this._s.lastHover) {
+                this.threeManager.focusOn(this._s.lastHover);
+                // this.focusOn(this._s.lastHover);
                 this.guiManager.setTopMenuMode('project');
-            } else if (!this.app.state.menu.isOpen) {
+            } else if (!this.app._s.menu.isOpen) {
                 // back to menu */
-            this.app.state.menu.isOpen = true;
+            this.app._s.menu.isOpen = true;
             this.threeManager.tweenToMenu();
             this.guiManager.setCursorMode('cross');
             this.guiManager.setTopMenuMode('menu');

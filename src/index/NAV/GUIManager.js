@@ -55,7 +55,7 @@ class GUIManager {
         this.threeManager = app.threeManager;
         this.tweenManager = app.tweenManager;
 
-        this.state = {
+        this._s = {
             cursorMode: new CursorModes(),
             topMenuMode: new TopMenuMode(),
             isHovering: false
@@ -94,10 +94,10 @@ class GUIManager {
     }
 
     setCursorMode = (mode) => {
-        this.state.cursorMode.set(mode);
+        this._s.cursorMode.set(mode);
     }
     setTopMenuMode = (mode) => {
-        this.state.topMenuMode.set(mode);
+        this._s.topMenuMode.set(mode);
     }
     setProjectTitle = (project) => {
         this.DOM.project.title.classList.remove('hidden');
@@ -135,7 +135,7 @@ class GUIManager {
             projecTitle: window.innerWidth < 600 ? 100 : 75
         }
 
-        let infoOpen = this.app.state.infoOpen;
+        let infoOpen = this.app._s.infoOpen;
 
         let canvas = {
             now: infoOpen ? max.canvas : 0,
@@ -152,18 +152,18 @@ class GUIManager {
         })
         tweener.addEventListener('complete', ({ detail }) => {
             console.log("COMPLETE!!!");
-            this.app.state.infoOpen = !this.app.state.infoOpen;
-            console.log("INFO OPEN IS ", this.app.state.infoOpen);
+            this.app._s.infoOpen = !this.app._s.infoOpen;
+            console.log("INFO OPEN IS ", this.app._s.infoOpen);
         })
     }
 
     closeInfo = e => {
         e.stopPropagation();
-        this.app.state.pause = false;
-        this.app.state.info = false;
+        this.app._s.pause = false;
+        this.app._s.info = false;
         this.tweenCanvas();
         this.setCursorMode('pointer');
-        if (this.app.state.menu.isOpen) {
+        if (this.app._s.menu.isOpen) {
             this.setTopMenuMode('menu')
         } else {
             this.setTopMenuMode('project')
@@ -172,8 +172,8 @@ class GUIManager {
     }
 
     openInfo = () => {
-        this.app.state.info = true;
-        this.app.state.pause = true;
+        this.app._s.info = true;
+        this.app._s.pause = true;
         this.setTopMenuMode('info');
         this.tweenCanvas();
         this.DOM.canvas.addEventListener('mouseup', this.closeInfo);
@@ -188,10 +188,10 @@ class GUIManager {
 
         document.querySelectorAll('button').forEach(b => {
             b.addEventListener('mouseenter', () => {
-                this.state.isHovering = true;
+                this._s.isHovering = true;
             })
             b.addEventListener('mouseout', () => {
-                this.state.isHovering = false;
+                this._s.isHovering = false;
             })
         })
 
@@ -206,15 +206,15 @@ class GUIManager {
             this.DOM.info.container.classList.remove('hidden');
             this.DOM.about.classList.add('hidden');
 
-            this.DOM.info.big.innerHTML = this.app.state.focus.project.userData.info.big;
-            this.DOM.info.small.innerHTML = this.app.state.focus.project.userData.info.small;
+            this.DOM.info.big.innerHTML = this.app._s.focus.project.userData.info.big;
+            this.DOM.info.small.innerHTML = this.app._s.focus.project.userData.info.small;
 
             this.openInfo();
         });
 
 
         this.DOM.buttons.contact.addEventListener('mouseup', () => {
-            if (this.app.state.menu.isOpen) {
+            if (this.app._s.menu.isOpen) {
                 this.threeManager.resizeCanvas();
             }
         })
@@ -222,10 +222,10 @@ class GUIManager {
         this.DOM.buttons.volume.addEventListener("mousedown", function (event) {
             if (this.children[0].innerHTML === "muted") {
                 this.children[0].innerHTML = "mute";
-                this.app.state.focus.media.material.map.image.volume = "1";
+                this.app._s.focus.media.material.map.image.volume = "1";
             } else {
                 this.children[0].innerHTML = "muted";
-                this.app.state.focus.media.material.map.image.volume = "0";
+                this.app._s.focus.media.material.map.image.volume = "0";
             }
         });
     }

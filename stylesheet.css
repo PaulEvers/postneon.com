@@ -54,6 +54,10 @@ body {
 
 #subTitle {}
 
+.mobile .scroll-container {
+	display: none;
+}
+
 .scroll-container {
 	position: fixed;
 	height: 100vh;

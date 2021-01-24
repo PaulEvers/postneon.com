@@ -16,16 +16,16 @@ export default class InteractionManager {
     }
 
     updateScroll() {
-        this.scrollManager.scrollLoop()
+        this.scrollManager.updateScroll()
     }
     updateHover() {
-        if (!this.app.state.isMobile &&
-            !this.app.state.info &&
-            !this.app.state.tween.isTweening &&
-            this.app.state.menu.isOpen &&
-            !this.app.state.guiHover &&
-            !this.app.state.mouseDown &&
-            !this.app.state.pause
+        if (!this.app._s.isMobile &&
+            !this.app._s.info &&
+            !this.app._s.tween.isTweening &&
+            this.app._s.menu.isOpen &&
+            !this.app._s.guiHover &&
+            !this.app._s.mouseDown &&
+            !this.app._s.pause
         ) {
             this.cursorManager.hoverMenu()
         }

@@ -16,7 +16,6 @@ html, body {
 
 body {
     font-family: "serifbabe";
-    cursor: crosshair;
     padding: 0px;
     margin: 0px;
     overflow: hidden;
@@ -85,7 +84,6 @@ body {
     top: 0px;
     bottom: 0px;
     z-index: 0;
-    cursor: crosshair;
     transform-origin: bottom right;
     overflow: hidden;
     background: black;
@@ -149,10 +147,6 @@ body {
     fill: white;
 }*/
 
-.hover {
-    cursor: pointer;
-}
-
 #postNeon {
     top: 1.25vh;
     left: 50vw;
@@ -163,7 +157,6 @@ body {
     height: 10vh;
     stroke: white;
     stroke-width: 2px;
-    cursor: pointer;
     user-select: none;
     top: 50vh;
     transform: translate(-50%, -50%);
@@ -314,7 +307,6 @@ button:active, button:focus {
 
 #projectInfo {
     right: 0px;
-    cursor: pointer;
     text-align: right;
     margin-right: 1.25vh;
     line-height: 7.5vh;

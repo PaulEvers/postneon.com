@@ -15,7 +15,7 @@ export default class ScrollManager {
                 content: document.querySelector(".scroll-content")
             },
         }
-        this.state = {
+        this._s = {
             toOrigin: false,
             scroll: {
                 now: { x: null, y: null },
@@ -23,63 +23,93 @@ export default class ScrollManager {
                 last: { x: null, y: null },
                 delta: { x: null, y: null },
                 alpha: 0.25,
-                origin: null
+                origin: null,
+                scrolling: false,
+                clearScrolling: null,
             }
 
         }
         this.init();
     }
     init() {
-        this.state.scroll.origin = this.DOM.scroll.content.offsetHeight / 2;
-        this.DOM.scroll.container.scrollTop = this.state.scroll.origin;
-        this.scrollLoop();
+        this._s.scroll.origin =
+        {
+            x: this.DOM.scroll.content.offsetWidth / 2,
+            y: this.DOM.scroll.content.offsetHeight / 2
+        };
+        this.DOM.scroll.container.scrollTop = this._s.scroll.origin.y;
+        this.DOM.scroll.container.addEventListener('wheel', () => { this.setScrolling(true) });
+        this.resetScrollState();
+        this.updateScroll();
+    }
+    setScrolling = (bool) => {
+        if (bool) {
+            this._s.scroll.scrolling = true;
+            if (this._s.scroll.clearScrolling)
+                clearTimeout(this._s.scroll.clearScrolling);
+            this._s.scroll.clearScrolling = setTimeout(() => {
+                this.setScrolling(false);
+            }, 500)
+        } else {
+            this._s.scroll.scrolling = true;
+        }
     }
 
-    scrollLoop = () => {
+    scrollToOrigin = () => {
+        this.DOM.scroll.container.scrollTo(0, this._s.scroll.origin.y);
+        this._s.toOrigin = true;
+    }
 
-        this.state.scroll.now = {
+    resetScrollState = () => {
+        this._s.scroll.eased = this._s.scroll.origin;
+        this._s.scroll.last = this._s.scroll.eased;
+    }
+
+    updateScroll = () => {
+        if (!this._s.scroll.scrolling) {
+            return false;
+        }
+        this._s.scroll.now = {
             x: this.DOM.scroll.container.scrollLeft,
             y: this.DOM.scroll.container.scrollTop
         }
 
-        if (this.state.toOrigin) {
-            if (this.state.scroll.now.y === this.state.scroll.origin)
-                this.state.toOrigin = false;
+        if (this._s.toOrigin) {
+            if (this._s.scroll.now.y === this._s.scroll.origin.y)
+                this._s.toOrigin = false;
             return;
         }
 
-        if (this.state.scroll.now.y === this.state.scroll.origin) {
-            this.state.scroll.eased = this.state.scroll.now;
-            this.state.scroll.last = this.state.scroll.eased
+        if (this._s.scroll.now.y === this._s.scroll.origin.y) {
+            this.resetScrollState();
             return
         }
 
-        this.state.scroll.eased = {
-            x: this.state.scroll.now.x * this.state.scroll.alpha + this.state.scroll.eased.x * (1 - this.state.scroll.alpha),
-            y: this.state.scroll.now.y * this.state.scroll.alpha + this.state.scroll.eased.y * (1 - this.state.scroll.alpha),
+        this._s.scroll.eased = {
+            x: this._s.scroll.now.x * this._s.scroll.alpha + this._s.scroll.eased.x * (1 - this._s.scroll.alpha),
+            y: this._s.scroll.now.y * this._s.scroll.alpha + this._s.scroll.eased.y * (1 - this._s.scroll.alpha),
         }
 
-        this.state.scroll.delta = {
-            x: this.state.scroll.last.x - this.state.scroll.eased.x,
-            y: this.state.scroll.last.y - this.state.scroll.eased.y
+        this._s.scroll.delta = {
+            x: this._s.scroll.last.x - this._s.scroll.eased.x,
+            y: this._s.scroll.last.y - this._s.scroll.eased.y
         }
 
-        this.app.state.menu.direction = this.state.scroll.delta.y > 0 ? 1 : -1;
+        this.app._s.menu.direction = this._s.scroll.delta.y > 0 ? 1 : -1;
 
 
-        if (Math.abs(this.state.scroll.delta.y) < 0.00125) {
-            this.DOM.scroll.container.scrollTo(0, this.state.scroll.origin);
-            this.state.toOrigin = true;
+        if (Math.abs(this._s.scroll.delta.y) < 0.00125) {
+            this.scrollToOrigin();
             return
         }
 
 
-        if (this.app.state.menu.isOpen) {
-            this.app.state.menu.lerpTo += this.state.scroll.delta.y / 10000;
+        if (this.app._s.menu.isOpen) {
+            this.app._s.menu.lerpTo += this._s.scroll.delta.y / 10000;
 
         } else {
         }
-        this.state.scroll.last = this.state.scroll.eased
+        this._s.scroll.last = this._s.scroll.eased
     }
 
     scrollToNextProject(direction) {

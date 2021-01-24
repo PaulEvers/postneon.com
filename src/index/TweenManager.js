@@ -2,7 +2,7 @@ import uniqid from 'uniqid'
 class TweenManager {
     constructor({ app, threeManager }) {
         this.tweens = {};
-        this.state = {
+        this._s = {
             isTweening: false,
         }
         this.delta = null;
@@ -15,15 +15,17 @@ class TweenManager {
         tweener.addEventListener('complete', () => {
             delete this.tweens[id];
             if (Object.keys(this.tweens) == 0) {
-                this.state.isTweening = false;
+                this._s.isTweening = false;
             }
         })
         return tweener;
     }
 
     easings = {
-        sine_in: (x) => 1 - Math.cos((x * Math.PI) / 2),
-        linear: (x) => x
+        // sine_in: (x) => 1 - Math.cos((x * Math.PI) / 2),
+        linear: (x) => x,
+        sine_in: (x) => x,
+
     }
 
     lerp(a, alpha) {
@@ -36,8 +38,8 @@ class TweenManager {
         let delta;
         for (let id in this.tweens) {
             tween = this.tweens[id];
-            delta = (now - tween.state.start) / tween.state.duration;
-            delta = this.easings[tween.state.easingType](delta);
+            delta = (now - tween._s.start) / tween._s.duration;
+            delta = this.easings[tween._s.easingType](delta);
             delta = Math.min(delta, 1);
             tween.update(delta);
             if (delta != 1) {
@@ -48,7 +50,7 @@ class TweenManager {
             delete this.tweens[id];
         }
 
-        this.state.isTweening = isTweening;
+        this._s.isTweening = isTweening;
         return isTweening;
     }
 }
@@ -60,7 +62,7 @@ class Tweener extends EventTarget {
             update: new CustomEvent("update", {}),
             complete: new CustomEvent("complete", {})
         }
-        this.state = {
+        this._s = {
             start: performance.now(),
             duration: duration,
             easingType: easingType

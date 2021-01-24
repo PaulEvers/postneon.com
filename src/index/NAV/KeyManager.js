@@ -1,6 +1,6 @@
 export default class KeyManager {
     constructor() {
-        this.state = {
+        this._s = {
             flyCam: {
                 velocity: 0.5,
                 direction: { x: 0, y: 0, z: 0 },
@@ -11,87 +11,87 @@ export default class KeyManager {
     }
     initKey() {
         function keyAction() {
-            if (this.state.flycam.stopMove) {
-                this.state.flycam.stopMove = false;
-                moveCamera(this.state.flycam.direction);
+            if (this._s.flycam.stopMove) {
+                this._s.flycam.stopMove = false;
+                moveCamera(this._s.flycam.direction);
             }
         }
         document.body.addEventListener("keydown", function (event) {
-            if (!this.app.state.menu.isOpen) {
-                if (this.state.flycam.keysPressed.indexOf(event.code) == -1) {
-                    this.state.flycam.keysPressed.push(event.code);
+            if (!this.app._s.menu.isOpen) {
+                if (this._s.flycam.keysPressed.indexOf(event.code) == -1) {
+                    this._s.flycam.keysPressed.push(event.code);
                     if (event.key === "ArrowUp" || event.code === "KeyW") {
-                        this.state.flycam.direction.x = -1;
+                        this._s.flycam.direction.x = -1;
                         keyAction();
                     }
                     if (event.key === "ArrowDown" || event.code === "KeyS") {
-                        this.state.flycam.direction.x = 1;
+                        this._s.flycam.direction.x = 1;
                         keyAction();
                     }
                     if (event.key === "ArrowLeft" || event.code === "KeyA") {
-                        this.state.flycam.direction.y = -1;
+                        this._s.flycam.direction.y = -1;
                         keyAction();
                     }
                     if (event.key === "ArrowRight" || event.code === "KeyD") {
-                        this.state.flycam.direction.y = 1;
+                        this._s.flycam.direction.y = 1;
                         keyAction();
                     }
                     if (event.code === "KeyQ") {
-                        this.state.flycam.direction.z = -1;
+                        this._s.flycam.direction.z = -1;
                         keyAction();
                     }
                     if (event.code === "KeyE") {
-                        this.state.flycam.direction.z = 1;
+                        this._s.flycam.direction.z = 1;
                         keyAction();
                     }
                 }
             }
         })
         document.body.onkeyup = function (event) {
-            this.state.flycam.keysPressed.splice(this.state.flycam.keysPressed.indexOf(event.code), 1);
-            if (!this.state.flycam.stopMove && this.state.flycam.keysPressed.length == 0) {
-                this.state.flycam.stopMove = true;
+            this._s.flycam.keysPressed.splice(this._s.flycam.keysPressed.indexOf(event.code), 1);
+            if (!this._s.flycam.stopMove && this._s.flycam.keysPressed.length == 0) {
+                this._s.flycam.stopMove = true;
             }
             if (event.key === "ArrowUp" || event.code === "KeyW") {
-                if ((this.state.flycam.keysPressed.indexOf("KeyS") == -1)) {
-                    this.state.flycam.direction.x = 0
+                if ((this._s.flycam.keysPressed.indexOf("KeyS") == -1)) {
+                    this._s.flycam.direction.x = 0
                 } else {
-                    this.state.flycam.direction.x = 1;
+                    this._s.flycam.direction.x = 1;
                 }
             }
             if (event.key === "ArrowDown" || event.code === "KeyS") {
-                if ((this.state.flycam.keysPressed.indexOf("KeyW") == -1)) {
-                    this.state.flycam.direction.x = 0;
+                if ((this._s.flycam.keysPressed.indexOf("KeyW") == -1)) {
+                    this._s.flycam.direction.x = 0;
                 } else {
-                    this.state.flycam.direction.x = -1;
+                    this._s.flycam.direction.x = -1;
                 }
             }
             if (event.key === "ArrowLeft" || event.code === "KeyA") {
-                if ((this.state.flycam.keysPressed.indexOf("KeyD") == -1)) {
-                    this.state.flycam.direction.y = 0;
+                if ((this._s.flycam.keysPressed.indexOf("KeyD") == -1)) {
+                    this._s.flycam.direction.y = 0;
                 } else {
-                    this.state.flycam.direction.y = 1;
+                    this._s.flycam.direction.y = 1;
                 }
             }
             if (event.key === "ArrowRight" || event.code === "KeyD") {
-                if ((this.state.flycam.keysPressed.indexOf("KeyA") == -1)) {
-                    this.state.flycam.direction.y = 0;
+                if ((this._s.flycam.keysPressed.indexOf("KeyA") == -1)) {
+                    this._s.flycam.direction.y = 0;
                 } else {
-                    this.state.flycam.direction.y = -1;
+                    this._s.flycam.direction.y = -1;
                 }
             }
             if (event.code === "KeyQ") {
-                if ((this.state.flycam.keysPressed.indexOf("KeyE") == -1)) {
-                    this.state.flycam.direction.z = 0;
+                if ((this._s.flycam.keysPressed.indexOf("KeyE") == -1)) {
+                    this._s.flycam.direction.z = 0;
                 } else {
-                    this.state.flycam.direction.y = 1;
+                    this._s.flycam.direction.y = 1;
                 }
             }
             if (event.code === "KeyE") {
-                if ((this.state.flycam.keysPressed.indexOf("KeyQ") == -1)) {
-                    this.state.flycam.direction.z = 0;
+                if ((this._s.flycam.keysPressed.indexOf("KeyQ") == -1)) {
+                    this._s.flycam.direction.z = 0;
                 } else {
-                    this.state.flycam.direction.y = -1;
+                    this._s.flycam.direction.y = -1;
                 }
             }
         }
@@ -101,12 +101,12 @@ export default class KeyManager {
 
 
     moveCamera() {
-        if (!this.state.flycam.stopMove) {
+        if (!this._s.flycam.stopMove) {
             requestAnimationFrame(() => { moveCamera() });
         }
 
-        this.threeManager.camera.translateZ(this.state.flycam.velocity * this.state.flycam.direction.x);
-        this.threeManager.translateX(this.state.flycam.velocity * this.state.flycam.direction.y);
-        this.threeManager.translateY(this.state.flycam.velocity * this.state.flycam.direction.z);
+        this.threeManager.camera.translateZ(this._s.flycam.velocity * this._s.flycam.direction.x);
+        this.threeManager.translateX(this._s.flycam.velocity * this._s.flycam.direction.y);
+        this.threeManager.translateY(this._s.flycam.velocity * this._s.flycam.direction.z);
     }
 }

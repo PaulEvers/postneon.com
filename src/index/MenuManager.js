@@ -8,7 +8,7 @@ export default class MenuManager {
             normal: document.querySelector("#normal"),
             pointer: document.querySelector("#pointer"),
         }
-        this.state = {
+        this._s = {
             now: null,
             delta: null,
             vector: new THREE.Vector2(),
@@ -22,22 +22,22 @@ export default class MenuManager {
 
         }
     }
-    rotateMenu(state) {
-        this.state.now = performance.now();
-        if (state.menu.isOpen && this.state.lastTick) {
+    rotateMenu(_s) {
+        this._s.now = performance.now();
+        if (_s.menu.isOpen && this._s.lastTick) {
 
-            this.state.delta = Math.min(10, this.state.now - this.state.lastTick);
-            if (this.state.delta < (100 / 120))
+            this._s.delta = Math.min(10, this._s.now - this._s.lastTick);
+            if (this._s.delta < (100 / 120))
                 return
-            // console.log(this.app.state.menu.lerpTo);
-            this.app.state.menu.lerpTo = Math.abs(this.app.state.menu.lerpTo) < 0.000001 ? 0 : this.app.state.menu.lerpTo;
-            this.state.lerpTo = this.app.state.menu.lerpTo/*  * 0.1 + this.state.lerpTo * 0.9 */;
-            this.threeManager.state.projects.rotation.y += (this.state.speed * this.state.delta / 25 * state.menu.direction) * 0.9 + (this.app.state.menu.lerpTo) * 0.1;
-            // this.app.state.menu.lerpTo = this.app.state.menu.lerpTo * 0.975;
-            this.app.state.menu.lerpTo
-            this.state.lastTick = this.state.now;
+            // console.log(this.app._s.menu.lerpTo);
+            this.app._s.menu.lerpTo = Math.abs(this.app._s.menu.lerpTo) < 0.000001 ? 0 : this.app._s.menu.lerpTo;
+            this._s.lerpTo = this.app._s.menu.lerpTo/*  * 0.1 + this._s.lerpTo * 0.9 */;
+            this.threeManager._s.projects.rotation.y += (this._s.speed * this._s.delta / 25 * _s.menu.direction) * 0.9 + (this.app._s.menu.lerpTo) * 0.1;
+            // this.app._s.menu.lerpTo = this.app._s.menu.lerpTo * 0.975;
+            this.app._s.menu.lerpTo
+            this._s.lastTick = this._s.now;
         } else {
-            this.state.lastTick = this.state.now;
+            this._s.lastTick = this._s.now;
         }
     }
 }
