@@ -205,6 +205,10 @@ body {
     white-space: nowrap;
 }
 
+.UI-container.video-mode .volume-button {
+    display: inline-block;
+}
+
 /* menu-mode */
 
 .UI-container.menu-mode .menu-buttons {
@@ -400,7 +404,10 @@ input::selection {
     pointer-events: none;
     opacity: 0;
     /* mix-blend-mode: exclusion; */
-    transition: transform 0.25s;
+}
+
+.cursor.activated {
+    transition: transform 0.05s;
 }
 
 .cursor.pointer-left .pointer {
@@ -463,7 +470,7 @@ input::selection {
     width: 100vw;
     z-index: 5;
     overflow: auto;
-    transform: scale(2);
+    /* transform: scale(2); */
     background: black;
     mix-blend-mode: lighten;
 }

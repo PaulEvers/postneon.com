@@ -2,7 +2,6 @@
 import ThreeManager from "./3D/ThreeManager"
 import InteractionManager from "./NAV/InteractionManager"
 import TweenManager from './TweenManager';
-import MenuManager from "./MenuManager"
 import * as THREE from "three"
 window.THREE = THREE;
 
@@ -17,21 +16,16 @@ class Application {
             infoOpen: false,
             tween: {
                 isTweening: false,
-                timeStamp: performance.now()
             },
             menu: {
                 isOpen: true,
                 direction: 1,
                 lerpTo: 0,
             },
-            interaction: {
-                timeStap: performance.now()
-            },
             infoMode: false,
             cursor: {
                 x: null,
                 y: null,
-                isScrolling: false
             },
             textures: {
                 pics: {},
@@ -39,7 +33,6 @@ class Application {
                 preview: {},
                 uploading: [],
                 videos: {},
-                timeStap: performance.now()
             },
             focus: {
                 project: null,
@@ -59,15 +52,16 @@ class Application {
 
         this._s.opt = this._s.isMobile ? 'mobile' : 'desktop';
         // this._s.opt = 'mobile';
-        this.threeManager = new ThreeManager({ app: this });
-        this.tweenManager = new TweenManager({ app: this, threeManager: this.threeManager });
-        this.interactionManager = new InteractionManager({ app: this, threeManager: this.threeManager });
-        this.menuManager = new MenuManager({ app: this, threeManager: this.threeManager });
-        this.threeManager.initLogos().then(() => {
+        this._three = new ThreeManager({ app: this });
+        this._tween = new TweenManager({ app: this, _three: this._three });
+        this._gui = new GUIManager({ app: this, _three: this._three };
+
+        this._interaction = new InteractionManager({ app: this, _three: this._three });
+        this._three.initLogos().then(() => {
             this.animate();
         })
 
-        this.threeManager.fetchScene("http://www.post-neon.com/new/JSON/data.json");
+        this._three.fetchScene("http://www.post-neon.com/new/JSON/data.json");
     }
 
     animate = (now) => {
@@ -88,11 +82,11 @@ class Application {
 
 
 
-        this.threeManager.render();
-        this.interactionManager.updateScroll();
-        this.interactionManager.updateHover();
+        this._three.render();
+        this._interaction.updateScroll();
+        this._interaction.updateHover();
 
-        this.tweenManager.update(now);
+        this._tween.update(now);
 
         for (let key in this._s.textures.update) {
             if (this._s.textures.update[key].image.readyState >=
@@ -104,7 +98,7 @@ class Application {
 
 
         if (this._s.menu.isOpen) {
-            this.threeManager.rotateMenu(now);
+            this._three.rotateMenu(now);
         }
     }
 }

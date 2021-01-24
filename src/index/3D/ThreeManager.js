@@ -10,7 +10,7 @@ class ThreeManager {
             geo: new THREE.PlaneGeometry(0, 0, 1),
             mat: new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide }),
             mesh: new THREE.Mesh(this.geo, this.mat),
-            // MediaManager: new MediaManager({ app: this.app, threeManager: this })
+            // MediaManager: new MediaManager({ app: this.app, _three: this })
         }
 
         this._s = {
@@ -35,10 +35,13 @@ class ThreeManager {
             preserveDrawingBuffer: true,
             alpha: false,
             depth: false,
+            // precision: 'highp',
             powerPreference: 'low-power',
             antialias: true,
             outputEncoding: THREE.LinearEncoding,
         });
+        // this.renderer.precision = this.renderer.capabilities.getMaxPrecision();
+        // console.log('PRECISION IS ', this.renderer.capabilities.getMaxPrecision());
 
         this.renderer.setPixelRatio(pixelRatio);
         this.renderer.debug.checkShaderErrors = false;
@@ -56,8 +59,8 @@ class ThreeManager {
         ////console.log(this.camera.fov, this.camera.position.z);
 
         this.loader = new THREE.TextureLoader();
-        this.mediaManager = new MediaManager({ app: app, threeManager: this });
-        this.logoManager = new LogoManager({ app: this.app, threeManager: this });
+        this._media = new MediaManager({ app: app, _three: this });
+        this._logo = new LogoManager({ app: this.app, _three: this });
 
         this.init();
 
@@ -67,7 +70,7 @@ class ThreeManager {
         this.initProjects();
     }
     initLogos = async () => {
-        await this.logoManager.createLogos();
+        await this._logo.createLogos();
         return;
     }
 
@@ -97,7 +100,7 @@ class ThreeManager {
     }
 
     tweenToProject(project) {
-        let tween = this.app.tweenManager.add(500, "sine_in");
+        let tween = this.app._tween.add(500, "sine_in");
         const media = project.children[0];
         const viewpoint = project.children[1];
 
@@ -117,8 +120,8 @@ class ThreeManager {
             tween: new THREE.Quaternion()
         }
 
-        project.children[1].getWorldPosition(pos.next);
-        project.children[1].getWorldQuaternion(quat.next);
+        viewpoint.getWorldPosition(pos.next);
+        media.getWorldQuaternion(quat.next);
 
         tween.addEventListener('update', ({ detail }) => {
             THREE.Quaternion.slerp(quat.now, quat.next, quat.tween, detail);
@@ -130,13 +133,13 @@ class ThreeManager {
         tween.addEventListener('complete', () => {
             this.app._s.menu.isOpen = false;
             if (media.userData.type === 'video') media.material.map.play();
-
         })
         return tween;
     }
 
     tweenToMenu = () => {
-        let tween = this.app.tweenManager.add(500, "sine_in");
+        console.log("TWEEN TO MENU");
+        let tween = this.app._tween.add(500, "sine_in");
         if (!tween) return false;
 
         this.pauseMedia();
@@ -173,10 +176,11 @@ class ThreeManager {
         if (canTween) {
             this.app._s.focus.project = project;
             this.app._s.focus.media = media;
+            console.log('focusOn', this.app._s.focus.media);
             if (this.app._s.focus.media.userData.type === 'video')
                 this.app._s.focus.media.material.map.pause();
             if (!this.app._s.focus.project) return;
-            // this.mediaManager.preloadVideos(project);
+            // this._media.preloadVideos(project);
         }
         return canTween;
     }
@@ -237,7 +241,8 @@ class ThreeManager {
         if (this.app._s.orientation !== this._s.tempOrientation)
             this.changeOrientation(this._s.tempOrientation);
 
-        this.logoManager.chooseLogo();
+        this._logo.chooseLogo();
+
 
         if (this.app._s.menuOpen) {
 
@@ -248,9 +253,15 @@ class ThreeManager {
 
         this.render();
         if (!!this.app._s.menu.isOpen) {
-            this.logoManager.chooseLogo();
+            this._logo.chooseLogo();
+        } else {
+            this.updateViewpointPosition(this.app._s.focus.project);
+            let vector = new THREE.Vector3();
+            this.app._s.focus.project.children[1].getWorldPosition(vector);
+            this.camera.position.copy(vector);
         }
-        this.mediaManager.updateScaleMedias();
+
+        this._media.updateScaleMedias();
     }
 
     fetchProject = async (_p) => {
@@ -292,7 +303,7 @@ class ThreeManager {
 
         this.addToProjects(project);
 
-        let media = await this.mediaManager.create({ _media: _m, _project: _p });
+        let media = await this._media.create({ _media: _m, _project: _p });
 
         project.add(media);
         this.app._s.objects.push(media);
@@ -358,16 +369,16 @@ class ThreeManager {
 
 
 class LogoManager {
-    constructor({ app, threeManager }) {
+    constructor({ app, _three }) {
         this.app = app;
-        this.threeManager = threeManager;
-        this.canvas = this.threeManager.canvas;
+        this._three = _three;
+        this.canvas = this._three.canvas;
         this.logos = new THREE.Group();
         this.logos.name = 'logos';
 
         this.resources = {
             mat: new THREE.MeshBasicMaterial({ color: 0xffffff, transparant: true }),
-            mesh: this.threeManager.resources.mesh
+            mesh: this._three.resources.mesh
         };
         this._s = {
             isInitialized: false,
@@ -428,8 +439,8 @@ class LogoManager {
                 })
                 ////console.log("CHOOSELOG");
                 this.chooseLogo();
-                this.threeManager.render(performance.now);
-                this.threeManager.addToScene(this.logos);
+                this._three.render(performance.now);
+                this._three.addToScene(this.logos);
                 this._s.isInitialized = true;
                 resolve();
             })

@@ -1,9 +1,8 @@
 import enableInlineVideo from 'iphone-inline-video';
 
 export default class MediaManager {
-    constructor({ threeManager, app }) {
+    constructor({ app }) {
         this.app = app;
-        this.threeManager = threeManager;
         this.DOM = {
             videos: document.querySelector('#videos'),
             buttons: {
@@ -99,9 +98,10 @@ export default class MediaManager {
             let video = await this.createVideo({ url, src });
 
             let texture = this.resources.texture.video(video);
-
+            // texture.minFilter = THREE.LinearInterpolant;
             texture.format = THREE.RGBFormat;
             texture.generateMipMaps = false;
+
 
             texture.play = async (callback) => {
                 video.play();
@@ -126,12 +126,12 @@ export default class MediaManager {
                 texture.play();
                 await this.isReady(video);
                 resolve(texture);
-
-                // video.pause();
                 setTimeout(() => {
                     texture.pause();
                 }, 250);
             } else {
+                texture.play();
+                await this.isReady(video);
                 resolve(texture);
             }
         })
@@ -166,10 +166,10 @@ export default class MediaManager {
     }
 
     scaleMedia = (media, ratio) => {
-        const camera = this.threeManager.camera;
+        const camera = this.app._three.camera;
         const viewpoint = media.parent.children[1];
 
-        this.threeManager.updateViewpointPosition(media.parent);
+        this.app._three.updateViewpointPosition(media.parent);
 
         for (let src in this.app._s.textures.update)
             this.app._s.textures.update[src].pause();
@@ -193,7 +193,7 @@ export default class MediaManager {
 
         if (scale.now === scale.next) return
 
-        let tweener = this.app.tweenManager.add(500);
+        let tweener = this.app._tween.add(500, "elastic_in_out");
         tweener.addEventListener('update', ({ detail }) => {
             scale.tween = scale.now.clone();
             scale.tween.lerp(scale.next.clone(), detail);
@@ -215,7 +215,6 @@ export default class MediaManager {
         if (order < 0) order = project.userData.medias.length - 1;
 
         let media = project.children[0];
-        console.log(project, media);
 
         let _media = project.userData.medias[order];
         project.userData.order = order;
@@ -231,26 +230,19 @@ export default class MediaManager {
             _oldTex.dispose();
             project.children[0].material.map = tex;
             project.children[0].material.needsUpdate = true;
+            this._gui.hideVolume();
         } else {
             if (!this.app._s.isMobile) {
                 this.DOM.buttons.volume.classList.remove('hidden');
             }
-            // if (!this.app._s.textures["videos"][_media.src]) {
             let _oldTex = media.material.map;
             let texture = await this.createVideoTexture(url, false);
-            texture.play();
             this.app._s.textures["videos"][_media.src] = texture;
-            media.material.map = texture;
-            _oldTex.dispose();
-
-            /* } else {
-                setTimeout(() => {
-                    const texture = this.app._s.textures.videos[_media.src];
-                    this.app._s.textures.update[_media.src] = texture;
-                    media.material.map = texture;
-                    texture.play();
-                }, 250);
-            } */
+            setTimeout(() => {
+                media.material.map = texture;
+                _oldTex.dispose();
+            }, 250);
+            this._gui.showVolume();
         }
     }
 
@@ -265,7 +257,7 @@ export default class MediaManager {
         }
     }
     updateScaleMedias() {
-        for (let project of this.threeManager._s.projects.children) {
+        for (let project of this.app._three._s.projects.children) {
             let media = project.children[0];
             if (!media) return;
             media.scale.copy(this.getScaleMedia(media.userData.ratio));

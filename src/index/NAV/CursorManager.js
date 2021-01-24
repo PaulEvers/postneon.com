@@ -4,20 +4,18 @@ import RayCastManager from "../3D/RayCastManager"
 
 
 export default class CursorManager {
-    constructor({ app, guiManager }) {
+    constructor({ app }) {
         this.app = app;
-        this.threeManager = app.threeManager;
-        this.tweenManager = app.tweenManager;
-        this.guiManager = guiManager;
 
-        this.rayCastManager = new RayCastManager();
+        this._raycast = new RayCastManager();
 
         this.DOM = {
-            canvas: this.threeManager.renderer.domElement,
+            canvas: this.app._three.renderer.domElement,
             projectTitle: document.querySelector(".project-title"),
             buttons: {
                 back: document.querySelector(".back-button"),
-            }
+            },
+            scroll: document.querySelector(".scroll-container")
         }
 
         this._s = {
@@ -58,10 +56,10 @@ export default class CursorManager {
     init() {
         if (!this.app._s.isMobile) {
             window.addEventListener('mousemove', this.onCursorMove.bind(this), false);
-            window.addEventListener('mousedown', this.onCursorDown.bind(this), false);
-            window.addEventListener('mouseup', this.onCursorUp.bind(this), false);
+            this.DOM.scroll.addEventListener('mousedown', this.onCursorDown.bind(this), false);
+            this.DOM.scroll.addEventListener('mouseup', this.onCursorUp.bind(this), false);
             window.addEventListener("mouseout", () => {
-                this.guiManager.hideCursor()
+                this.this.app._gui.hideCursor()
             })
         } else {
             window.addEventListener('touchstart', this.onCursorDown.bind(this), false);
@@ -104,14 +102,14 @@ export default class CursorManager {
 
         this._s.cursor.temp = this.getCursorPosition(event);
 
-        this.guiManager.setCursorPosition(this._s.cursor.temp.x, this._s.cursor.temp.y)
-        this.guiManager.showCursor();
+        this.this.app._gui.setCursorPosition(this._s.cursor.temp.x, this._s.cursor.temp.y)
+        this.this.app._gui.showCursor();
 
         if (!this.app._s.menu.isOpen) {
 
             this.hoverProject();
         } else {
-            this.guiManager.setCursorMode('pointer')
+            this.this.app._gui.setCursorMode('pointer')
         }
 
         if (this._s.cursor.isDragging && this._s.cursor.temp.x && this.app._s.menu.isOpen) {
@@ -121,10 +119,10 @@ export default class CursorManager {
         if (this.app._s.info) {
             if (event.target.id === 'scene') {
                 this.DOM.buttons.back.classList.add('active');
-                this.guiManager.setCursorMode('cross')
+                this.this.app._gui.setCursorMode('cross')
             } else {
                 this.DOM.buttons.back.classList.remove('active');
-                this.guiManager.setCursorMode('pointer')
+                this.this.app._gui.setCursorMode('pointer')
             }
         }
         this._s.cursor.now = this._s.cursor.temp;
@@ -173,31 +171,31 @@ export default class CursorManager {
     }
 
     hoverMenu() {
-        if (this.tweenManager._s.isTweening) return;
+        if (this.app._tween._s.isTweening) return;
 
         this._s.cursor.array = this.getCursorArray();
         if (!this._s.cursor.array) return;
 
         this._s.vector.fromArray(this._s.cursor.array);
 
-        this._s.intersections = this.rayCastManager.getIntersects(this.threeManager.camera, this._s.vector, this.app._s.objects);
+        this._s.intersections = this._raycast.getIntersects(this.app._three.camera, this._s.vector, this.app._s.objects);
 
         if (this._s.intersections.length > 0) {
             this._s.intersected.media = this._s.intersections[0].object;
             this._s.intersected.project = this._s.intersected.media.parent;
-            this.guiManager.setProjectTitle(this._s.intersected.project);
+            this.this.app._gui.setProjectTitle(this._s.intersected.project);
         } else {
-            this.guiManager.hideProjectTitle();
+            this.this.app._gui.hideProjectTitle();
         }
     }
 
     hoverProject() {
         if (this.app._s.pause) return;
-        if (this.tweenManager._s.isTweening) return;
-        this.guiManager.showCursor();
+        if (this.app._tween._s.isTweening) return;
+        this.this.app._gui.showCursor();
 
-        if (this.guiManager._s.isHovering) {
-            this.guiManager.setCursorMode('pointer');
+        if (this.this.app._gui._s.isHovering) {
+            this.this.app._gui.setCursorMode('pointer');
             return;
         }
 
@@ -205,7 +203,7 @@ export default class CursorManager {
         if (!cursorArray) return;
         this._s.vector.fromArray(cursorArray);
 
-        const intersects = this.rayCastManager.getIntersects(this.threeManager.camera, this._s.vector, this.app._s.objects);
+        const intersects = this._raycast.getIntersects(this.app._three.camera, this._s.vector, this.app._s.objects);
 
         if (intersects.length > 0) {
             let intersectedMedia = intersects[0].object;
@@ -215,20 +213,20 @@ export default class CursorManager {
             if (intersectedMedia.userData && !this.app._s.focus.media ||
                 intersectedMedia.userData.src != this.app._s.focus.media.userData.src ||
                 intersectedProject.userData.medias.length == 1) {
-                this.guiManager.setCursorMode('pointer');
+                this.this.app._gui.setCursorMode('pointer');
                 return;
             }
             if (this._s.cursor.now.x > (window.innerWidth / 2)) {
-                this.guiManager.setCursorMode('left');
+                this.this.app._gui.setCursorMode('left');
             } else {
-                this.guiManager.setCursorMode('right');
+                this.this.app._gui.setCursorMode('right');
 
             }
             return
         }
 
         this._s.isHoverProject = false;
-        this.guiManager.setCursorMode('cross');
+        this.this.app._gui.setCursorMode('cross');
         if (this.DOM.projectTitle.innerHTML != this.app._s.focus.project.name) {
             this.DOM.projectTitle.innerHTML = this.app._s.focus.project.name
         }
@@ -247,7 +245,7 @@ export default class CursorManager {
 
         } else {
             delta = this._s.cursor.now.y - cursor.y;
-            this.threeManager._s.projects.rotation.y += delta / 500;
+            this.app._three._s.projects.rotation.y += delta / 500;
         }
         this.app._s.menu.direction = delta < 0 ? 1 : -1;
 
@@ -255,43 +253,34 @@ export default class CursorManager {
     }
 
     handleClick() {
-        const intersects = this.rayCastManager.getIntersects(this.threeManager.camera, this._s.vector, this.app._s.objects);
+        const intersects = this._raycast.getIntersects(this.app._three.camera, this._s.vector, this.app._s.objects);
         let isNewProject = false;
 
         if (intersects.length > 0) {
             const media = intersects[0].object;
             const project = media.parent;
-            console.log(media, project);
             isNewProject = !this.app._s.focus.project
                 || project.name != this.app._s.focus.project.name;
 
             if (isNewProject) {
-                this.threeManager.focusOn(project);
+                this.app._three.focusOn(project);
             } else {
                 if (project.userData.medias.length > 1) {
-                    console.log(project);
-                    this.threeManager.mediaManager.changeMedia(project, this._s.cursor.direction);
+
+                    this.app._three._media.changeMedia(project, this._s.cursor.direction);
                 }
             }
             if (this.app._s.menu.isOpen) {
                 this.app._s.menu.isOpen = false;
-                this.guiManager.setTopMenuMode('project');
+                this.this.app._gui.setTopMenuMode('project');
             }
-            this.guiManager.setProjectUI(project);
-            /* this.DOM.projectLength.innerHTML = media.parent.userData.projectLength;
-            this.DOM.mediaIndex.innerHTML = media.parent.userData.order + 1; */
+            this.this.app._gui.setProjectUI(project);
+
         } else {
-            /* if (!!this._s.lastHover) {
-                this.threeManager.focusOn(this._s.lastHover);
-                // this.focusOn(this._s.lastHover);
-                this.guiManager.setTopMenuMode('project');
-            } else if (!this.app._s.menu.isOpen) {
-                // back to menu */
             this.app._s.menu.isOpen = true;
-            this.threeManager.tweenToMenu();
-            this.guiManager.setCursorMode('cross');
-            this.guiManager.setTopMenuMode('menu');
-            // }
+            this.app._three.tweenToMenu();
+            this.this.app._gui.setCursorMode('cross');
+            this.this.app._gui.setTopMenuMode('menu');
         }
         return isNewProject;
     }

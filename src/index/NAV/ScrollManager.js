@@ -1,13 +1,6 @@
-import normalizeWheel from 'normalize-wheel'
-
 export default class ScrollManager {
-    constructor({ app, guiManager }) {
-
+    constructor({ app }) {
         this.app = app;
-        this.threeManager = app.threeManager;
-        this.mediaManager = this.threeManager.mediaManager;
-        this.tweenManager = app.tweenManager;
-        this.guiManager = guiManager;
 
         this.DOM = {
             scroll: {
@@ -49,6 +42,7 @@ export default class ScrollManager {
                 clearTimeout(this._s.scroll.clearScrolling);
             this._s.scroll.clearScrolling = setTimeout(() => {
                 this.setScrolling(false);
+
             }, 500)
         } else {
             this._s.scroll.scrolling = true;
@@ -106,18 +100,17 @@ export default class ScrollManager {
 
         if (this.app._s.menu.isOpen) {
             this.app._s.menu.lerpTo += this._s.scroll.delta.y / 10000;
-
         } else {
+            if (!this.app._tween._s.isTweening && Math.abs(this._s.scroll.delta.y) > 30)
+                this.scrollToNextProject(this._s.scroll.delta.y > 0 ? -1 : 1)
         }
         this._s.scroll.last = this._s.scroll.eased
     }
 
     scrollToNextProject(direction) {
-        let nextProject = this.threeManager.getNextProject(direction);
-        let success = this.threeManager.focusOn(nextProject.children[0], 1000);
+        let project = this.app._three.getNextProject(direction);
+        let success = this.app._three.focusOn(project, 1000);
         if (success)
-            this.guiManager.setProjectUI(project)
-
+            this.app._gui.setProjectUI(project)
     }
-
 }

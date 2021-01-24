@@ -105,8 +105,8 @@ export default class KeyManager {
             requestAnimationFrame(() => { moveCamera() });
         }
 
-        this.threeManager.camera.translateZ(this._s.flycam.velocity * this._s.flycam.direction.x);
-        this.threeManager.translateX(this._s.flycam.velocity * this._s.flycam.direction.y);
-        this.threeManager.translateY(this._s.flycam.velocity * this._s.flycam.direction.z);
+        this._three.camera.translateZ(this._s.flycam.velocity * this._s.flycam.direction.x);
+        this._three.translateX(this._s.flycam.velocity * this._s.flycam.direction.y);
+        this._three.translateY(this._s.flycam.velocity * this._s.flycam.direction.z);
     }
 }

@@ -5,18 +5,15 @@ import ScrollManager from "./ScrollManager"
 
 
 export default class InteractionManager {
-    constructor({ app, threeManager }) {
+    constructor({ app, _three }) {
         this.app = app;
-        this.threeManager = threeManager;
-
-        this.guiManager = new GUIManager({ app, threeManager });
-        this.cursorManager = new CursorManager({ app, guiManager: this.guiManager });
-        this.scrollManager = new ScrollManager({ app, guiManager: this.guiManager });
-        this.keyManager = new KeyManager({ app, guiManager: this.guiManager });
+        this._cursor = new CursorManager({ app });
+        this._scroll = new ScrollManager({ app });
+        this.keyManager = new KeyManager({ app });
     }
 
     updateScroll() {
-        this.scrollManager.updateScroll()
+        this._scroll.updateScroll()
     }
     updateHover() {
         if (!this.app._s.isMobile &&
@@ -27,7 +24,7 @@ export default class InteractionManager {
             !this.app._s.mouseDown &&
             !this.app._s.pause
         ) {
-            this.cursorManager.hoverMenu()
+            this._cursor.hoverMenu()
         }
     }
 }

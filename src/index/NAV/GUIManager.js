@@ -50,26 +50,28 @@ class TopMenuMode {
 }
 
 class GUIManager {
-    constructor({ app, threeManager }) {
+    constructor({ app }) {
         this.app = app;
-        this.threeManager = app.threeManager;
-        this.tweenManager = app.tweenManager;
 
         this._s = {
             cursorMode: new CursorModes(),
             topMenuMode: new TopMenuMode(),
-            isHovering: false
+            isHovering: false,
+            cursor: {
+                activated: false,
+            }
         }
 
         this.DOM = {
             cursor: document.querySelector('.cursor'),
             canvas: document.querySelector('#threejs'),
+            UIContainer: document.querySelector(".UI-container"),
             buttons: {
                 about: document.querySelector(".about-button"),
                 contact: document.querySelector(".contact-button"),
                 volume: document.querySelector(".volume-button"),
                 back: document.querySelector(".back-button"),
-                menu: document.querySelector(".back-button"),
+                menu: document.querySelector(".menu-button"),
                 info: document.querySelector(".info-button")
             },
             project: {
@@ -89,8 +91,13 @@ class GUIManager {
 
 
     setCursorPosition = (x, y) => {
-        this.DOM.cursor.style.left = x;
-        this.DOM.cursor.style.top = y;
+        this.DOM.cursor.style.transform = `translateX(${x}px) translateY(${y}px)`
+        if (!this._s.cursor.activated) {
+            this._s.cursor.activated = true;
+            setTimeout(() => {
+                this.DOM.cursor.classList.add('activated');
+            }, 0);
+        }
     }
 
     setCursorMode = (mode) => {
@@ -127,7 +134,7 @@ class GUIManager {
     }
 
     tweenCanvas = () => {
-        let tweener = this.app.tweenManager.add(750);
+        let tweener = this.app.this.app._tween.add(750);
         if (!tweener) return
 
         const max = {
@@ -147,8 +154,8 @@ class GUIManager {
         }
 
         tweener.addEventListener('update', ({ detail }) => {
-            this.DOM.canvas.style.left = this.tweenManager.lerp(canvas, detail) + "vw";
-            this.DOM.project.title.style.left = this.tweenManager.lerp(projectTitle, detail) + "%";
+            this.DOM.canvas.style.left = this.this.app._tween.lerp(canvas, detail) + "vw";
+            this.DOM.project.title.style.left = this.this.app._tween.lerp(projectTitle, detail) + "%";
         })
         tweener.addEventListener('complete', ({ detail }) => {
             console.log("COMPLETE!!!");
@@ -157,8 +164,15 @@ class GUIManager {
         })
     }
 
+    showVolume = () => {
+        this.DOM.buttons.volume.classList.remove('hidden');
+    }
+
+    hideVolume = () => {
+        this.DOM.buttons.volume.classList.add('hidden');
+    }
+
     closeInfo = e => {
-        e.stopPropagation();
         this.app._s.pause = false;
         this.app._s.info = false;
         this.tweenCanvas();
@@ -169,6 +183,8 @@ class GUIManager {
             this.setTopMenuMode('project')
         }
         this.DOM.canvas.removeEventListener('mouseup', this.closeInfo);
+        e.stopPropagation();
+        e.preventDefault();
     }
 
     openInfo = () => {
@@ -181,8 +197,10 @@ class GUIManager {
 
     init = () => {
         this.DOM.buttons.back.addEventListener('mouseup', this.closeInfo)
-        this.DOM.buttons.menu.addEventListener('mouseup', () => {
-            this.threeManager.tweenToMenu(false);
+        this.DOM.buttons.menu.addEventListener('mouseup', (e) => {
+            e.stopPropagation();
+            console.log('this?');
+            this.app._three.tweenToMenu(false);
             this.setTopMenuMode('menu');
         })
 
@@ -195,14 +213,17 @@ class GUIManager {
             })
         })
 
-        this.DOM.buttons.about.addEventListener('mouseup', () => {
+        this.DOM.buttons.about.addEventListener('mouseup', (e) => {
+            e.stopPropagation();
             this.DOM.about.classList.remove('hidden');
             this.DOM.info.container.classList.add('hidden');
 
             this.openInfo();
         });
 
-        this.DOM.buttons.info.addEventListener('mouseup', () => {
+        this.DOM.buttons.info.addEventListener('mouseup', (e) => {
+            e.stopPropagation();
+
             this.DOM.info.container.classList.remove('hidden');
             this.DOM.about.classList.add('hidden');
 
@@ -213,9 +234,11 @@ class GUIManager {
         });
 
 
-        this.DOM.buttons.contact.addEventListener('mouseup', () => {
+        this.DOM.buttons.contact.addEventListener('mouseup', (e) => {
+            e.stopPropagation();
+
             if (this.app._s.menu.isOpen) {
-                this.threeManager.resizeCanvas();
+                this.app._three.resizeCanvas();
             }
         })
 

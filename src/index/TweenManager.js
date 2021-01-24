@@ -1,6 +1,6 @@
 import uniqid from 'uniqid'
 class TweenManager {
-    constructor({ app, threeManager }) {
+    constructor({ app, _three }) {
         this.tweens = {};
         this._s = {
             isTweening: false,
@@ -25,6 +25,7 @@ class TweenManager {
         // sine_in: (x) => 1 - Math.cos((x * Math.PI) / 2),
         linear: (x) => x,
         sine_in: (x) => x,
+        elastic_in_out: (x) => (Math.cos(Math.PI * x) - 1) / -2 + 0.01,
 
     }
 

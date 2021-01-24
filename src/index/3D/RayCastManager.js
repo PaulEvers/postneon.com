@@ -1,6 +1,7 @@
 export default class RayCastManager {
     constructor() {
         this.raycaster = new THREE.Raycaster();
+        this.raycaster.far = 1000;
         this.cursor = new THREE.Vector2();
         this.intersects = [];
 
