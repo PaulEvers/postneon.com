@@ -22,10 +22,11 @@
     "node-composer-runner": "^0.3.0",
     "webpack": "^4.28.4",
     "webpack-bundle-analyzer": "^3.3.2",
-    "webpack-cli": "^3.2.1"
+    "webpack-cli": "^3.2.1",
+    "worker-loader": "^3.0.8"
   },
   "scripts": {
-    "build": "webpack --mode development --watch "
+    "start": "webpack --mode development --watch "
   },
   "author": "",
   "license": "ISC"

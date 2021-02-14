@@ -18,7 +18,7 @@ export default class CursorManager {
             scroll: document.querySelector(".scroll-container")
         }
 
-        this._s = {
+        this.__ = {
             vector: new THREE.Vector2(),
             intersections: [],
             intersected: {
@@ -54,12 +54,12 @@ export default class CursorManager {
     }
 
     init() {
-        if (!this.app._s.isMobile) {
+        if (!this.app.__.isMobile) {
             window.addEventListener('mousemove', this.onCursorMove.bind(this), false);
             this.DOM.scroll.addEventListener('mousedown', this.onCursorDown.bind(this), false);
             this.DOM.scroll.addEventListener('mouseup', this.onCursorUp.bind(this), false);
             window.addEventListener("mouseout", () => {
-                this.this.app._gui.hideCursor()
+                this.app._gui.hideCursor()
             })
         } else {
             window.addEventListener('touchstart', this.onCursorDown.bind(this), false);
@@ -78,209 +78,213 @@ export default class CursorManager {
     }
 
     getCursorArray() {
-        return [(this._s.cursor.now.x) / window.innerWidth, (this._s.cursor.now.y) / window.innerHeight];
+        return [(this.__.cursor.now.x) / window.innerWidth, (this.__.cursor.now.y) / window.innerHeight];
     }
 
     onCursorDown(event) {
-        if (this.app._s.info) return;
-        if (!!this._s.focusBack) {
-            clearTimeout(this._s.focusBack);
-            this._s.focusBack = false;
+        if (this.app.__.info) return;
+        if (!!this.__.focusBack) {
+            clearTimeout(this.__.focusBack);
+            this.__.focusBack = false;
         }
-        this._s.cursor.isDragging = true;
-        this._s.cursor.now = this.getCursorPosition(event);
-        this.app._s.mouseDown = performance.now();
+        this.__.cursor.isDragging = true;
+        this.__.cursor.now = this.getCursorPosition(event);
+        document.elementsFromPoint(this.__.cursor.now.x, this.__.cursor.now.y)[2].click({ 'detail': 'start' });
+        console.log(document.elementsFromPoint(this.__.cursor.now.x, this.__.cursor.now.y));
+        this.app.__.mouseDown = performance.now();
 
-        if (this.app._s.isMobile)
-            this._s.cursor.start = this._s.cursor.now;
+        if (this.app.__.isMobile)
+            this.__.cursor.start = this.__.cursor.now;
     }
 
     onCursorMove = (event) => {
-        if (!this._s.throttle.mousemove) return;
+        this.app.__.pause = false;
+        if (!this.__.throttle.mousemove) return;
 
-        this._s.throttle.mousemove = false;
+        this.__.throttle.mousemove = false;
 
-        this._s.cursor.temp = this.getCursorPosition(event);
+        this.__.cursor.temp = this.getCursorPosition(event);
 
-        this.this.app._gui.setCursorPosition(this._s.cursor.temp.x, this._s.cursor.temp.y)
-        this.this.app._gui.showCursor();
+        this.app._gui.setCursorPosition(this.__.cursor.temp.x, this.__.cursor.temp.y)
+        this.app._gui.showCursor();
 
-        if (!this.app._s.menu.isOpen) {
-
+        if (!this.app.__.menu.isOpen) {
             this.hoverProject();
         } else {
-            this.this.app._gui.setCursorMode('pointer')
+            this.app._gui.setCursorMode('pointer')
         }
 
-        if (this._s.cursor.isDragging && this._s.cursor.temp.x && this.app._s.menu.isOpen) {
-            this.dragMenu(this._s.cursor.temp);
+        if (this.__.cursor.isDragging && this.__.cursor.temp.x && this.app.__.menu.isOpen) {
+            this.dragMenu(this.__.cursor.temp);
         }
 
-        if (this.app._s.info) {
-            if (event.target.id === 'scene') {
+        if (this.app.__.infoMode) {
+            // console.log(event.target);
+            if (event.target.classList.contains("scroll-content")) {
+                console.log('ok');
                 this.DOM.buttons.back.classList.add('active');
-                this.this.app._gui.setCursorMode('cross')
+                this.app._gui.setCursorMode('cross')
             } else {
                 this.DOM.buttons.back.classList.remove('active');
-                this.this.app._gui.setCursorMode('pointer')
+                this.app._gui.setCursorMode('pointer')
             }
         }
-        this._s.cursor.now = this._s.cursor.temp;
+        this.__.cursor.now = this.__.cursor.temp;
 
-        setTimeout(() => this._s.throttle.mousemove = true, 1000 / 60);
+        setTimeout(() => this.__.throttle.mousemove = true, 1000 / 60);
     }
 
     onCursorUp(event) {
-        if (!this._s.cursor.isDragging) return;
-        this._s.cursor.isDragging = false;
+        if (!this.__.cursor.isDragging) return;
+        this.__.cursor.isDragging = false;
 
-        this._s.vector.fromArray(this.getCursorArray());
+        this.__.vector.fromArray(this.getCursorArray());
 
-        clearTimeout(this._s.hideTitle);
+        clearTimeout(this.__.hideTitle);
 
 
-        if (this._s.cursor.temp.x < window.innerWidth / 2) {
-            this._s.cursor.direction = -1;
+        if (this.__.cursor.temp.x < window.innerWidth / 2) {
+            this.__.cursor.direction = -1;
         } else {
-            this._s.cursor.direction = 1;
+            this.__.cursor.direction = 1;
         }
 
-        if (!this.app._s.info) {
-            if (!this.app._s.isMobile || this.app._s.menu.isOpen) {
-                if (Math.abs(this.app._s.mouseDown - performance.now()) < 200) {
+        if (!this.app.__.infoMode) {
+            if (!this.app.__.isMobile || this.app.__.menu.isOpen) {
+                if (Math.abs(this.app.__.mouseDown - performance.now()) < 200) {
                     this.handleClick();
                 }
             } else {
-                if (this.app._s.orientation === 'landscape' &&
-                    Math.abs(this._s.cursor.start.x - this._s.cursor.now.x) > 125) {
-                    let direction = this._s.cursor.start.x > this._s.cursor.now.x ? -1 : 1;
+                if (this.app.__.orientation === 'landscape' &&
+                    Math.abs(this.__.cursor.start.x - this.__.cursor.now.x) > 125) {
+                    let direction = this.__.cursor.start.x > this.__.cursor.now.x ? -1 : 1;
                     this.scrollToNextProject(direction);
 
-                } else if (this.app._s.orientation === 'portrait' &&
-                    Math.abs(this._s.cursor.start.y - this._s.cursor.now.y) > 125) {
-                    let direction = this._s.cursor.start.y > this._s.cursor.now.y ? -1 : 1;
+                } else if (this.app.__.orientation === 'portrait' &&
+                    Math.abs(this.__.cursor.start.y - this.__.cursor.now.y) > 125) {
+                    let direction = this.__.cursor.start.y > this.__.cursor.now.y ? -1 : 1;
                     this.scrollToNextProject(direction);
                     return
-                } else if (Math.abs(this.app._s.mouseDown - performance.now()) < 200) {
+                } else if (Math.abs(this.app.__.mouseDown - performance.now()) < 200) {
                     this.handleClick();
                 }
             }
         }
-        this._s.cursor.start = this._s.cursor.now;
-        this.app._s.mouseDown = false;
+        this.__.cursor.start = this.__.cursor.now;
+        this.app.__.mouseDown = false;
     }
 
     hoverMenu() {
-        if (this.app._tween._s.isTweening) return;
+        if (this.app._tween.__.isTweening) return;
 
-        this._s.cursor.array = this.getCursorArray();
-        if (!this._s.cursor.array) return;
+        this.__.cursor.array = this.getCursorArray();
+        if (!this.__.cursor.array) return;
 
-        this._s.vector.fromArray(this._s.cursor.array);
+        this.__.vector.fromArray(this.__.cursor.array);
 
-        this._s.intersections = this._raycast.getIntersects(this.app._three.camera, this._s.vector, this.app._s.objects);
+        this.__.intersections = this._raycast.getIntersects(this.app._three.camera, this.__.vector, this.app.__.objects);
 
-        if (this._s.intersections.length > 0) {
-            this._s.intersected.media = this._s.intersections[0].object;
-            this._s.intersected.project = this._s.intersected.media.parent;
-            this.this.app._gui.setProjectTitle(this._s.intersected.project);
+        if (this.__.intersections.length > 0) {
+            this.__.intersected.media = this.__.intersections[0].object;
+            this.__.intersected.project = this.__.intersected.media.parent;
+            this.app._gui.setProjectTitle(this.__.intersected.project);
         } else {
-            this.this.app._gui.hideProjectTitle();
+            this.app._gui.hideProjectTitle();
         }
     }
 
     hoverProject() {
-        if (this.app._s.pause) return;
-        if (this.app._tween._s.isTweening) return;
-        this.this.app._gui.showCursor();
+        if (this.app.__.pause) return;
+        if (this.app._tween.__.isTweening) return;
+        this.app._gui.showCursor();
 
-        if (this.this.app._gui._s.isHovering) {
-            this.this.app._gui.setCursorMode('pointer');
+        if (this.app._gui.__.isHovering) {
+            this.app._gui.setCursorMode('pointer');
             return;
         }
 
         const cursorArray = this.getCursorArray();
         if (!cursorArray) return;
-        this._s.vector.fromArray(cursorArray);
+        this.__.vector.fromArray(cursorArray);
 
-        const intersects = this._raycast.getIntersects(this.app._three.camera, this._s.vector, this.app._s.objects);
+        const intersects = this._raycast.getIntersects(this.app._three.camera, this.__.vector, this.app.__.objects);
 
         if (intersects.length > 0) {
             let intersectedMedia = intersects[0].object;
             let intersectedProject = intersects[0].object.parent;
             this.DOM.projectTitle.innerHTML = intersectedProject.name;
 
-            if (intersectedMedia.userData && !this.app._s.focus.media ||
-                intersectedMedia.userData.src != this.app._s.focus.media.userData.src ||
+            if (intersectedMedia.userData && !this.app.__.focus.media ||
+                intersectedMedia.userData.src != this.app.__.focus.media.userData.src ||
                 intersectedProject.userData.medias.length == 1) {
-                this.this.app._gui.setCursorMode('pointer');
+                this.app._gui.setCursorMode('pointer');
                 return;
             }
-            if (this._s.cursor.now.x > (window.innerWidth / 2)) {
-                this.this.app._gui.setCursorMode('left');
+            if (this.__.cursor.now.x > (window.innerWidth / 2)) {
+                this.app._gui.setCursorMode('left');
             } else {
-                this.this.app._gui.setCursorMode('right');
+                this.app._gui.setCursorMode('right');
 
             }
             return
         }
 
-        this._s.isHoverProject = false;
-        this.this.app._gui.setCursorMode('cross');
-        if (this.DOM.projectTitle.innerHTML != this.app._s.focus.project.name) {
-            this.DOM.projectTitle.innerHTML = this.app._s.focus.project.name
+        this.__.isHoverProject = false;
+        this.app._gui.setCursorMode('cross');
+        if (this.DOM.projectTitle.innerHTML != this.app.__.focus.project.name) {
+            this.DOM.projectTitle.innerHTML = this.app.__.focus.project.name
         }
     }
 
     dragMenu(cursor) {
-        this._s.hideTitle = setTimeout(() => {
+        this.__.hideTitle = setTimeout(() => {
             this.DOM.projectTitle.classList.add('hidden');
         }, 250);
 
         let delta;
 
-        if (this.app._s.orientation === "landscape") {
-            delta = this._s.cursor.now.x - cursor.x;
-            this.app._s.menu.lerpTo += delta / -5000;
+        if (this.app.__.orientation === "landscape") {
+            delta = this.__.cursor.now.x - cursor.x;
+            this.app.__.menu.lerpTo += delta / -5000;
 
         } else {
-            delta = this._s.cursor.now.y - cursor.y;
-            this.app._three._s.projects.rotation.y += delta / 500;
+            delta = this.__.cursor.now.y - cursor.y;
+            this.app._three.__.projects.rotation.y += delta / 500;
         }
-        this.app._s.menu.direction = delta < 0 ? 1 : -1;
+        this.app.__.menu.direction = delta < 0 ? 1 : -1;
 
-        this._s.cursor.isDragging = true;
+        this.__.cursor.isDragging = true;
     }
 
     handleClick() {
-        const intersects = this._raycast.getIntersects(this.app._three.camera, this._s.vector, this.app._s.objects);
+        const intersects = this._raycast.getIntersects(this.app._three.camera, this.__.vector, this.app.__.objects);
         let isNewProject = false;
 
         if (intersects.length > 0) {
             const media = intersects[0].object;
             const project = media.parent;
-            isNewProject = !this.app._s.focus.project
-                || project.name != this.app._s.focus.project.name;
+            isNewProject = !this.app.__.focus.project
+                || project.name != this.app.__.focus.project.name;
 
             if (isNewProject) {
                 this.app._three.focusOn(project);
             } else {
                 if (project.userData.medias.length > 1) {
 
-                    this.app._three._media.changeMedia(project, this._s.cursor.direction);
+                    this.app._three._media.changeMedia(project, this.__.cursor.direction);
                 }
             }
-            if (this.app._s.menu.isOpen) {
-                this.app._s.menu.isOpen = false;
-                this.this.app._gui.setTopMenuMode('project');
+            if (this.app.__.menu.isOpen) {
+                this.app.__.menu.isOpen = false;
+                this.app._gui.setTopMenuMode('project');
             }
-            this.this.app._gui.setProjectUI(project);
+            this.app._gui.setProjectUI(project);
 
         } else {
-            this.app._s.menu.isOpen = true;
+            this.app.__.menu.isOpen = true;
             this.app._three.tweenToMenu();
-            this.this.app._gui.setCursorMode('cross');
-            this.this.app._gui.setTopMenuMode('menu');
+            this.app._gui.setCursorMode('cross');
+            this.app._gui.setTopMenuMode('menu');
         }
         return isNewProject;
     }

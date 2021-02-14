@@ -8,6 +8,12 @@
     src: url("serifbabe_alt.otf");
 }
 
+video, img {
+    width: 2000px;
+    height: 2000px;
+    object-fit: fill;
+}
+
 html, body {
     height: 100vh;
     overflow: hidden;
@@ -51,17 +57,13 @@ body {
     width: 100vw;
 }
 
-#videos * {
-    width: 75px;
-}
-
 #videos {
     z-index: 10;
     top: 0vh;
     position: absolute;
-    opacity: 0;
+    /* opacity: 0; */
     pointer-events: none;
-    /*display: none;*/
+    display: none;
 }
 
 /* .play-button, .IIV::-webkit-media-controls-start-playback-button {
@@ -77,7 +79,7 @@ body {
 }
 
 #threejs {
-    position: absolute;
+    position: fixed;
     height: 100vh;
     left: 0px;
     right: 0px;
@@ -200,7 +202,7 @@ body {
     pointer-events: all;
 }
 
-.menu-buttons, .project-buttons, .info-buttons, .volume-button, .index-container {
+.menu-buttons, .project-buttons, .info-buttons, .index-container {
     display: none;
     white-space: nowrap;
 }
@@ -210,6 +212,10 @@ body {
 }
 
 /* menu-mode */
+
+.UI-container.menu-mode .volume-button {
+    display: none !important;
+}
 
 .UI-container.menu-mode .menu-buttons {
     display: inline-block;
@@ -234,6 +240,10 @@ body {
 }
 
 /* info-mode */
+
+.UI-container.info-mode .volume-button {
+    display: none !important;
+}
 
 .UI-container.info-mode .info-buttons {
     display: inline-block;
@@ -403,7 +413,7 @@ input::selection {
     left: 0px;
     pointer-events: none;
     opacity: 0;
-    /* mix-blend-mode: exclusion; */
+    mix-blend-mode: exclusion;
 }
 
 .cursor.activated {
@@ -455,23 +465,29 @@ input::selection {
 }
 
 .volume-button {
-    right: 0px;
+    right: 5px;
     position: absolute;
-    bottom: 1.5vh;
+    bottom: 0px;
 }
 
 .hidden {
-    display: none !important;
+    /* display: none !important; */
+    opacity: 0 !important;
+    pointer-events: none;
+}
+
+.scroll-container.toOrigin {
+    pointer-events: none;
 }
 
 .scroll-container {
-    position: fixed;
+    position: absolute;
     height: 100vh;
     width: 100vw;
     z-index: 5;
     overflow: auto;
     /* transform: scale(2); */
-    background: black;
+    /* background: black; */
     mix-blend-mode: lighten;
 }
 

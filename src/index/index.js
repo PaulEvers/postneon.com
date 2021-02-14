@@ -2,104 +2,163 @@
 import ThreeManager from "./3D/ThreeManager"
 import InteractionManager from "./NAV/InteractionManager"
 import TweenManager from './TweenManager';
+import GUIManager from './NAV/GUIManager';
+
 import * as THREE from "three"
 window.THREE = THREE;
 
 class Application {
-    constructor() {
-        // set up some variables
-        this.JSON = {};
-        this.scene = null;
-        this._s = {
-            time: 0,
-            pause: false,
-            infoOpen: false,
-            tween: {
-                isTweening: false,
-            },
-            menu: {
-                isOpen: true,
-                direction: 1,
-                lerpTo: 0,
-            },
-            infoMode: false,
-            cursor: {
-                x: null,
-                y: null,
-            },
-            textures: {
-                pics: {},
-                update: {},
-                preview: {},
-                uploading: [],
-                videos: {},
-            },
-            focus: {
-                project: null,
-                media: null
-            },
-            opt: null,
-            objects: []
-        }
-        this.init();
+    __ = {
+        time: 0,
+        pause: false,
+        infoOpen: false,
+        timestamp: {
+            analysis: performance.now(),
+            hover: performance.now(),
+            scroll: performance.now(),
+        },
+        tween: {
+            isTweening: false,
+        },
+        menu: {
+            isOpen: true,
+            direction: 1,
+            lerpTo: 0,
+        },
+        infoMode: false,
+        cursor: {
+            x: null,
+            y: null,
+        },
+        textures: {
+            pics: {},
+            update: {},
+            preview: {},
+            uploading: [],
+            videos: {},
+        },
+        focus: {
+            project: null,
+            media: null
+        },
+        opt: null,
+        objects: []
     }
 
-    async init() {
-        this.faviconAnimator = new FaviconAnimator();
-        let formatOptimizer = new FormatOptimizer();
+    capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1);
 
-        this._s.isMobile = formatOptimizer.isMobile;
 
-        this._s.opt = this._s.isMobile ? 'mobile' : 'desktop';
-        // this._s.opt = 'mobile';
+    getOrientation = () => window.innerWidth > window.innerHeight ? 'landscape' : 'portrait';
+
+    constructor() {
+        const faviconAnimator = new FaviconAnimator();
+        const formatOptimizer = new FormatOptimizer();
+
+        this.__.isMobile = formatOptimizer.isMobile;
+        this.__.opt = this.__.isMobile ? 'mobile' : 'desktop';
+
         this._three = new ThreeManager({ app: this });
-        this._tween = new TweenManager({ app: this, _three: this._three });
-        this._gui = new GUIManager({ app: this, _three: this._three };
+        this._tween = new TweenManager({ app: this });
+        this._gui = new GUIManager({ app: this });
+        this._interaction = new InteractionManager({ app: this });
 
-        this._interaction = new InteractionManager({ app: this, _three: this._three });
-        this._three.initLogos().then(() => {
-            this.animate();
-        })
+        this._three.initLogos()
+            .then(this.initLoops)
 
         this._three.fetchScene("http://www.post-neon.com/new/JSON/data.json");
+        window.addEventListener('blur', this.onBlur);
+        window.addEventListener('focus', this.onFocus);
+    }
+
+
+    initLoops = () => {
+        this.analyse();
+        this.animate();
+    }
+
+    onBlur = () => {
+        console.log("BLUR!");
+        this.__.pause = true;
+    }
+    onFocus = () => {
+        console.log("UNBLUR!");
+        this.__.pause = false
+    }
+
+    analyse = (now) => {
+        requestAnimationFrame(this.analyse);
+        if (this.__.pause) return;
+
+        if (!now) return;
+
+        if (!this.__.timestamp.analysis)
+            this.__.timestamp.analysis = now;
+        else {
+            if ((1000 / (now - this.__.timestamp.analysis)) > 120) {
+                return;
+            } else {
+                this.__.timestamp.analysis = now;
+            }
+        }
+
+        if (this.__.menu.isOpen) {
+            this._three.rotateMenu(now);
+        }
+
+        this._tween.update(now);
+
+        if (this.__.infoMode || this.__.isMobile) return
+
+        if ((1000 / (now - this.__.timestamp.scroll)) < 60) {
+            this._interaction._scroll.updateScroll();
+            this.__.timestamp.scroll = now;
+        }
+
+
+        if (this.__.menu.isOpen &&
+            !this.__.tween.isTweening &&
+            !this.__.guiHover
+        ) {
+            if ((1000 / (now - this.__.timestamp.hover)) < 15) {
+                this._interaction._cursor.hoverMenu();
+                this.__.timestamp.hover = now;
+            }
+        }
     }
 
     animate = (now) => {
         requestAnimationFrame(this.animate);
-        if (!now) return;
-        if (!this._s.lastTime)
-            this._s.lastTime = now;
-        else {
-            if ((1000 / (now - this._s.lastTime)) > 90) {
-                return;
-            } else {
-                this._s.lastTime = now;
-            }
-        }
+        // setTimeout(() => { this.animate(performance.now) }, 1000 / 60);
+        if (this.__.pause) return;
 
-        if (this._s.stopAnimation || document.hidden || !document.visibilityState)
+        /* if (!this.__.isMobile) {
+            if (!now) return;
+            if (!this.__.timestamp.animate)
+                this.__.timestamp.animate = now;
+            else {
+                if ((1000 / (now - this.__.timestamp.animate)) > 90) {
+                    return;
+                } else {
+                    this.__.timestamp.animate = now;
+                }
+            }
+
+        } */
+
+        if (this.__.stopAnimation || document.hidden || !document.visibilityState)
             return;
 
-
-
-        this._three.render();
-        this._interaction.updateScroll();
-        this._interaction.updateHover();
-
-        this._tween.update(now);
-
-        for (let key in this._s.textures.update) {
-            if (this._s.textures.update[key].image.readyState >=
-                this._s.textures.update[key].image.HAVE_CURRENT_DATA
+        for (let key in this.__.textures.update) {
+            // console.log(this.__.textures.update[key].video);
+            if (this.__.textures.update[key].video.readyState >=
+                this.__.textures.update[key].video.HAVE_CURRENT_DATA
             ) {
-                this._s.textures.update[key].needsUpdate = true;
+                this.__.textures.update[key].update();
+                this.__.textures.update[key].needsUpdate = true;
             }
         }
+        this._three.render();
 
-
-        if (this._s.menu.isOpen) {
-            this._three.rotateMenu(now);
-        }
     }
 }
 

@@ -1,5 +1,86 @@
 import enableInlineVideo from 'iphone-inline-video';
 
+
+const VideoCanvas = function ({ url, src }) {
+    this.canvas = document.createElement("canvas");
+    var ctx = this.canvas.getContext('2d', { alpha: false });
+    // const ctx = this.canvas.getContext('bitmaprenderer')
+
+    this.video = document.createElement("video");
+
+    this.video.setAttribute("loop", "");
+    this.video.id = src;
+    this.video.volume = 0;
+    this.video.setAttribute("playsinline", "true");
+    enableInlineVideo(this.video);
+
+    let source = document.createElement("source");
+    source.src = url;
+    this.video.appendChild(source);
+
+
+
+    this.video.addEventListener('loadedmetadata', () => {
+        this.canvas.width = this.video.videoWidth;
+        this.canvas.height = this.video.videoHeight;
+    });
+
+    let playing = false;
+
+    this.play = () => {
+        this.video.play();
+        playing = true;
+        // updateCanvas();
+    }
+
+    this.pause = () => {
+        this.video.pause();
+        playing = false;
+    }
+
+    this.update = async () => {
+        // ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        // ctx.drawImage(this.video, 0, 0, this.canvas.width, this.canvas.height);
+
+        // if (!playing) return;
+        // console.log('this should happen');
+
+        // requestAnimationFrame(updateCanvas);
+
+
+        // this.canvas = await createImageBitmap(this.video);
+
+        // ctx.transferFromImageBitmap(img);
+    }
+
+
+    this.isReady = async () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 1;
+        canvas.height = 1;
+        const videoTester = canvas.getContext("2d");
+
+        let p = null;
+        return new Promise((resolve) => {
+            const pingVideo = () => {
+                if (this.video.readyState >=
+                    this.video.HAVE_CURRENT_DATA) {
+                    videoTester.drawImage(this.video, 0, 0, 1, 1);
+                    p = videoTester.getImageData(0, 0, 1, 1).data;
+                    if (p.reduce((a, b) => a + b) > 0.5)
+                        resolve()
+                    else
+                        requestAnimationFrame(pingVideo);
+                } else {
+                    requestAnimationFrame(pingVideo);
+                }
+
+            }
+            pingVideo();
+        })
+    }
+}
+
 export default class MediaManager {
     constructor({ app }) {
         this.app = app;
@@ -26,41 +107,23 @@ export default class MediaManager {
                         generateMipMaps: false,
                     })
                 },
-                video: (video) => {
-                    return new THREE.Texture(video,
+                canvas: (canvas) => {
+                    return new THREE.Texture(canvas,
                         {
-                            minFilter: THREE.NearestFilter,
-                            magFilter: THREE.NearestFilter,
+                            minFilter: THREE.LinearFilter,
+                            magFilter: THREE.LinearFilter,
+                            encoding: THREE.sRGBEncoding,
                             generateMipMaps: false,
                         })
                 }
             },
             loader: new THREE.TextureLoader(),
         }
-        this.initVideoTester();
-    }
-    initVideoTester = () => {
-        let canvas = document.createElement('canvas');
-        canvas.width = 1;
-        canvas.height = 1;
-        this.videoTester = canvas.getContext("2d");
     }
 
-    isReady = async (video) => {
-        let p = null;
 
-        return new Promise((resolve) => {
-            const pingVideo = (video) => {
-                this.videoTester.drawImage(video, 0, 0, 1, 1);
-                p = this.videoTester.getImageData(0, 0, 1, 1).data;
-                if (p.reduce((a, b) => a + b) > 0.5)
-                    resolve()
-                else
-                    requestAnimationFrame(() => { pingVideo(video) });
-            }
-            pingVideo(video);
-        })
-    }
+
+
 
     pauseIfVideo = (media, duration) => {
         if (media.userData.type !== 'video') return;
@@ -76,36 +139,29 @@ export default class MediaManager {
         }, duration);
     }
 
-    createVideo = async ({ url, src }) => {
-        return new Promise(async (resolve) => {
-            var video = document.createElement("video");
-            var source = document.createElement("source");
-            source.src = `${url}`;
-            video.setAttribute("loop", "");
-            video.id = src;
-            video.volume = 0;
-            video.setAttribute("playsinline", "true");
-            enableInlineVideo(video);
-            video.appendChild(source);
-            resolve(video);
-        })
-    }
+    /* createVideo = async ({ url, src }) => {
+        return 
+    } */
 
     createVideoTexture = async (url, onlyFirstFrame) => {
 
         return new Promise(async (resolve) => {
             let src = url.split("/")[url.split("/").length - 1];
-            let video = await this.createVideo({ url, src });
-
-            let texture = this.resources.texture.video(video);
-            // texture.minFilter = THREE.LinearInterpolant;
-            texture.format = THREE.RGBFormat;
+            let video = new VideoCanvas({ url, src });
+            let texture = this.resources.texture.canvas(video.video);
+            texture.update = video.update;
+            console.log("VIDEOVIDEO IS ", video.video)
+            texture.video = video.video;
+            // texture.minFilter = THREE.LinearFilter;
+            texture.minFilter = THREE.LinearMipmapLinearFilter;
+            // texture.format = THREE.AlphaFormat;
             texture.generateMipMaps = false;
-
+            // texture.anisotropy = this.app._three.renderer.getMaxAnisotropy()
 
             texture.play = async (callback) => {
                 video.play();
-                this.app._s.textures.update[src] = texture;
+                this.app.__.textures.update[src] = texture;
+                console.log(this.app.__.textures.update);
                 texture.playing = true;
                 if (callback) {
                     callback();
@@ -115,24 +171,27 @@ export default class MediaManager {
             texture.pause = () => {
                 video.pause();
                 texture.playing = false;
-                delete this.app._s.textures.update[src];
+                delete this.app.__.textures.update[src];
             }
 
-            this.app._s.textures["videos"][src] = texture;
+            this.app.__.textures["videos"][src] = texture;
+            // document.getElementById('videos').appendChild(video.canvas);
 
             if (onlyFirstFrame) {
                 if (texture.playing)
                     return
                 texture.play();
-                await this.isReady(video);
+                await video.isReady();
+                console.log(video.src + ' is ready');
                 resolve(texture);
                 setTimeout(() => {
                     texture.pause();
-                }, 250);
+                }, 1000);
             } else {
                 texture.play();
-                await this.isReady(video);
+                await video.isReady();
                 resolve(texture);
+                console.log("SHOULD  BE PAYIN???");
             }
         })
     }
@@ -142,7 +201,7 @@ export default class MediaManager {
             this.resources.loader.load(url, (tex) => {
                 tex.minFilter = THREE.LinearMipmapLinearFilter;
                 tex.magFilter = THREE.LinearFilter;
-                // tex.generateMipMaps = false;
+                tex.generateMipMaps = true;
                 resolve(tex)
             });
         })
@@ -152,8 +211,8 @@ export default class MediaManager {
         console.log(project);
         for (let _media of project.userData.medias) {
             if (_media.type === 'video') {
-                if (!this.app._s.textures["videos"][_media.src]) {
-                    let url = `projects/${project.userData.directory}/${this.capitalize(_media.type)}/${this.app._s.opt}/${_media.src}`;
+                if (!this.app.__.textures["videos"][_media.src]) {
+                    let url = `projects/${project.userData.directory}/${this.capitalize(_media.type)}/${this.app.__.opt}/${_media.src}`;
                     let texture = await this.createVideoTexture(url, true);
                     console.log('preloaded texture');
                 }
@@ -171,8 +230,8 @@ export default class MediaManager {
 
         this.app._three.updateViewpointPosition(media.parent);
 
-        for (let src in this.app._s.textures.update)
-            this.app._s.textures.update[src].pause();
+        for (let src in this.app.__.textures.update)
+            this.app.__.textures.update[src].pause();
 
 
         let scale = {
@@ -220,7 +279,7 @@ export default class MediaManager {
         project.userData.order = order;
 
         media.userData = _media;
-        let url = `projects/${project.userData.directory}/${this.capitalize(_media.type)}/${this.app._s.opt}/${_media.src}`;
+        let url = `projects/${project.userData.directory}/${this.capitalize(_media.type)}/${this.app.__.opt}/${_media.src}`;
 
         this.scaleMedia(media, media.userData.ratio);
 
@@ -230,19 +289,19 @@ export default class MediaManager {
             _oldTex.dispose();
             project.children[0].material.map = tex;
             project.children[0].material.needsUpdate = true;
-            this._gui.hideVolume();
+            this.app._gui.hideVolume();
         } else {
-            if (!this.app._s.isMobile) {
+            if (!this.app.__.isMobile) {
                 this.DOM.buttons.volume.classList.remove('hidden');
             }
             let _oldTex = media.material.map;
             let texture = await this.createVideoTexture(url, false);
-            this.app._s.textures["videos"][_media.src] = texture;
+            this.app.__.textures["videos"][_media.src] = texture;
             setTimeout(() => {
                 media.material.map = texture;
                 _oldTex.dispose();
             }, 250);
-            this._gui.showVolume();
+            this.app._gui.showVolume();
         }
     }
 
@@ -257,7 +316,7 @@ export default class MediaManager {
         }
     }
     updateScaleMedias() {
-        for (let project of this.app._three._s.projects.children) {
+        for (let project of this.app._three.__.projects.children) {
             let media = project.children[0];
             if (!media) return;
             media.scale.copy(this.getScaleMedia(media.userData.ratio));
@@ -270,10 +329,11 @@ export default class MediaManager {
         media.userData = _media
         media.updateMatrix();
         media.position.set(0, 0, 75);
-        media.rotation.set(0, 0, (Math.PI / -2));
+        media.rotation.set(0, 0, (Math.PI / 2));
         media.scale.copy(this.getScaleMedia(_media.ratio));
+        media.frustumCulled = false;
 
-        let url = `projects/${_project.directory}/${this.capitalize(_media.type)}/${this.app._s.opt}/${_media.src}`;
+        let url = `projects/${_project.directory}/${this.capitalize(_media.type)}/${this.app.__.opt}/${_media.src}`;
 
         if (_media.type === "image") {
             media.material.visible = false;

@@ -11,21 +11,5 @@ export default class InteractionManager {
         this._scroll = new ScrollManager({ app });
         this.keyManager = new KeyManager({ app });
     }
-
-    updateScroll() {
-        this._scroll.updateScroll()
-    }
-    updateHover() {
-        if (!this.app._s.isMobile &&
-            !this.app._s.info &&
-            !this.app._s.tween.isTweening &&
-            this.app._s.menu.isOpen &&
-            !this.app._s.guiHover &&
-            !this.app._s.mouseDown &&
-            !this.app._s.pause
-        ) {
-            this._cursor.hoverMenu()
-        }
-    }
 }
 

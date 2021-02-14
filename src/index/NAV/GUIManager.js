@@ -53,13 +53,14 @@ class GUIManager {
     constructor({ app }) {
         this.app = app;
 
-        this._s = {
+        this.__ = {
             cursorMode: new CursorModes(),
             topMenuMode: new TopMenuMode(),
             isHovering: false,
             cursor: {
                 activated: false,
-            }
+            },
+            isMuted: true,
         }
 
         this.DOM = {
@@ -92,8 +93,8 @@ class GUIManager {
 
     setCursorPosition = (x, y) => {
         this.DOM.cursor.style.transform = `translateX(${x}px) translateY(${y}px)`
-        if (!this._s.cursor.activated) {
-            this._s.cursor.activated = true;
+        if (!this.__.cursor.activated) {
+            this.__.cursor.activated = true;
             setTimeout(() => {
                 this.DOM.cursor.classList.add('activated');
             }, 0);
@@ -101,10 +102,10 @@ class GUIManager {
     }
 
     setCursorMode = (mode) => {
-        this._s.cursorMode.set(mode);
+        this.__.cursorMode.set(mode);
     }
     setTopMenuMode = (mode) => {
-        this._s.topMenuMode.set(mode);
+        this.__.topMenuMode.set(mode);
     }
     setProjectTitle = (project) => {
         this.DOM.project.title.classList.remove('hidden');
@@ -134,7 +135,10 @@ class GUIManager {
     }
 
     tweenCanvas = () => {
-        let tweener = this.app.this.app._tween.add(750);
+        console.log(this);
+        console.log(this.app);
+
+        let tweener = this.app._tween.add(500);
         if (!tweener) return
 
         const max = {
@@ -142,7 +146,7 @@ class GUIManager {
             projecTitle: window.innerWidth < 600 ? 100 : 75
         }
 
-        let infoOpen = this.app._s.infoOpen;
+        let infoOpen = this.app.__.infoOpen;
 
         let canvas = {
             now: infoOpen ? max.canvas : 0,
@@ -154,30 +158,40 @@ class GUIManager {
         }
 
         tweener.addEventListener('update', ({ detail }) => {
-            this.DOM.canvas.style.left = this.this.app._tween.lerp(canvas, detail) + "vw";
-            this.DOM.project.title.style.left = this.this.app._tween.lerp(projectTitle, detail) + "%";
+            console.log(detail);
+            this.DOM.canvas.style.left = this.app._tween.lerp(canvas, detail) + "vw";
+            this.DOM.project.title.style.left = this.app._tween.lerp(projectTitle, detail) + "%";
         })
         tweener.addEventListener('complete', ({ detail }) => {
             console.log("COMPLETE!!!");
-            this.app._s.infoOpen = !this.app._s.infoOpen;
-            console.log("INFO OPEN IS ", this.app._s.infoOpen);
+            this.app.__.infoOpen = !this.app.__.infoOpen;
+            console.log("INFO OPEN IS ", this.app.__.infoOpen);
         })
     }
 
+    getMuted = () => {
+        return this.__.isMuted;
+    }
+
     showVolume = () => {
+        console.log('show volume!');
         this.DOM.buttons.volume.classList.remove('hidden');
     }
 
     hideVolume = () => {
+        console.log('hide volume!');
+
         this.DOM.buttons.volume.classList.add('hidden');
     }
 
     closeInfo = e => {
-        this.app._s.pause = false;
-        this.app._s.info = false;
+        this.app.__.infoMode = false;
+
+        /* this.app.__.pause = false;
+        this.app.__.info = false; */
         this.tweenCanvas();
         this.setCursorMode('pointer');
-        if (this.app._s.menu.isOpen) {
+        if (this.app.__.menu.isOpen) {
             this.setTopMenuMode('menu')
         } else {
             this.setTopMenuMode('project')
@@ -185,14 +199,19 @@ class GUIManager {
         this.DOM.canvas.removeEventListener('mouseup', this.closeInfo);
         e.stopPropagation();
         e.preventDefault();
+        if (this.app.__.isMobile && this.app.__.focus.media && this.app.__.focus.media.userData.type === 'video') {
+            this.app.__.focus.media.material.map.image.play();
+        }
     }
 
     openInfo = () => {
-        this.app._s.info = true;
-        this.app._s.pause = true;
+        this.app.__.infoMode = true;
         this.setTopMenuMode('info');
         this.tweenCanvas();
         this.DOM.canvas.addEventListener('mouseup', this.closeInfo);
+        if (this.app.__.isMobile && this.app.__.focus.media && this.app.__.focus.media.userData.type === 'video') {
+            this.app.__.focus.media.material.map.image.pause();
+        }
     }
 
     init = () => {
@@ -206,10 +225,10 @@ class GUIManager {
 
         document.querySelectorAll('button').forEach(b => {
             b.addEventListener('mouseenter', () => {
-                this._s.isHovering = true;
+                this.__.isHovering = true;
             })
             b.addEventListener('mouseout', () => {
-                this._s.isHovering = false;
+                this.__.isHovering = false;
             })
         })
 
@@ -227,8 +246,8 @@ class GUIManager {
             this.DOM.info.container.classList.remove('hidden');
             this.DOM.about.classList.add('hidden');
 
-            this.DOM.info.big.innerHTML = this.app._s.focus.project.userData.info.big;
-            this.DOM.info.small.innerHTML = this.app._s.focus.project.userData.info.small;
+            this.DOM.info.big.innerHTML = this.app.__.focus.project.userData.info.big;
+            this.DOM.info.small.innerHTML = this.app.__.focus.project.userData.info.small;
 
             this.openInfo();
         });
@@ -237,18 +256,20 @@ class GUIManager {
         this.DOM.buttons.contact.addEventListener('mouseup', (e) => {
             e.stopPropagation();
 
-            if (this.app._s.menu.isOpen) {
+            if (this.app.__.menu.isOpen) {
                 this.app._three.resizeCanvas();
             }
         })
 
-        this.DOM.buttons.volume.addEventListener("mousedown", function (event) {
-            if (this.children[0].innerHTML === "muted") {
-                this.children[0].innerHTML = "mute";
-                this.app._s.focus.media.material.map.image.volume = "1";
+        this.DOM.buttons.volume.addEventListener("mousedown", e => {
+            if (this.__.isMuted) {
+                this.DOM.buttons.volume.innerHTML = "mute";
+                this.app.__.focus.media.material.map.image.volume = "1";
+                this.__.isMuted = false;
             } else {
-                this.children[0].innerHTML = "muted";
-                this.app._s.focus.media.material.map.image.volume = "0";
+                this.DOM.buttons.volume.innerHTML = "muted";
+                this.app.__.focus.media.material.map.image.volume = "0";
+                this.__.isMuted = true;
             }
         });
     }

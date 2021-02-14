@@ -2,7 +2,7 @@ import uniqid from 'uniqid'
 class TweenManager {
     constructor({ app, _three }) {
         this.tweens = {};
-        this._s = {
+        this.__ = {
             isTweening: false,
         }
         this.delta = null;
@@ -15,7 +15,7 @@ class TweenManager {
         tweener.addEventListener('complete', () => {
             delete this.tweens[id];
             if (Object.keys(this.tweens) == 0) {
-                this._s.isTweening = false;
+                this.__.isTweening = false;
             }
         })
         return tweener;
@@ -39,8 +39,8 @@ class TweenManager {
         let delta;
         for (let id in this.tweens) {
             tween = this.tweens[id];
-            delta = (now - tween._s.start) / tween._s.duration;
-            delta = this.easings[tween._s.easingType](delta);
+            delta = (now - tween.__.start) / tween.__.duration;
+            delta = this.easings[tween.__.easingType](delta);
             delta = Math.min(delta, 1);
             tween.update(delta);
             if (delta != 1) {
@@ -51,7 +51,7 @@ class TweenManager {
             delete this.tweens[id];
         }
 
-        this._s.isTweening = isTweening;
+        this.__.isTweening = isTweening;
         return isTweening;
     }
 }
@@ -63,7 +63,7 @@ class Tweener extends EventTarget {
             update: new CustomEvent("update", {}),
             complete: new CustomEvent("complete", {})
         }
-        this._s = {
+        this.__ = {
             start: performance.now(),
             duration: duration,
             easingType: easingType
