@@ -180,7 +180,7 @@ class Project {
     updateMedia = (_m) => {
         this.media.userData = _m;
 
-        let scale = this.app._three.__.scale;
+        let scale = this.app._three.__.scale * 1000;
 
         _m.ratio < 1 ?
             this.media.scale.set(scale * _m.ratio, scale, 1) :
@@ -198,14 +198,22 @@ class Project {
 
         // this.media = new CSS3DObject(d_container);
         this.media = new THREE.Mesh(
-            new THREE.PlaneGeometry(100, 100, 1, 1),
-            new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide })
+            new THREE.PlaneGeometry(1, 1, 1, 1),
+            new THREE.MeshBasicMaterial({ color: 0xffff00, side: THREE.DoubleSide })
         );
+        /* this.media = new THREE.Mesh(
+            new THREE.PlaneGeometry(10000, 10000, 1, 1),
+            new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide })
+        ); */
         this.collision = new THREE.Mesh(
-            new THREE.PlaneGeometry(100, 100, 1, 1),
+            new THREE.PlaneGeometry(1, 1, 5, 5),
             new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide })
         );
-        // this.media.add(this.collision);
+
+        console.log(this.media);
+        this.media.add(this.collision);
+        this.collision.parent = this.media;
+
         console.log(this.media);
 
         this.project = new CSS3DObject();
@@ -257,7 +265,7 @@ class ThreeManager {
                 outputEncoding: THREE.LinearEncoding,
             }),
             scene: new THREE.Scene(),
-            camera: new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 500),
+            camera: new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 10000),
             collisions: []
         }
 
@@ -434,6 +442,8 @@ class ThreeManager {
         this._3d.camera.aspect = window.innerWidth / window.innerHeight;
         this._3d.camera.updateProjectionMatrix();
         this._3d.renderer.setSize(window.innerWidth, window.innerHeight);
+        this._3d.glRenderer.setSize(window.innerWidth, window.innerHeight);
+
     }
 
     resizeCanvas = (noLogo) => {
@@ -480,12 +490,13 @@ class ThreeManager {
         [..._data.projects].forEach(async (p, i) => {
             let _p = new Project(this.app, p);
             this._3d.projects.add(_p.project);
-            this._3d.collisions.push(_p.collision);
-            this.addToScene(_p.collision);
+            this._3d.collisions.push(_p.media);
+            // this.addToScene(_p.collision);
             _p.project.rotation.set(0, i * Math.PI * 2 / _data.projects.length, 0);
             this.__.projects.push(_p);
 
         });
+        this.resizeCanvas();
 
         this.render();
 

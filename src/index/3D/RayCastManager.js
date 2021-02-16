@@ -7,12 +7,9 @@ export default class RayCastManager {
 
     }
     getIntersects(camera, point, objects) {
-        // console.log(objects);
-        // console.log(point.x, point.y);
-        this.cursor.set((point.x * 2) - 1, -(point.y * 2) + 1);
+        this.cursor.set((point.x * 2) - 1, (point.y * -2) + 1);
         this.raycaster.setFromCamera(this.cursor, camera);
         this.intersects.length = 0;
-        this.raycaster.intersectObjects(objects, false, this.intersects);
-        return this.intersects;
+        return this.raycaster.intersectObjects(objects, true);
     }
 }

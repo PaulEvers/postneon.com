@@ -186,13 +186,13 @@ export default class CursorManager {
         if (this.app._tween.__.isTweening || this.__.cursor.isDragging) return;
 
         this.__.intersection = this.getIntersects();
-
-        if (this.__.intersection) {
-            this.this.app._gui.setProjectTitle(this._s.intersection);
-            return;
-        }
-
-        this.app._gui.hideProjectTitle()
+        console.log(this.__.intersection);
+        /*         if (this.__.intersection) {
+                    this.app._gui.setProjectTitle(this._s.intersection);
+                    return;
+                }
+        
+                this.app._gui.hideProjectTitle() */
     }
 
     hoverProject() {
