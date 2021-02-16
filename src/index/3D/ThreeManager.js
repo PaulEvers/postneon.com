@@ -2,14 +2,14 @@
 
 import { CSS3DRenderer, CSS3DObject } from 'three/examples/jsm/renderers/CSS3DRenderer.js';
 import RayCastManager from './RayCastManager.js'
-
+import LogoManager from "./LogoManager.js"
+import * as THREE from "three"
 
 class Project {
     constructor(app, _p) {
         this.app = app;
 
         this.__ = {
-
             projectLength: _p.medias.length,
             order: 0,
             name: _p.title,
@@ -41,20 +41,15 @@ class Project {
                 } else {
                     this.changeMedia(e.detail.x > window.innerWidth / 2 ? 1 : -1)
                 }
-
                 break;
             case 'hover_menu':
                 this.app._gui.setProjectTitle(this.__.name)
-
                 break;
             case 'hover_project':
-
                 if (this != this.app.__.focus.project || this.__.medias.length == 1) {
                     this.app._gui.setCursorMode('pointer');
                     return;
                 }
-
-
                 if (e.detail.x > (window.innerWidth / 2)) {
                     this.app._gui.setCursorMode('left');
                 } else {
@@ -103,7 +98,7 @@ class Project {
             return;
         }
         let tween = this.app._tween.add(1000, "sine_in");
-        console.log(this.isPlaying(d_media));
+
         if (this.isPlaying(d_media)) return;
         d_media.volume = 0
         d_media.play();
@@ -155,7 +150,6 @@ class Project {
 
         d_media.classList.add('hidden');
 
-
         d_media.addEventListener(listenTo, () => {
             if (nextMedia.type === 'video') {
                 console.log(d_media, nextMedia);
@@ -164,8 +158,6 @@ class Project {
             }
             d_media.classList.remove('hidden');
         })
-
-
     }
 
     createMedia = (_m) => {
@@ -206,11 +198,11 @@ class Project {
 
         // this.media = new CSS3DObject(d_container);
         this.media = new THREE.Mesh(
-            new THREE.PlaneGeometry(1, 1, 1, 1),
+            new THREE.PlaneGeometry(100, 100, 1, 1),
             new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide })
         );
         this.collision = new THREE.Mesh(
-            new THREE.PlaneGeometry(1, 1, 1, 1),
+            new THREE.PlaneGeometry(100, 100, 1, 1),
             new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide })
         );
         // this.media.add(this.collision);
@@ -254,11 +246,22 @@ class ThreeManager {
 
         this._3d = {
             renderer: new CSS3DRenderer(),
-            glRenderer: new THREE.WebGLRenderer(),
+            glRenderer: new THREE.WebGLRenderer({
+                autoClear: false,
+                preserveDrawingBuffer: true,
+                alpha: false,
+                depth: false,
+                // precision: 'highp',
+                powerPreference: 'low-power',
+                antialias: true,
+                outputEncoding: THREE.LinearEncoding,
+            }),
             scene: new THREE.Scene(),
             camera: new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 500),
             collisions: []
         }
+
+        document.querySelector("#threejs").appendChild(this._3d.glRenderer.domElement);
 
         this._3d.renderer.domElement.id = 'scene';
         document.querySelector("#threejs").appendChild(this._3d.renderer.domElement);
@@ -478,6 +481,7 @@ class ThreeManager {
             let _p = new Project(this.app, p);
             this._3d.projects.add(_p.project);
             this._3d.collisions.push(_p.collision);
+            this.addToScene(_p.collision);
             _p.project.rotation.set(0, i * Math.PI * 2 / _data.projects.length, 0);
             this.__.projects.push(_p);
 
@@ -517,87 +521,5 @@ class ThreeManager {
 }
 
 
-class LogoManager {
-    constructor({ app, _three }) {
-        this.app = app;
-        this._three = _three;
-        this.canvas = this._three._3d.renderer.domElement;
-        this.logos = new CSS3DObject();
-        this.logos.position.set(0, 0, 0);
-        this.logos.name = 'logos';
-        this.__ = {
-            isInitialized: false,
-        }
-    }
-    createLogo(src, ratio, y) {
-        return new Promise((resolve) => {
-            let path = `./logos/${src}`;
-
-            let d_img = document.createElement("img");
-
-            let d_container = document.createElement("div");
-            d_container.classList.add('d_container');
-            d_container.classList.add('d_logo');
-
-            d_container.appendChild(d_img);
-            d_container.style.pointerEvents = 'none';
-            d_img.setAttribute("src", path);
-            let logo = new CSS3DObject(d_container);
-
-            ratio = ratio / 10;
-
-            d_img.onload = () => {
-                logo.scale.set(ratio, ratio * d_img.height / d_img.width, 1);
-                resolve(logo);
-            }
-        })
-    }
-    createLogos() {
-        return new Promise((resolve) => {
-            let promises = [];
-
-            if (this.app.__.isMobile) {
-                promises.push(this.createLogo("logo_h.png", 20, 2));
-                promises.push(this.createLogo("logo_m.png", 9, 2));
-                promises.push(this.createLogo("logo_v.png", 9, -7));
-            } else {
-                promises.push(this.createLogo("logo_h.png", 15, 2));
-                promises.push(this.createLogo("logo_m.png", 9, 2));
-                promises.push(this.createLogo("logo_v.png", 45, 0));
-            }
-            Promise.all(promises).then((resolves) => {
-                resolves.forEach(logo => {
-                    this.logos.add(logo);
-                    logo.position.set(0, 0, 0);
-                })
-                this.chooseLogo();
-                this._three.render(performance.now);
-                this._three.addToScene(this.logos);
-                this.__.isInitialized = true;
-                resolve();
-            })
-        })
-
-    }
-
-    chooseLogo() {
-        if (!this.__.isInitialized) return;
-        if ((this.canvas.offsetWidth / window.innerHeight) > 1.6) {
-            this.logos.children[0].visible = true;
-            this.logos.children[1].visible = false;
-            this.logos.children[2].visible = false;
-        } else {
-            if ((this.canvas.offsetWidth / window.innerHeight) > 1) {
-                this.logos.children[0].visible = false;
-                this.logos.children[1].visible = true;
-                this.logos.children[2].visible = false;
-            } else {
-                this.logos.children[0].visible = false;
-                this.logos.children[1].visible = false;
-                this.logos.children[2].visible = true;
-            }
-        }
-    }
-}
 
 export default ThreeManager;
