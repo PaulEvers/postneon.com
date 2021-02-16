@@ -1,236 +1,14 @@
 
 
 import { CSS3DRenderer, CSS3DObject } from 'three/examples/jsm/renderers/CSS3DRenderer.js';
-import RayCastManager from './RayCastManager.js'
-import LogoManager from "./LogoManager.js"
 import * as THREE from "three"
 
-class Project {
-    constructor(app, _p) {
-        this.app = app;
-
-        this.__ = {
-            projectLength: _p.medias.length,
-            order: 0,
-            name: _p.title,
-            directory: _p.directory,
-            info: {
-                big: _p.info.big ? _p.info.big.replace(/\n/g, "<br>") : "",
-                small: _p.info.small ? _p.info.small.replace(/\n/g, "<br>") : "",
-            },
-            medias: _p.medias,
-        }
-
-        this.mediaCache = [];
-
-        this.init(_p.medias[0])
-    }
-
-    getUrl = (_m) => `projects/${this.__.directory}/${this.app.capitalize(_m.type)}/${this.app.__.opt}/${_m.src}`;
-
-    handleClick = (e) => {
-        switch (e.detail.type) {
-            case 'click':
-                if (this.app.__.focus.project != this) {
-                    this.app._three.focusOn(this);
-                    if (this.__.medias[0].type === 'video') {
-                        setTimeout(() => {
-                            this.play();
-                        }, 500);
-                    }
-                } else {
-                    this.changeMedia(e.detail.x > window.innerWidth / 2 ? 1 : -1)
-                }
-                break;
-            case 'hover_menu':
-                this.app._gui.setProjectTitle(this.__.name)
-                break;
-            case 'hover_project':
-                if (this != this.app.__.focus.project || this.__.medias.length == 1) {
-                    this.app._gui.setCursorMode('pointer');
-                    return;
-                }
-                if (e.detail.x > (window.innerWidth / 2)) {
-                    this.app._gui.setCursorMode('left');
-                } else {
-                    this.app._gui.setCursorMode('right');
-                }
-                break;
-        }
-    }
-
-    isPlaying = video => !!(video.currentTime > 0 && !video.paused && !video.ended && video.readyState > 2);
-
-    pause = (d_media) => {
-        if (!d_media) d_media = [...this.media.element.children].find(v => v.src.includes(this.__.medias[this.__.order]))
-
-        console.log(d_media);
-        if (!d_media || d_media.tagName !== 'VIDEO') {
-            console.log("ERRORR PAUSE");
-            return;
-        }
-
-        return new Promise((resolve) => {
-            let tween = this.app._tween.add(500);
-            tween.addEventListener('update', ({ detail }) => {
-                d_media.volume = Math.min(1, Math.max(0, 1 - detail));
-            })
-            tween.addEventListener('complete', () => {
-                d_media.pause();
-                resolve();
-            })
-        })
-
-    }
-
-    getMediaDomFromSrc = (src) => [...this.media.element.children].find(v => v.src.includes(src))
-
-    play = (d_media) => {
-
-        if (!d_media) {
-            console.log('this happens', this.__.medias[this.__.order], [...this.media.element.children]);
-            d_media = this.getMediaDomFromSrc(this.__.medias[this.__.order].src);
-        }
-
-        console.log(d_media.tagName);
-        if (d_media.tagName !== 'VIDEO') {
-            console.log("ERRORR PLAY");
-            return;
-        }
-        let tween = this.app._tween.add(1000, "sine_in");
-
-        if (this.isPlaying(d_media)) return;
-        d_media.volume = 0
-        d_media.play();
-        tween.addEventListener('update', ({ detail }) => {
-            d_media.volume = Math.min(1, Math.max(0, detail));
-        })
-    }
-
-    hideOldMedia = async () => {
-        const oldMedia = this.__.medias[this.__.order];
-        console.log('oldMedia', oldMedia);
-        const url = this.getUrl(oldMedia);
-        console.log('url', url);
-        let d_media = [...this.media.element.children].find(v => {
-            console.log(v.src, url);
-            return v.src.includes(url);
-        });
-        console.log(d_media);
-        if (!d_media) return
-        if (oldMedia.type === 'video') {
-            this.pause(d_media);
-        }
-        d_media.classList.add('hidden');
-    }
-
-    changeMedia = (direction) => {
-        if (this.__.medias.length <= 1) return
-        this.hideOldMedia();
-
-        this.__.order = this.__.order + direction % (this.__.medias.length);
-        if (this.__.order < 0) this.__.order = this.__.medias.length - 1;
-        let nextMedia = this.__.medias[this.__.order];
-
-        this.updateMedia(nextMedia);
-        console.log(this.media.element)
-        let loadedMedia = [...this.media.element.children].find(v => v.src.includes(nextMedia.src));
-        if (loadedMedia) {
-            console.log('this?');
-            loadedMedia.classList.remove('hidden');
-            if (nextMedia.type === 'video')
-                this.play(loadedMedia);
-            return;
-        }
-
-        let d_media = this.createMedia(nextMedia);
-
-        let listenTo = nextMedia.type === 'video' ? 'loadedmetadata' : 'load'
-        this.media.element.appendChild(d_media);
-
-        d_media.classList.add('hidden');
-
-        d_media.addEventListener(listenTo, () => {
-            if (nextMedia.type === 'video') {
-                console.log(d_media, nextMedia);
-                this.play(d_media);
-
-            }
-            d_media.classList.remove('hidden');
-        })
-    }
-
-    createMedia = (_m) => {
-        let url = this.getUrl(_m);
-
-        let d_media;
-        if (_m.type === "image") {
-            d_media = document.createElement('img')
-        } else {
-            d_media = document.createElement('video');
-            d_media.volume = 0;
-            d_media.loop = true;
-        }
-
-        d_media.src = url;
-        d_media.className = 'd_media';
-        return d_media;
-    }
-
-    updateMedia = (_m) => {
-        this.media.userData = _m;
-
-        let scale = this.app._three.__.scale * 1000;
-
-        _m.ratio < 1 ?
-            this.media.scale.set(scale * _m.ratio, scale, 1) :
-            this.media.scale.set(scale, scale / _m.ratio, 1);
-    }
-
-    init = (_m) => {
-
-        let d_media = this.createMedia(_m);
-
-        let d_container = document.createElement('div');
-        d_container.className = 'd_container';
-        d_container.appendChild(d_media);
-        d_container.addEventListener('click', this.handleClick);
-
-        // this.media = new CSS3DObject(d_container);
-        this.media = new THREE.Mesh(
-            new THREE.PlaneGeometry(1, 1, 1, 1),
-            new THREE.MeshBasicMaterial({ color: 0xffff00, side: THREE.DoubleSide })
-        );
-        /* this.media = new THREE.Mesh(
-            new THREE.PlaneGeometry(10000, 10000, 1, 1),
-            new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide })
-        ); */
-        this.collision = new THREE.Mesh(
-            new THREE.PlaneGeometry(1, 1, 5, 5),
-            new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide })
-        );
-
-        console.log(this.media);
-        this.media.add(this.collision);
-        this.collision.parent = this.media;
-
-        console.log(this.media);
-
-        this.project = new CSS3DObject();
-        this.project.rotation.z = this.app.getOrientation() === 'landscape' ? Math.PI / 2 : 0;
-        this.project.add(this.media);
-        this.media.parent = this.project;
+import RayCastManager from './RayCastManager.js'
+import LogoManager from "./LogoManager.js"
+import Project from "./ProjectManager.js"
 
 
-        let radius = this.app._three.__.radius;
-        this.media.position.set(0, 0, radius * 5);
-        this.media.rotation.set(Math.PI, Math.PI, Math.PI / 2);
 
-        this.updateMedia(_m);
-
-        // return { project, media };
-    }
-}
 
 class ThreeManager {
     constructor({ app }) {
@@ -238,11 +16,11 @@ class ThreeManager {
         this._ray = new RayCastManager();
 
         this.__ = {
-            scale: 0.375,
-            centerDistance: this.app.__.isMobile ? 110 : 3000,
+            scale: 0.025,
+            centerDistance: this.app.__.isMobile ? 110 : 200,
             orientation: null,
             tempOrientation: {},
-            radius: 400,
+            radius: 25,
             menu: {
                 lastTick: null,
                 delta: 0,
@@ -269,7 +47,7 @@ class ThreeManager {
             collisions: []
         }
 
-        document.querySelector("#threejs").appendChild(this._3d.glRenderer.domElement);
+        // document.querySelector("#threejs").appendChild(this._3d.glRenderer.domElement);
 
         this._3d.renderer.domElement.id = 'scene';
         document.querySelector("#threejs").appendChild(this._3d.renderer.domElement);
@@ -300,9 +78,9 @@ class ThreeManager {
     resetVideo = () => this.isVideoPlaying() ? this.app.__.focus.project.pause() : null
 
     pauseMedia = () => {
-        const media = this.app.__.focus.media;
-        if (media && media.userData.type === 'video')
-            media.material.map.pause();
+        const project = this.app.__.focus.project;
+        if (project && project.media.userData.type === 'video')
+            project.pause();
     }
 
     getViewpoint = (media) => {
@@ -332,7 +110,8 @@ class ThreeManager {
             next: new THREE.Quaternion(),
             tween: new THREE.Quaternion()
         }
-        let _vp = this.getViewpoint(media);
+        let _vp = project.userData.project.getViewpoint();
+        // console.log(this.getViewpoint(media), project.userData.project.getViewpoint());
         pos.next.copy(_vp.pos);
         quat.next.copy(_vp.quat);
 
@@ -387,6 +166,8 @@ class ThreeManager {
         if (project === this.app.__.focus.project) return;
         this.resetVideo();
 
+
+
         let canTween = this.tweenToProject(project.project);
 
         this.app._gui.setTopMenuMode('project');
@@ -396,6 +177,9 @@ class ThreeManager {
         this.app.__.focus.project = project;
         if (project.media.userData.type === 'video') {
             setTimeout(() => { this.app.__.focus.project.play(), 500 })
+            project.setVideoUI(true);
+        } else {
+            project.setVideoUI(false);
         }
         return canTween;
     }
@@ -491,7 +275,7 @@ class ThreeManager {
             let _p = new Project(this.app, p);
             this._3d.projects.add(_p.project);
             this._3d.collisions.push(_p.media);
-            // this.addToScene(_p.collision);
+            // this.addToScene(_p.media);
             _p.project.rotation.set(0, i * Math.PI * 2 / _data.projects.length, 0);
             this.__.projects.push(_p);
 
@@ -513,7 +297,7 @@ class ThreeManager {
     }
     render = () => {
         this._3d.renderer.render(this._3d.scene, this._3d.camera);
-        this._3d.glRenderer.render(this._3d.scene, this._3d.camera);
+        // this._3d.glRenderer.render(this._3d.scene, this._3d.camera);
 
     }
     lerp = (a, b, alpha) => a * alpha + b * (1 - alpha)

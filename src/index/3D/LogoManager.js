@@ -27,7 +27,7 @@ export default class LogoManager {
             d_img.setAttribute("src", path);
             let logo = new CSS3DObject(d_container);
 
-            ratio = ratio / 10;
+            ratio = ratio / 3.75 * this.app._three.__.scale;
 
             d_img.onload = () => {
                 logo.scale.set(ratio, ratio * d_img.height / d_img.width, 1);

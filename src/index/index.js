@@ -78,11 +78,12 @@ class Application {
         requestAnimationFrame(this.analyse);
         if (this.__.pause) return;
         if (!now) return;
-        this._tween.update(now);
 
         if (this.__.menu.isOpen && !this.__.infoMode) {
             this._three.rotateMenu(now);
         }
+
+        this._tween.update(now);
 
 
         if (this.__.infoMode || this.__.isMobile) return

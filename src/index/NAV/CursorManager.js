@@ -133,23 +133,20 @@ export default class CursorManager {
         if (!this.__.cursor.isDragging) return;
         this.__.cursor.isDragging = false;
 
-        let d_media = document.elementsFromPoint(this.__.cursor.now.x, this.__.cursor.now.y).find(v => v.className.includes('d_'));
-        // console.log(document.elementsFromPoint(this.__.cursor.now.x, this.__.cursor.now.y));
+        this.__.intersection = this.getIntersects();
 
-
-
-        if (!d_media) {
-            console.log(this.app.__.menu.isOpen);
+        if (!this.__.intersection) {
             if (!this.app.__.menu.isOpen)
                 this.app._three.tweenToMenu();
             return;
         }
 
+
         clearTimeout(this.__.hideTitle);
 
         if (!this.app.__.isMobile || this.app.__.menu.isOpen) {
             if (Math.abs(this.__.cursor.timestamp - performance.now()) < 200) {
-                d_media.dispatchEvent(this.s_event('click'));
+                this.__.intersection.userData.project.click(this.__.cursor.now.x);
             }
         } else {
             if (this.app.__.orientation === 'landscape' &&
@@ -186,22 +183,20 @@ export default class CursorManager {
         if (this.app._tween.__.isTweening || this.__.cursor.isDragging) return;
 
         this.__.intersection = this.getIntersects();
-        console.log(this.__.intersection);
-        /*         if (this.__.intersection) {
-                    this.app._gui.setProjectTitle(this._s.intersection);
-                    return;
-                }
-        
-                this.app._gui.hideProjectTitle() */
+        if (this.__.intersection) {
+            this.app._gui.setProjectTitle(this.__.intersection.userData.project.__.name);
+            return;
+        }
+
+        this.app._gui.hideProjectTitle()
     }
 
     hoverProject() {
         if (this.app.__.pause) return;
         if (this.app._tween.__.isTweening) return;
-        console.log(document.elementsFromPoint(this.__.cursor.now.x, this.__.cursor.now.y));
-        let d_media = document.elementsFromPoint(this.__.cursor.now.x, this.__.cursor.now.y).find(v => v.className.includes('d_'));
-        if (d_media) {
-            d_media.dispatchEvent(this.s_event('hover_project', { x: this.__.cursor.now.x, y: this.__.cursor.now.y }));
+        this.__.intersection = this.getIntersects();
+        if (this.__.intersection) {
+            this.__.intersection.userData.project.hover(this.__.cursor.now.x);
             return;
         }
         if (!this.app._gui.__.isHovering)

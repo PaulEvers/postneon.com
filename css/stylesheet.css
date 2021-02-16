@@ -24,7 +24,7 @@ video, img {
     object-fit: fill;
     pointer-events: none;
     position: absolute;
-    opacity: 0
+    /* opacity: 0.5 */
 }
 
 html, body {

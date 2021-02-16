@@ -109,7 +109,6 @@ class GUIManager {
     }
     setProjectTitle = (project_name) => {
         if (this.DOM.project.title.innerHTML != project_name) {
-            console.log('setProjectTitle');
             this.DOM.project.title.innerHTML = project_name;
         }
         if (this.DOM.project.title.classList.contains('hidden'))
@@ -177,15 +176,15 @@ class GUIManager {
     getMuted = () => {
         return this.__.isMuted;
     }
+    setVideoUI = (bool) => {
+        bool ? this.DOM.buttons.volume.classList.remove('hidden') : this.DOM.buttons.volume.classList.add('hidden');
+    }
 
     showVolume = () => {
-        //console.log('show volume!');
         this.DOM.buttons.volume.classList.remove('hidden');
     }
 
     hideVolume = () => {
-        //console.log('hide volume!');
-
         this.DOM.buttons.volume.classList.add('hidden');
     }
 
