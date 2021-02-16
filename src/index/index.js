@@ -66,8 +66,6 @@ class Application {
             .then(this.initLoops)
 
         this._three.fetchScene("http://www.post-neon.com/new/JSON/data.json");
-        window.addEventListener('blur', this.onBlur);
-        window.addEventListener('focus', this.onFocus);
     }
 
 
@@ -76,36 +74,16 @@ class Application {
         this.animate();
     }
 
-    onBlur = () => {
-        console.log("BLUR!");
-        this.__.pause = true;
-    }
-    onFocus = () => {
-        console.log("UNBLUR!");
-        this.__.pause = false
-    }
-
     analyse = (now) => {
         requestAnimationFrame(this.analyse);
         if (this.__.pause) return;
-
         if (!now) return;
+        this._tween.update(now);
 
-        if (!this.__.timestamp.analysis)
-            this.__.timestamp.analysis = now;
-        else {
-            if ((1000 / (now - this.__.timestamp.analysis)) > 120) {
-                return;
-            } else {
-                this.__.timestamp.analysis = now;
-            }
-        }
-
-        if (this.__.menu.isOpen) {
+        if (this.__.menu.isOpen && !this.__.infoMode) {
             this._three.rotateMenu(now);
         }
 
-        this._tween.update(now);
 
         if (this.__.infoMode || this.__.isMobile) return
 
@@ -117,7 +95,7 @@ class Application {
 
         if (this.__.menu.isOpen &&
             !this.__.tween.isTweening &&
-            !this.__.guiHover
+            !this._gui.__.isHovering
         ) {
             if ((1000 / (now - this.__.timestamp.hover)) < 15) {
                 this._interaction._cursor.hoverMenu();
@@ -128,37 +106,8 @@ class Application {
 
     animate = (now) => {
         requestAnimationFrame(this.animate);
-        // setTimeout(() => { this.animate(performance.now) }, 1000 / 60);
         if (this.__.pause) return;
-
-        /* if (!this.__.isMobile) {
-            if (!now) return;
-            if (!this.__.timestamp.animate)
-                this.__.timestamp.animate = now;
-            else {
-                if ((1000 / (now - this.__.timestamp.animate)) > 90) {
-                    return;
-                } else {
-                    this.__.timestamp.animate = now;
-                }
-            }
-
-        } */
-
-        if (this.__.stopAnimation || document.hidden || !document.visibilityState)
-            return;
-
-        for (let key in this.__.textures.update) {
-            // console.log(this.__.textures.update[key].video);
-            if (this.__.textures.update[key].video.readyState >=
-                this.__.textures.update[key].video.HAVE_CURRENT_DATA
-            ) {
-                this.__.textures.update[key].update();
-                this.__.textures.update[key].needsUpdate = true;
-            }
-        }
         this._three.render();
-
     }
 }
 

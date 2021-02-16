@@ -107,12 +107,13 @@ class GUIManager {
     setTopMenuMode = (mode) => {
         this.__.topMenuMode.set(mode);
     }
-    setProjectTitle = (project) => {
-        this.DOM.project.title.classList.remove('hidden');
-
-        if (this.DOM.project.title.innerHTML != project.name) {
-            this.DOM.project.title.innerHTML = project.name
+    setProjectTitle = (project_name) => {
+        if (this.DOM.project.title.innerHTML != project_name) {
+            console.log('setProjectTitle');
+            this.DOM.project.title.innerHTML = project_name;
         }
+        if (this.DOM.project.title.classList.contains('hidden'))
+            this.DOM.project.title.classList.remove('hidden');
     }
 
     hideProjectTitle = () => {
@@ -124,19 +125,21 @@ class GUIManager {
     }
 
     showCursor = () => {
+
         this.DOM.cursor.classList.remove('hidden');
         this.DOM.cursor.style.opacity = "1";
     }
     setProjectUI = (project) => {
-        this.DOM.project.length.innerHTML = project.userData.projectLength;
-        this.DOM.project.index.innerHTML = project.userData.order + 1;
-        this.DOM.project.title.innerHTML = project.name;
+
+        this.DOM.project.length.innerHTML = project.__.projectLength;
+        this.DOM.project.index.innerHTML = project.__.order + 1;
+        this.DOM.project.title.innerHTML = project.__.name;
         this.DOM.project.title.classList.remove('hidden');
     }
 
     tweenCanvas = () => {
-        console.log(this);
-        console.log(this.app);
+        console.log('TWEEEEEEEEEN');
+
 
         let tweener = this.app._tween.add(500);
         if (!tweener) return
@@ -158,14 +161,16 @@ class GUIManager {
         }
 
         tweener.addEventListener('update', ({ detail }) => {
-            console.log(detail);
+            //console.log(detail);
             this.DOM.canvas.style.left = this.app._tween.lerp(canvas, detail) + "vw";
+            this.DOM.canvas.children[0].style.transform = `translateX(-${this.app._tween.lerp(canvas, detail) / 2}%)`;
+
             this.DOM.project.title.style.left = this.app._tween.lerp(projectTitle, detail) + "%";
         })
         tweener.addEventListener('complete', ({ detail }) => {
-            console.log("COMPLETE!!!");
+            //console.log("COMPLETE!!!");
             this.app.__.infoOpen = !this.app.__.infoOpen;
-            console.log("INFO OPEN IS ", this.app.__.infoOpen);
+            //console.log("INFO OPEN IS ", this.app.__.infoOpen);
         })
     }
 
@@ -174,51 +179,50 @@ class GUIManager {
     }
 
     showVolume = () => {
-        console.log('show volume!');
+        //console.log('show volume!');
         this.DOM.buttons.volume.classList.remove('hidden');
     }
 
     hideVolume = () => {
-        console.log('hide volume!');
+        //console.log('hide volume!');
 
         this.DOM.buttons.volume.classList.add('hidden');
     }
 
     closeInfo = e => {
         this.app.__.infoMode = false;
-
-        /* this.app.__.pause = false;
-        this.app.__.info = false; */
+        document.querySelector('.scroll-container').classList.remove('hidden');
         this.tweenCanvas();
         this.setCursorMode('pointer');
-        if (this.app.__.menu.isOpen) {
-            this.setTopMenuMode('menu')
-        } else {
-            this.setTopMenuMode('project')
-        }
+        setTimeout(() => {
+            if (this.app.__.menu.isOpen) {
+                this.setTopMenuMode('menu')
+            } else {
+                this.setTopMenuMode('project')
+            }
+        }, 500)
+
         this.DOM.canvas.removeEventListener('mouseup', this.closeInfo);
         e.stopPropagation();
         e.preventDefault();
-        if (this.app.__.isMobile && this.app.__.focus.media && this.app.__.focus.media.userData.type === 'video') {
-            this.app.__.focus.media.material.map.image.play();
-        }
     }
 
     openInfo = () => {
         this.app.__.infoMode = true;
         this.setTopMenuMode('info');
         this.tweenCanvas();
+        document.querySelector('.scroll-container').classList.add('hidden');
         this.DOM.canvas.addEventListener('mouseup', this.closeInfo);
-        if (this.app.__.isMobile && this.app.__.focus.media && this.app.__.focus.media.userData.type === 'video') {
+        /* if (this.app.__.isMobile && this.app.__.focus.media && this.app.__.focus.media.userData.type === 'video') {
             this.app.__.focus.media.material.map.image.pause();
-        }
+        } */
     }
 
     init = () => {
         this.DOM.buttons.back.addEventListener('mouseup', this.closeInfo)
         this.DOM.buttons.menu.addEventListener('mouseup', (e) => {
             e.stopPropagation();
-            console.log('this?');
+            //console.log('this?');
             this.app._three.tweenToMenu(false);
             this.setTopMenuMode('menu');
         })
@@ -246,8 +250,8 @@ class GUIManager {
             this.DOM.info.container.classList.remove('hidden');
             this.DOM.about.classList.add('hidden');
 
-            this.DOM.info.big.innerHTML = this.app.__.focus.project.userData.info.big;
-            this.DOM.info.small.innerHTML = this.app.__.focus.project.userData.info.small;
+            this.DOM.info.big.innerHTML = this.app.__.focus.project.__.info.big;
+            this.DOM.info.small.innerHTML = this.app.__.focus.project.__.info.small;
 
             this.openInfo();
         });

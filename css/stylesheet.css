@@ -8,10 +8,22 @@
     src: url("serifbabe_alt.otf");
 }
 
-video, img {
+.d_logo {
+    pointer-events: none !important;
+}
+
+.d_container {
     width: 2000px;
     height: 2000px;
+    /* background: black; */
+}
+
+video, img {
+    width: 100%;
+    height: 100%;
     object-fit: fill;
+    pointer-events: none;
+    position: absolute;
 }
 
 html, body {
@@ -194,7 +206,7 @@ body {
     left: 0px;
     right: 0px;
     bottom: 0px;
-    z-index: 5;
+    z-index: 50;
     pointer-events: none;
 }
 
@@ -471,8 +483,8 @@ input::selection {
 }
 
 .hidden {
-    /* display: none !important; */
-    opacity: 0 !important;
+    display: none !important;
+    /* opacity: 0 !important; */
     pointer-events: none;
 }
 
@@ -486,9 +498,9 @@ input::selection {
     width: 100vw;
     z-index: 5;
     overflow: auto;
-    /* transform: scale(2); */
+    transform: scale(2);
     /* background: black; */
-    mix-blend-mode: lighten;
+    /* mix-blend-mode: lighten; */
 }
 
 .scroll-content {

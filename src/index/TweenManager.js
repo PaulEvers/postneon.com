@@ -22,9 +22,9 @@ class TweenManager {
     }
 
     easings = {
-        // sine_in: (x) => 1 - Math.cos((x * Math.PI) / 2),
+        sine_in: (x) => 1 - Math.cos((x * Math.PI) / 2),
         linear: (x) => x,
-        sine_in: (x) => x,
+        // sine_in: (x) => x,
         elastic_in_out: (x) => (Math.cos(Math.PI * x) - 1) / -2 + 0.01,
 
     }
@@ -45,10 +45,11 @@ class TweenManager {
             tween.update(delta);
             if (delta != 1) {
                 isTweening = true;
-                break
+            } else {
+                tween.complete();
+                delete this.tweens[id];
             }
-            tween.complete();
-            delete this.tweens[id];
+
         }
 
         this.__.isTweening = isTweening;

@@ -120,14 +120,16 @@ export default class ScrollManager {
         if (this.app.__.menu.isOpen) {
             this.app.__.menu.lerpTo += this.__.scroll.delta.y / 10000;
         } else {
-            if (!this.app._tween.__.isTweening && Math.abs(this.__.scroll.delta.y) > 40)
+            if (!this.app._tween.__.isTweening && Math.abs(this.__.scroll.delta.y) > 15)
                 this.scrollToNextProject(this.__.scroll.delta.y > 0 ? -1 : 1)
         }
         this.__.scroll.last = this.__.scroll.eased
     }
 
     scrollToNextProject(direction) {
+        console.log('ok');
         let project = this.app._three.getNextProject(direction);
+        console.log(project);
         let success = this.app._three.focusOn(project, 1000);
         if (success)
             this.app._gui.setProjectUI(project)
