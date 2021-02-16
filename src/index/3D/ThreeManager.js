@@ -204,7 +204,18 @@ class Project {
         d_container.appendChild(d_media);
         d_container.addEventListener('click', this.handleClick);
 
-        this.media = new CSS3DObject(d_container);
+        // this.media = new CSS3DObject(d_container);
+        this.media = new THREE.Mesh(
+            new THREE.PlaneGeometry(1, 1, 1, 1),
+            new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide })
+        );
+        this.collision = new THREE.Mesh(
+            new THREE.PlaneGeometry(1, 1, 1, 1),
+            new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide })
+        );
+        // this.media.add(this.collision);
+        console.log(this.media);
+
         this.project = new CSS3DObject();
         this.project.rotation.z = this.app.getOrientation() === 'landscape' ? Math.PI / 2 : 0;
         this.project.add(this.media);
@@ -226,12 +237,6 @@ class ThreeManager {
         this.app = app;
         this._ray = new RayCastManager();
 
-        this.resources = {
-            geo: new THREE.PlaneGeometry(0, 0, 1),
-            mat: new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide }),
-            mesh: new THREE.Mesh(this.geo, this.mat),
-        }
-
         this.__ = {
             scale: 0.375,
             centerDistance: this.app.__.isMobile ? 110 : 3000,
@@ -249,8 +254,10 @@ class ThreeManager {
 
         this._3d = {
             renderer: new CSS3DRenderer(),
+            glRenderer: new THREE.WebGLRenderer(),
             scene: new THREE.Scene(),
             camera: new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 500),
+            collisions: []
         }
 
         this._3d.renderer.domElement.id = 'scene';
@@ -470,6 +477,7 @@ class ThreeManager {
         [..._data.projects].forEach(async (p, i) => {
             let _p = new Project(this.app, p);
             this._3d.projects.add(_p.project);
+            this._3d.collisions.push(_p.collision);
             _p.project.rotation.set(0, i * Math.PI * 2 / _data.projects.length, 0);
             this.__.projects.push(_p);
 
@@ -490,6 +498,8 @@ class ThreeManager {
     }
     render = () => {
         this._3d.renderer.render(this._3d.scene, this._3d.camera);
+        this._3d.glRenderer.render(this._3d.scene, this._3d.camera);
+
     }
     lerp = (a, b, alpha) => a * alpha + b * (1 - alpha)
 
@@ -515,11 +525,6 @@ class LogoManager {
         this.logos = new CSS3DObject();
         this.logos.position.set(0, 0, 0);
         this.logos.name = 'logos';
-
-        this.resources = {
-            mat: new THREE.MeshBasicMaterial({ color: 0xffffff, transparant: true }),
-            mesh: this._three.resources.mesh
-        };
         this.__ = {
             isInitialized: false,
         }

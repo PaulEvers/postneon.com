@@ -170,14 +170,28 @@ export default class CursorManager {
         this.__.cursor.start = this.__.cursor.now;
     }
 
+    getIntersects() {
+        this.__.cursor.array = this.getCursorArray();
+        if (!this.__.cursor.array) return;
+        this.__.vector.fromArray(this.__.cursor.array);
+        this.__.intersections = this._ray.getIntersects(this.app._three._3d.camera, this.__.vector, this.app._three._3d.collisions);
+        if (this.__.intersections.length > 0) {
+            return this.__.intersections[0].object;
+        } else {
+            return false;
+        }
+    }
+
     hoverMenu() {
         if (this.app._tween.__.isTweening || this.__.cursor.isDragging) return;
 
-        let d_media = document.elementsFromPoint(this.__.cursor.now.x, this.__.cursor.now.y).find(v => v.className.includes('d_'));
-        if (d_media) {
-            d_media.dispatchEvent(this.s_event('hover_menu'));
+        this.__.intersection = this.getIntersects();
+        console.log(this.__.intersection);
+        if (this.__.intersection) {
+            this.this.app._gui.setProjectTitle(this._s.intersection);
             return;
         }
+
         this.app._gui.hideProjectTitle()
     }
 
