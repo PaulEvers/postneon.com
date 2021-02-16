@@ -151,7 +151,7 @@ export default class Project {
             delta: {}
         }
 
-        let _vp = this.getViewpoint(y);
+        let _vp = this.getViewpoint(x, y);
         let pos = {
             now: this.app._three._3d.camera.position.clone(),
             next: _vp.pos.clone(),
@@ -169,19 +169,24 @@ export default class Project {
     }
 
 
-    getViewpoint = (height = this.media.scale.y) => {
+    getViewpoint = (width = this.media.scale.x, height = this.media.scale.y) => {
         let quat = new THREE.Quaternion();
         let pos = new THREE.Vector3();
 
 
 
-        const distance = (height) / Math.tan(this.app._three._3d.camera.fov * (Math.PI / 360));
+        let distance = (height) / Math.tan(this.app._three._3d.camera.fov * (Math.PI / 360));
 
-
+        let w_ratio = window.innerWidth / window.innerHeight;
+        let m_ratio = width / height;
+        if (w_ratio < m_ratio) {
+            distance = distance * (1 + m_ratio - w_ratio);
+            console.log('this happens!!', (1 + m_ratio - w_ratio));
+        }
         this.media.getWorldQuaternion(quat);
         const normal = new THREE.Vector3(0, 0, 1).applyQuaternion(quat);
         this.media.getWorldPosition(pos);
-        pos.addScaledVector(normal, distance * 1175);
+        pos.addScaledVector(normal, distance * 1000);
         return { quat, pos };
     }
 

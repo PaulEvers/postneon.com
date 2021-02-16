@@ -218,7 +218,7 @@ export default class CursorManager {
 
         } else {
             delta = this.__.cursor.now.y - cursor.y;
-            this.app._three.__.projects.rotation.y += delta / 500;
+            this.app._three._3d.projects.rotation.y += delta / 500;
         }
         this.app.__.menu.direction = delta < 0 ? 1 : -1;
 
