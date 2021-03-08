@@ -46,17 +46,17 @@ export default class LogoManager {
             } else {
                 promises.push(this.createLogo("logo_h.png", 15, 2));
                 promises.push(this.createLogo("logo_m.png", 9, 2));
-                promises.push(this.createLogo("logo_v.png", 45, 0));
+                promises.push(this.createLogo("logo_v.png", 9, 0));
             }
             Promise.all(promises).then((resolves) => {
                 resolves.forEach(logo => {
                     this.logos.add(logo);
                     logo.position.set(0, 0, 0);
                 })
-                this.chooseLogo();
                 this._three.render(performance.now);
                 this._three.addToScene(this.logos);
                 this.__.isInitialized = true;
+                this.chooseLogo();
                 resolve();
             })
         })

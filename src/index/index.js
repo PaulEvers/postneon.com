@@ -37,10 +37,7 @@ class Application {
             uploading: [],
             videos: {},
         },
-        focus: {
-            project: null,
-            media: null
-        },
+        focus: null,
         opt: null,
         objects: []
     }

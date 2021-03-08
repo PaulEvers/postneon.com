@@ -44,10 +44,7 @@ const VideoCanvas = function ({ url, src }) {
 
         // if (!playing) return;
         // console.log('this should happen');
-
         // requestAnimationFrame(updateCanvas);
-
-
         // this.canvas = await createImageBitmap(this.video);
 
         // ctx.transferFromImageBitmap(img);

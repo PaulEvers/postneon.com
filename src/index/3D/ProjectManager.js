@@ -65,7 +65,7 @@ export default class Project {
     setVideoUI = (bool) => this.app._gui.setVideoUI(bool)
 
     click = (x) => {
-        if (this.app.__.focus.project != this) {
+        if (this.app.__.focus != this) {
             this.app._three.focusOn(this);
             if (this.__.medias[0].type === 'video') {
                 setTimeout(() => {
@@ -78,7 +78,7 @@ export default class Project {
     }
 
     hover = (x) => {
-        if (this != this.app.__.focus.project || this.__.medias.length == 1) {
+        if (this != this.app.__.focus || this.__.medias.length == 1) {
             this.app._gui.setCursorMode('pointer');
             return;
         }
@@ -141,7 +141,9 @@ export default class Project {
         }
     }
 
-    lerp = (a, b, d) => a - d * a + b * d
+    lerp = (a, b, d) => a - d * a + b * d;
+
+
 
     tweenScale = (x, y) => {
         let tween = this.app._tween.add(500);
@@ -173,20 +175,16 @@ export default class Project {
         let quat = new THREE.Quaternion();
         let pos = new THREE.Vector3();
 
-
+        let w_ratio = window.innerWidth / window.innerHeight;
+        let m_ratio = width / height;
+        height = w_ratio > m_ratio ? height : height + (m_ratio * height - w_ratio * height) * 1 / w_ratio
 
         let distance = (height) / Math.tan(this.app._three._3d.camera.fov * (Math.PI / 360));
 
-        let w_ratio = window.innerWidth / window.innerHeight;
-        let m_ratio = width / height;
-        if (w_ratio < m_ratio) {
-            distance = distance * (1 + m_ratio - w_ratio);
-            console.log('this happens!!', (1 + m_ratio - w_ratio));
-        }
         this.media.getWorldQuaternion(quat);
         const normal = new THREE.Vector3(0, 0, 1).applyQuaternion(quat);
         this.media.getWorldPosition(pos);
-        pos.addScaledVector(normal, distance * 1000);
+        pos.addScaledVector(normal, distance * 1175);
         return { quat, pos };
     }
 
@@ -213,10 +211,13 @@ export default class Project {
 
     hideOldMedia = async () => {
         [...this.media.element.children].forEach(v => {
-            if (v.src.includes(this.__.medias[this.__.order])) return;
-            if (v.tagName === 'video' && v.volume == 1)
-                this.pause(d_media);
-            v.classList.add('hidden');
+            if (!v.src.includes(this.__.medias[this.__.order].src)) {
+                console.log(v.src, v.tagName);
+
+                if (v.tagName === 'VIDEO')
+                    this.pause(v);
+                v.classList.add('hidden');
+            }
         });
     }
 
@@ -244,6 +245,7 @@ export default class Project {
     }
 
     pause = (d_media) => {
+        console.log("PAUSE!!!");
         if (!d_media) d_media = [...this.media.element.children].find(v => {
             console.log(v.src, this.__.medias[this.__.order]);
             return v.src.includes(this.__.medias[this.__.order].src)

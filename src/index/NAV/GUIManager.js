@@ -60,7 +60,7 @@ class GUIManager {
             cursor: {
                 activated: false,
             },
-            isMuted: true,
+            isMuted: false,
         }
 
         this.DOM = {
@@ -249,8 +249,8 @@ class GUIManager {
             this.DOM.info.container.classList.remove('hidden');
             this.DOM.about.classList.add('hidden');
 
-            this.DOM.info.big.innerHTML = this.app.__.focus.project.__.info.big;
-            this.DOM.info.small.innerHTML = this.app.__.focus.project.__.info.small;
+            this.DOM.info.big.innerHTML = this.app.__.focus.__.info.big;
+            this.DOM.info.small.innerHTML = this.app.__.focus.__.info.small;
 
             this.openInfo();
         });

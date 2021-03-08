@@ -74,11 +74,11 @@ class ThreeManager {
     // getIntersects = () => this._ray.getIntersects(this.__.projects.)
 
     getScreenRatio = () => (window.innerWidth / window.innerHeight)
-    isVideoPlaying = () => this.app.__.focus.project && this.app.__.focus.project.media.userData.type === 'video'
-    resetVideo = () => this.isVideoPlaying() ? this.app.__.focus.project.pause() : null
+    isVideoPlaying = () => this.app.__.focus && this.app.__.focus.media.userData.type === 'video'
+    resetVideo = () => this.isVideoPlaying() ? this.app.__.focus.pause() : null
 
     pauseMedia = () => {
-        const project = this.app.__.focus.project;
+        const project = this.app.__.focus;
         if (project && project.media.userData.type === 'video')
             project.pause();
     }
@@ -94,7 +94,12 @@ class ThreeManager {
         const normal = new THREE.Vector3(0, 0, 1).applyQuaternion(quat);
         media.getWorldPosition(pos);
         pos.addScaledVector(normal, distance * 1175);
+
+
         return { quat, pos };
+
+
+
     }
 
     tweenToProject(project) {
@@ -153,7 +158,7 @@ class ThreeManager {
 
         tween.addEventListener('complete', () => {
             this.app.__.menu.isOpen = true;
-            this.app.__.focus.project = null;
+            this.app.__.focus = null;
             this.app.__.focus.media = null;
         })
         return true;
@@ -163,7 +168,7 @@ class ThreeManager {
 
 
     focusOn = (project, duration = false) => {
-        if (project === this.app.__.focus.project) return;
+        if (project === this.app.__.focus) return;
         this.resetVideo();
 
 
@@ -174,9 +179,9 @@ class ThreeManager {
         this.app._gui.setProjectUI(project);
 
         this.app.__.menu.isOpen = false;
-        this.app.__.focus.project = project;
+        this.app.__.focus = project;
         if (project.media.userData.type === 'video') {
-            setTimeout(() => { this.app.__.focus.project.play(), 500 })
+            setTimeout(() => { this.app.__.focus.play(), 500 })
             project.setVideoUI(true);
         } else {
             project.setVideoUI(false);
@@ -196,7 +201,7 @@ class ThreeManager {
     }
 
     getNextProject = (direction) => {
-        let index = this.__.projects.indexOf(this.app.__.focus.project);
+        let index = this.__.projects.indexOf(this.app.__.focus);
         index = (index + direction) % (this.__.projects.length);
         index = index < 0 ? (this.__.projects.length - 1) : index;
         return this.__.projects[index];
@@ -206,19 +211,19 @@ class ThreeManager {
         this.app.__.orientation = orientation;
 
         if (orientation === 'landscape') {
-            if (this.app.__.focus.media) this.app.__.focus.media.attach(this._3d.camera);
+            if (this.app.__.focus) this.app.__.focus.media.attach(this._3d.camera);
             this._3d.origin.rotation.z = 0;
             for (let project of this._3d.projects.children) {
                 project.rotation.z = Math.PI / 2;
             }
-            if (this.app.__.focus.media) this._3d.scene.attach(this._3d.camera);
+            if (this.app.__.focus) this._3d.scene.attach(this._3d.camera);
         } else {
-            if (this.app.__.focus.media) this.app.__.focus.media.attach(this._3d.camera);
+            if (this.app.__.focus) this.app.__.focus.media.attach(this._3d.camera);
             this._3d.origin.rotation.z = Math.PI / 2;
             for (let project of this._3d.projects.children) {
                 project.rotation.z = 0;
             }
-            if (this.app.__.focus.media) this._3d.scene.attach(this._3d.camera);
+            if (this.app.__.focus) this._3d.scene.attach(this._3d.camera);
         }
     }
 
@@ -231,29 +236,27 @@ class ThreeManager {
     }
 
     resizeCanvas = (noLogo) => {
-
         this.__.tempOrientation = this.app.getOrientation();
         if (this.app.__.orientation !== this.__.tempOrientation)
             this.changeOrientation(this.__.tempOrientation);
 
         this._logo.chooseLogo();
 
-
-        if (this.app.__.menuOpen) {
-
+        if (!!this.app.__.menu.isOpen) {
+            this._logo.chooseLogo();
             this._3d.camera.position.z = this.__.centerDistance;
+
+        } else {
+            if (this.app.__.focus) {
+                let _vp = this.app.__.focus.getViewpoint();
+                this._3d.camera.position.copy(_vp.pos);
+            }
         }
 
         this.updateCameraRatio();
 
         this.render();
-        if (!!this.app.__.menu.isOpen) {
-            this._logo.chooseLogo();
-        } else {
-            // let vector = new THREE.Vector3();
-            // this.app.__.focus.project.children[1].getWorldPosition(vector);
-            // this._3d.camera.position.copy(vector);
-        }
+
     }
 
 
