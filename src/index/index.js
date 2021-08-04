@@ -8,47 +8,24 @@ import * as THREE from "three"
 window.THREE = THREE;
 
 class Application {
-    __ = {
-        time: 0,
-        pause: false,
-        infoOpen: false,
-        timestamp: {
-            analysis: performance.now(),
-            hover: performance.now(),
-            scroll: performance.now(),
-        },
-        tween: {
-            isTweening: false,
-        },
-        menu: {
-            isOpen: true,
-            direction: 1,
-            lerpTo: 0,
-        },
-        infoMode: false,
-        cursor: {
-            x: null,
-            y: null,
-        },
-        textures: {
-            pics: {},
-            update: {},
-            preview: {},
-            uploading: [],
-            videos: {},
-        },
-        focus: null,
-        opt: null,
-        objects: []
-    }
-
-    capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1);
-
-
-    getOrientation = () => window.innerWidth > window.innerHeight ? 'landscape' : 'portrait';
 
     constructor() {
+        this.__ = {
+            hover_timestamp: performance.now(),
+            menu: {
+                isOpen: true,
+                direction: 1,
+                lerpTo: 0,
+            },
+            focus: null,
+            isMobile: null,
+            opt: null
+        }
+
         const faviconAnimator = new FaviconAnimator();
+        setTimeout(() => {
+            faviconAnimator.changeFavicon(1);
+        }, 5000);
         const formatOptimizer = new FormatOptimizer();
 
         this.__.isMobile = formatOptimizer.isMobile;
@@ -59,29 +36,30 @@ class Application {
         this._gui = new GUIManager({ app: this });
         this._interaction = new InteractionManager({ app: this });
 
-        this._three.initLogos()
-            .then(this.initLoops)
+        this._three.initLogos().then(() => {
+            this.animate(performance.now());
+        })
 
-        // this._three.fetchScene(`http://www.post-neon.com/new/JSON/data.json`);
         this._three.fetchScene('./JSON/data.json').then(data => {
             this.__.data = data;
         });
+
+
     }
 
+    getOrientation() {
+        return window.innerWidth > window.innerHeight ? 'landscape' : 'portrait'
+    };
 
-    initLoops = () => {
-        this.analyse();
-        this.animate();
+    throttle(now, timestamp, delta) {
+        return (1000 / (now - timestamp)) < delta
     }
 
-    analyse = (now) => {
-        // requestAnimationFrame(this.analyse);
-        this.animate();
+    animate(now) {
+        this._three.render();
 
-        setTimeout(() => {
-            this.analyse(performance.now());
-        }, 1000 / 60);
-        if (this.__.pause) return;
+        setTimeout(() => this.animate(performance.now()), 1000 / 60);
+
         if (!now) return;
 
         if (this.__.menu.isOpen && !this.__.infoMode) {
@@ -90,48 +68,30 @@ class Application {
 
         this._tween.update(now);
 
-
         if (this.__.infoMode || this.__.isMobile) return
 
-        if ((1000 / (now - this.__.timestamp.scroll)) < 60) {
-            this._interaction._scroll.updateScroll();
-            this.__.timestamp.scroll = now;
+        this._interaction._scroll.updateScroll();
+
+        if (!this.__.menu.isOpen || this._gui.__.isHovering) return;
+
+        if (this.throttle(now, this.__.hover_timestamp, 30)) {
+            this._interaction._cursor.hoverMenu();
+            this.__.hover_timestamp = now;
         }
-
-
-        if (this.__.menu.isOpen &&
-            !this.__.tween.isTweening &&
-            !this._gui.__.isHovering
-        ) {
-            if ((1000 / (now - this.__.timestamp.hover)) < 15) {
-                this._interaction._cursor.hoverMenu();
-                this.__.timestamp.hover = now;
-            }
-        }
-    }
-
-    animate = (now) => {
-        // requestAnimationFrame(this.animate);
-        // setTimeout(this.animate, 1000 / 60);
-        if (this.__.pause) return;
-        this._three.render();
     }
 }
 
 class FaviconAnimator {
     constructor() {
-        this.characters = "pqstneqn";
-        setTimeout(() => {
-            this.changeFavicon(1);
-        }, 5000);
+        this.characters = "postneon";
     }
     changeFavicon(index) {
-        let favoLinks = "pqstneqn";
+        let favoLinks = "postneon";
         var link = document.createElement('link'),
             oldLink = document.getElementById('dynamic-favicon');
         link.id = 'dynamic-favicon';
         link.rel = 'shortcut icon';
-        link.href = "http://www.post-neon.com/favicons/favicon_" + this.characters[index] + ".png";
+        link.href = "./favicons/favicon_" + this.characters[index] + ".png";
         if (oldLink) document.head.removeChild(oldLink);
         document.head.appendChild(link);
         index = index++ % favoLinks.length;

@@ -5,7 +5,7 @@ import * as THREE from "three"
 
 import RayCastManager from './RayCastManager.js'
 import LogoManager from "./LogoManager.js"
-import Project from "./ProjectManager.js"
+import ProjectManager from "./ProjectManager.js"
 
 
 
@@ -292,7 +292,7 @@ class ThreeManager {
         this.updateCameraRatio();
         let orientation = this.app.getOrientation();
         [..._data.projects].forEach(async (p, i) => {
-            let _p = new Project(this.app, p);
+            let _p = new ProjectManager({ app: this.app, data: p });
             this._3d.projects.add(_p.project);
             this._3d.collisions.push(_p.media);
             // this.addToScene(_p.media);

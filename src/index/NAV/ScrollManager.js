@@ -1,48 +1,41 @@
 export default class ScrollManager {
     constructor({ app }) {
         this.app = app;
-        this.init();
-    }
-    DOM = {
-        scroll: {
-            container: document.querySelector(".scroll-container"),
-            content: document.querySelector(".scroll-content")
-        },
-    }
-    __ = {
-        toOrigin: false,
-        scroll: {
-            now: { x: null, y: null },
-            eased: { x: null, y: null },
-            last: { x: null, y: null },
-            delta: { x: null, y: null },
-            alpha: 0.25,
-            origin: null,
-            scrolling: false,
-            clearScrolling: null,
-            throttle: null
+        this.DOM = {
+            scroll: {
+                container: document.querySelector(".scroll-container"),
+                content: document.querySelector(".scroll-content")
+            }
         }
+        this.__ = {
+            toOrigin: false,
+            scroll: {
+                now: { x: null, y: null },
+                eased: { x: null, y: null },
+                last: { x: null, y: null },
+                delta: { x: null, y: null },
+                alpha: 0.25,
+                origin: {
+                    x: this.DOM.scroll.content.offsetWidth / 2,
+                    y: this.DOM.scroll.content.offsetHeight / 2
+                },
+                scrolling: false,
+                clearScrolling: null,
+            }
 
-    }
-    init() {
-        this.__.scroll.origin =
-        {
-            x: this.DOM.scroll.content.offsetWidth / 2,
-            y: this.DOM.scroll.content.offsetHeight / 2
-        };
+        }
         this.DOM.scroll.container.scrollTop = this.__.scroll.origin.y;
         this.DOM.scroll.container.addEventListener('wheel', this.onWheel);
         this.resetScrollState();
         this.updateScroll();
     }
 
-    onWheel = e => {
-        // console.log(this.app.__.infoMode, this.__.scroll.scrolling);
+    onWheel(e) {
         if (!this.app.__.infoMode)
             this.setScrolling(true);
     }
 
-    setScrolling = (bool) => {
+    setScrolling(bool) {
         this.__.scroll.scrolling = true;
 
         if (!bool) return
@@ -54,7 +47,7 @@ export default class ScrollManager {
         }, 500)
     }
 
-    pingScrollContainer = () => {
+    pingScrollContainer() {
         this.__.scroll.temp = this.getScrollPosition();
         if (this.__.scroll.temp.y === this.__.scroll.origin.y) {
             this.__.toOrigin = false;
@@ -64,26 +57,26 @@ export default class ScrollManager {
         }
     }
 
-    scrollToOrigin = () => {
+    scrollToOrigin() {
         this.DOM.scroll.container.scrollTo(0, this.__.scroll.origin.y);
         this.DOM.scroll.container.classList.add('toOrigin');
         this.__.toOrigin = true;
         this.pingScrollContainer();
     }
 
-    resetScrollState = () => {
+    resetScrollState() {
         this.__.scroll.eased = this.__.scroll.origin;
         this.__.scroll.last = this.__.scroll.eased;
     }
 
-    getScrollPosition = () => {
+    getScrollPosition() {
         return {
             x: this.DOM.scroll.container.scrollLeft,
             y: this.DOM.scroll.container.scrollTop
         }
     }
 
-    updateScroll = () => {
+    updateScroll() {
         if (!this.__.scroll.scrolling || this.__.toOrigin) {
             return false;
         }

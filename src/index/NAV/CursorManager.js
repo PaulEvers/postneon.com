@@ -16,35 +16,13 @@ export default class CursorManager {
 
         this.__ = {
             vector: new THREE.Vector2(),
-            intersections: [],
-            intersected: {
-                media: null,
-                project: null
-            },
             hideTitle: null,
-            throttle: {
-                mousemove: true,
-            },
             cursor: {
                 temp: { x: null, y: null },
                 now: { x: null, y: null },
                 timestamp: null,
-                down: {
-                    value: { x: null, y: null },
-                    timestamp: null
-                },
-                delta: { x: null, y: null },
-                array: [],
-                isDragging: false,
-                scroll: {
-                    isHot: false,
-                    isCold: false
-                }
-            },
-            menu: {
-                delta: 0
+                isDragging: false
             }
-
         }
 
         this.init();
@@ -94,9 +72,7 @@ export default class CursorManager {
         this.__.cursor.start = this.__.cursor.now;
     }
 
-    onCursorMove = (event) => {
-        this.app.__.pause = false;
-
+    onCursorMove(event) {
         this.__.cursor.temp = this.getCursorPosition(event);
         this.app._gui.setCursorPosition(this.__.cursor.temp.x, this.__.cursor.temp.y)
         this.app._gui.showCursor();
@@ -124,7 +100,9 @@ export default class CursorManager {
         this.__.cursor.now = this.__.cursor.temp;
     }
 
-    s_event = (type, data) => new CustomEvent("click", { detail: { type: type, ...data } });
+    s_event(type, data) {
+        return new CustomEvent("click", { detail: { type: type, ...data } })
+    }
 
     onCursorUp(event) {
         if (!this.__.cursor.isDragging) return;
@@ -174,12 +152,12 @@ export default class CursorManager {
     }
 
     getIntersects() {
-        this.__.cursor.array = this.getCursorArray();
-        if (!this.__.cursor.array) return;
-        this.__.vector.fromArray(this.__.cursor.array);
-        this.__.intersections = this._ray.getIntersects(this.app._three._3d.camera, this.__.vector, this.app._three._3d.collisions);
-        if (this.__.intersections.length > 0) {
-            return this.__.intersections[0].object;
+        let cursorArray = this.getCursorArray();
+        if (!cursorArray) return;
+        this.__.vector.fromArray(cursorArray);
+        let intersections = this._ray.getIntersects(this.app._three._3d.camera, this.__.vector, this.app._three._3d.collisions);
+        if (intersections.length > 0) {
+            return intersections[0].object;
         } else {
             return false;
         }
@@ -198,7 +176,6 @@ export default class CursorManager {
     }
 
     hoverProject() {
-        if (this.app.__.pause) return;
         if (this.app._tween.__.isTweening) return;
         this.__.intersection = this.getIntersects();
         if (this.__.intersection) {

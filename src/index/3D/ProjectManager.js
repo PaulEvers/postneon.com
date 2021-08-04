@@ -4,37 +4,37 @@ import * as THREE from "three"
 
 
 export default class Project {
-    constructor(app, _p) {
+    constructor({ app, data }) {
         this.app = app;
-
         this.__ = {
-            projectLength: _p.medias.length,
+            projectLength: data.medias.length,
             order: 0,
-            name: _p.title,
-            directory: _p.directory,
+            name: data.title,
+            directory: data.directory,
             info: {
-                big: _p.info.big ? _p.info.big.replace(/\n/g, "<br>") : "",
-                small: _p.info.small ? _p.info.small.replace(/\n/g, "<br>") : "",
+                big: data.info.big ? data.info.big.replace(/\n/g, "<br>") : "",
+                small: data.info.small ? data.info.small.replace(/\n/g, "<br>") : "",
             },
-            medias: _p.medias,
+            medias: data.medias,
         }
+        this.media = null;
+        this.collision = null;
+        this.project = null;
 
-        this.mediaCache = [];
-
-        this.init(_p.medias[0])
+        this.init(data.medias[0])
     }
-
-    getUrl = (_m) => `projects/${this.__.directory}/${this.app.capitalize(_m.type)}/${this.app.__.opt}/${_m.src}`;
+    capitalize(str) { return str.charAt(0).toUpperCase() + str.slice(1) };
+    getUrl = (type, src) => `projects/${this.__.directory}/${this.capitalize(type)}/${this.app.__.opt}/${src}`;
     isPlaying = video => !!(video.currentTime > 0 && !video.paused && !video.ended && video.readyState > 2);
     getMediaDomFromSrc = (src) => [...this.media.element.children].find(v => v.src.includes(src))
 
-    init = (_m) => {
+    init = (media_data) => {
 
-        let d_media = this.createMedia(_m);
+        let media_dom = this.createMedia(media_data);
 
         let d_container = document.createElement('div');
         d_container.className = 'd_container';
-        d_container.appendChild(d_media);
+        d_container.appendChild(media_dom);
 
         this.media = new CSS3DObject(d_container);
 
@@ -59,7 +59,7 @@ export default class Project {
         this.media.position.set(0, 0, radius * 5);
         this.media.rotation.set(Math.PI, Math.PI, Math.PI / 2);
 
-        this.updateMedia(_m, false);
+        this.updateMedia(media_data, false);
     }
 
     setVideoUI = (bool) => this.app._gui.setVideoUI(bool)
@@ -89,37 +89,32 @@ export default class Project {
         }
     }
 
-    createMedia = (_m) => {
-        let url = this.getUrl(_m);
+    createMedia = (mediaData) => {
+        let media_dom;
+        let url = this.getUrl(mediaData.type, mediaData.src);
 
-        let d_media;
-        if (_m.type === "image") {
-            d_media = document.createElement('img')
+        if (mediaData.type === "image") {
+            media_dom = document.createElement('img')
         } else {
-            d_media = document.createElement('video');
-            // d_media.playsinline = true;
-            d_media.setAttribute('playsinline', true);
-            d_media.addEventListener('loadedmetadata', () => {
-                // alert('ok'); 
-                d_media.volume = 0;
-                d_media.play();
+            media_dom = document.createElement('video');
+            media_dom.setAttribute('playsinline', true);
+            media_dom.addEventListener('loadedmetadata', () => {
+                media_dom.volume = 0;
+                media_dom.play();
                 setTimeout(() => {
-                    d_media.pause();
-
+                    media_dom.pause();
                 }, 10)
             });
-
-
-            d_media.volume = 0;
-            d_media.loop = true;
-            d_media.onerror = () => {
-                alert('error video');
+            media_dom.volume = 0;
+            media_dom.loop = true;
+            media_dom.onerror = () => {
+                console.error('error video');
             }
         }
 
-        d_media.src = url;
-        d_media.className = 'd_media';
-        return d_media;
+        media_dom.src = url;
+        media_dom.className = 'media_dom';
+        return media_dom;
     }
 
     getNextMedia = (direction) => {
@@ -143,17 +138,17 @@ export default class Project {
             if (nextMedia.type === 'video')
                 this.play(loadedMedia);
         } else {
-            let d_media = this.createMedia(nextMedia);
-            this.media.element.appendChild(d_media);
-            d_media.classList.add('hidden');
-            d_media.addEventListener(nextMedia.type === 'video' ? 'loadedmetadata' : 'load',
+            let media_dom = this.createMedia(nextMedia);
+            this.media.element.appendChild(media_dom);
+            media_dom.classList.add('hidden');
+            media_dom.addEventListener(nextMedia.type === 'video' ? 'loadedmetadata' : 'load',
                 () => {
                     setTimeout(() => {
                         this.hideOldMedia();
-                        d_media.classList.remove('hidden');
+                        media_dom.classList.remove('hidden');
                     }, 5)
                     if (nextMedia.type === 'video') {
-                        this.play(d_media);
+                        this.play(media_dom);
                     }
                 }
             )
@@ -161,8 +156,6 @@ export default class Project {
     }
 
     lerp = (a, b, d) => a - d * a + b * d;
-
-
 
     tweenScale = (x, y) => {
         let tween = this.app._tween.add(500);
@@ -207,18 +200,18 @@ export default class Project {
         return { quat, pos };
     }
 
-    updateMedia = (_m, tween = true) => {
-        if (!_m) {
+    updateMedia = (mediaData, tween = true) => {
+        if (!mediaData) {
             console.log('errrrr', this.__.medias, this.__.order);
             return;
         }
-        this.media.userData = _m;
+        this.media.userData = mediaData;
 
         let scale = this.app._three.__.scale;
 
         let volume = scale;
-        let width = Math.sqrt(volume * _m.ratio);
-        let height = width / _m.ratio;
+        let width = Math.sqrt(volume * mediaData.ratio);
+        let height = width / mediaData.ratio;
 
         if (tween) {
             this.tweenScale(width, height)
@@ -242,56 +235,50 @@ export default class Project {
         });
     }
 
+    play = (media_dom) => {
 
-
-
-    play = (d_media) => {
-
-        if (!d_media) {
-            d_media = this.getMediaDomFromSrc(this.__.medias[this.__.order].src);
+        if (!media_dom) {
+            media_dom = this.getMediaDomFromSrc(this.__.medias[this.__.order].src);
         }
 
-        if (d_media.tagName !== 'VIDEO') {
+        if (media_dom.tagName !== 'VIDEO') {
             console.log("ERRORR PLAY");
             return;
         }
         let tween = this.app._tween.add(1000, "sine_in");
 
-        if (this.isPlaying(d_media)) return;
-        d_media.volume = this.app.__.isMobile ? 1 : 0;
-        d_media.play();
+        if (this.isPlaying(media_dom)) return;
+        media_dom.volume = this.app.__.isMobile ? 1 : 0;
+        media_dom.play();
         tween.addEventListener('update', ({ detail }) => {
-            d_media.volume = Math.min(1, Math.max(0, detail));
+            media_dom.volume = Math.min(1, Math.max(0, detail));
         })
     }
 
-    pause = (d_media) => {
-        console.log("PAUSE!!!");
-        if (!d_media) d_media = [...this.media.element.children].find(v => {
-            console.log(v.src, this.__.medias[this.__.order]);
+    pause = (media_dom) => {
+        if (!media_dom) media_dom = [...this.media.element.children].find(v => {
             return v.src.includes(this.__.medias[this.__.order].src)
         })
 
-        console.log(d_media);
-        if (!d_media || d_media.tagName !== 'VIDEO') {
-            console.log("ERRORR PAUSE");
+        if (!media_dom || media_dom.tagName !== 'VIDEO') {
+            console.error("error with pausing video");
             return;
         }
 
-        let startVolume = d_media.volume;
+        let startVolume = media_dom.volume;
 
         return new Promise((resolve) => {
             if (startVolume == 0) {
-                d_media.pause();
+                media_dom.pause();
                 resolve();
                 return;
             }
             let tween = this.app._tween.add(500);
             tween.addEventListener('update', ({ detail }) => {
-                d_media.volume = Math.min(1, Math.max(0, 1 - detail));
+                media_dom.volume = Math.min(1, Math.max(0, 1 - detail));
             })
             tween.addEventListener('complete', () => {
-                d_media.pause();
+                media_dom.pause();
                 resolve();
             })
         })
@@ -299,13 +286,13 @@ export default class Project {
     }
 
     setVolume = (volume) => {
-        let d_media = this.getMediaDomFromSrc(this.__.medias[this.__.order].src);
-        let startVolume = d_media.volume;
+        let media_dom = this.getMediaDomFromSrc(this.__.medias[this.__.order].src);
+        let startVolume = media_dom.volume;
 
         let tween = this.app._tween.add(500);
         tween.addEventListener('update', ({ detail }) => {
             let _volume = startVolume * (1 - detail) + volume * detail;
-            d_media.volume = Math.min(1, Math.max(0, _volume));
+            media_dom.volume = Math.min(1, Math.max(0, _volume));
         })
     }
 
