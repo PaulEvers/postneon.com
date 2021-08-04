@@ -62,7 +62,10 @@ class Application {
         this._three.initLogos()
             .then(this.initLoops)
 
-        this._three.fetchScene("http://www.post-neon.com/new/JSON/data.json");
+        // this._three.fetchScene(`http://www.post-neon.com/new/JSON/data.json`);
+        this._three.fetchScene('./JSON/data.json').then(data => {
+            this.__.data = data;
+        });
     }
 
 
@@ -72,7 +75,12 @@ class Application {
     }
 
     analyse = (now) => {
-        requestAnimationFrame(this.analyse);
+        // requestAnimationFrame(this.analyse);
+        this.animate();
+
+        setTimeout(() => {
+            this.analyse(performance.now());
+        }, 1000 / 60);
         if (this.__.pause) return;
         if (!now) return;
 
@@ -103,7 +111,8 @@ class Application {
     }
 
     animate = (now) => {
-        requestAnimationFrame(this.animate);
+        // requestAnimationFrame(this.animate);
+        // setTimeout(this.animate, 1000 / 60);
         if (this.__.pause) return;
         this._three.render();
     }

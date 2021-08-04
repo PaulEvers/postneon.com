@@ -16,8 +16,8 @@ class ThreeManager {
         this._ray = new RayCastManager();
 
         this.__ = {
-            scale: 0.025,
-            centerDistance: this.app.__.isMobile ? 110 : 200,
+            scale: 0.0025,
+            centerDistance: 200,
             orientation: null,
             tempOrientation: {},
             radius: 25,
@@ -159,7 +159,7 @@ class ThreeManager {
         tween.addEventListener('complete', () => {
             this.app.__.menu.isOpen = true;
             this.app.__.focus = null;
-            this.app.__.focus.media = null;
+            // this.app.__.focus.media = null;
         })
         return true;
     }
@@ -181,10 +181,11 @@ class ThreeManager {
         this.app.__.menu.isOpen = false;
         this.app.__.focus = project;
         if (project.media.userData.type === 'video') {
-            setTimeout(() => { this.app.__.focus.play(), 500 })
-            project.setVideoUI(true);
+            setTimeout(() => { this.app.__.focus.play(), 500 });
+            if (!this.app.__.isMobile) project.setVideoUI(true);
+
         } else {
-            project.setVideoUI(false);
+            if (!this.app.__.isMobile) project.setVideoUI(false);
         }
         return canTween;
     }
@@ -213,15 +214,22 @@ class ThreeManager {
         if (orientation === 'landscape') {
             if (this.app.__.focus) this.app.__.focus.media.attach(this._3d.camera);
             this._3d.origin.rotation.z = 0;
+            this._3d.projects.rotation.x = 0;
+            this._3d.projects.rotation.z = 0;
             for (let project of this._3d.projects.children) {
                 project.rotation.z = Math.PI / 2;
             }
             if (this.app.__.focus) this._3d.scene.attach(this._3d.camera);
         } else {
             if (this.app.__.focus) this.app.__.focus.media.attach(this._3d.camera);
-            this._3d.origin.rotation.z = Math.PI / 2;
+            // this._3d.origin.rotation.z = Math.PI / 2;
+            // this._3d.projects.rotation.z = -Math.PI / 2;
+            this._3d.projects.rotation.x = -Math.PI / 2;
+            this._3d.projects.rotation.z = -Math.PI / 2;
+            this._3d.projects.rotation.y = 0;
+
             for (let project of this._3d.projects.children) {
-                project.rotation.z = 0;
+                project.rotation.z = Math.PI;
             }
             if (this.app.__.focus) this._3d.scene.attach(this._3d.camera);
         }
@@ -239,11 +247,12 @@ class ThreeManager {
         this.__.tempOrientation = this.app.getOrientation();
         if (this.app.__.orientation !== this.__.tempOrientation)
             this.changeOrientation(this.__.tempOrientation);
-
-        this._logo.chooseLogo();
+        setTimeout(() => {
+            this._logo.chooseLogo();
+        }, 0);
 
         if (!!this.app.__.menu.isOpen) {
-            this._logo.chooseLogo();
+            // this._logo.chooseLogo();
             this._3d.camera.position.z = this.__.centerDistance;
 
         } else {
@@ -261,15 +270,23 @@ class ThreeManager {
 
 
     fetchScene = async (url) => {
-        let _data = await fetch(url, { method: 'GET', mode: 'cors' })
+        let _data = await fetch(url, { method: 'GET' })
             .then(res => res.json());
+
+
+        _data.projects = [..._data.projects]
+            .map((a) => ({ sort: Math.random(), value: a }))
+            .sort((a, b) => a.sort - b.sort)
+            .map((a) => a.value)
 
         let _amount = _data.projects.length;
 
         _data.about.big = _data.about.big.replace(/\n/g, "<br>");
         _data.about.small = _data.about.small.replace(/\n/g, "<br>");
+
         _data.contact.big = _data.contact.big.replace(/\n/g, "<br>");
         _data.contact.small = _data.contact.small.replace(/\n/g, "<br>");
+
 
 
         this.updateCameraRatio();
@@ -310,7 +327,11 @@ class ThreeManager {
         if (!this.__.menu.lastTick) this.__.menu.lastTick = now;
         this.__.menu.delta = Math.min(10, now - this.__.menu.lastTick);
         this.__.menu.lerpTo = this.lerp(this.app.__.menu.lerpTo, this.__.menu.lerpTo, 0.125);
-        this._3d.projects.rotation.y += this.__.menu.speed * this.__.menu.delta * this.app.__.menu.direction * 0.9 + this.__.menu.lerpTo * this.__.menu.delta;
+        if (this.app.__.orientation === 'landscape') {
+            this._3d.projects.rotation.y += this.__.menu.speed * this.__.menu.delta * this.app.__.menu.direction * 0.9 + this.__.menu.lerpTo * this.__.menu.delta;
+        } else {
+            this._3d.projects.rotation.x += this.__.menu.speed * this.__.menu.delta * this.app.__.menu.direction * 0.9 + this.__.menu.lerpTo * this.__.menu.delta;
+        }
         this.__.menu.lastTick = now;
         this.app.__.menu.lerpTo = 0
         this._3d.scene.updateMatrixWorld();

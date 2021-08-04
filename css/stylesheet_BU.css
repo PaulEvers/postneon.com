@@ -30,8 +30,7 @@ video, img {
 html, body {
     height: 100vh;
     overflow: hidden;
-    width: 100vw;
-    background-color: black;
+    width: 100%;
 }
 
 body {
@@ -55,10 +54,7 @@ body {
     -ms-user-select: none;
     user-select: none;
     -webkit-tap-highlight-color: transparent;
-}
-
-svg {
-    transform-style: initial !important;
+    transform-style: preserve-3d;
 }
 
 #progress {
@@ -73,7 +69,6 @@ svg {
 #scroll {
     height: 100%;
     width: 100vw;
-    overflow: hidden;
 }
 
 #videos {
@@ -100,13 +95,15 @@ svg {
 #threejs {
     position: fixed;
     height: 100vh;
-    width: 100vw;
+    left: 0px;
+    right: 0px;
     top: 0px;
     bottom: 0px;
     z-index: 0;
     transform-origin: bottom right;
     overflow: hidden;
     background: black;
+    /*background: linear-gradient(180deg, rgba(0, 0, 0, 1) 0%, rgba(173, 173, 173, 1) 100%);*/
 }
 
 #threejs canvas {
@@ -181,7 +178,7 @@ svg {
     transform: translate(-50%, -50%);
     height: auto;
     width: 75vw;
-    /* fill: transparent; */
+    fill: transparent;
     opacity: 0;
     display: none;
 }
@@ -352,8 +349,7 @@ button:active, button:focus {
 .link {
     margin: 0px;
     padding: 0px;
-    /* font-size:inherit; */
-    font-size: 16pt;
+    font-size: 5vh;
     font-family: serifbabe;
     border: 0px;
     user-select: none;
@@ -411,9 +407,7 @@ input::selection {
 }
 
 .gui:hover, .gui.active {
-    background:white;
-    color:black;
-    /* filter: invert(1); */
+    filter: invert(1);
 }
 
 .noMobile #projectInfo:hover {
@@ -423,19 +417,17 @@ input::selection {
 
 * {
     cursor: none !important;
-    /* transition: background 0.5s, color 0.5s, filter 0.5s; */
+    transition: background 0.5s, color 0.5s, filter 0.5s;
 }
 
 .cursor {
     position: absolute;
-    z-index: 50;
+    z-index: 20;
     top: 0px;
     left: 0px;
     pointer-events: none;
     opacity: 0;
-    /* filter:drop-shadow(rgba(0,0,0,0.5) 5px 5px 5px) */
-    
-    /* mix-blend-mode: exclusion; */
+    mix-blend-mode: exclusion;
 }
 
 .cursor.activated {
@@ -498,17 +490,8 @@ input::selection {
     pointer-events: none;
 }
 
-.mobile .scroll-content{
-    display: none;
-}
-
 .scroll-container.toOrigin {
     pointer-events: none;
-}
-
-.mobile .scroll-container{
-    padding: 0px !important;
-
 }
 
 .scroll-container {
@@ -517,17 +500,14 @@ input::selection {
     width: 100vw;
     z-index: 5;
     overflow: auto;
-    padding: 15px;
-    /* background: rgba(250,0,0,0.25); */
-    /* transform: scale(2); */
+    transform: scale(2);
     /* background: black; */
     /* mix-blend-mode: lighten; */
 }
 
 .scroll-content {
-    height: 10000px;
+    height: 10000vh;
     width: 100vw;
-    /* background: */
 }
 
 @media only screen and (max-width: 600px) {
@@ -583,11 +563,4 @@ input::selection {
         margin-right: 2.5vw;
         margin-left: 2.5vw;
     }
-}
-
-.log{
-    position: absolute;
-    z-index: 100;
-    background: red;
-    color:black;
 }

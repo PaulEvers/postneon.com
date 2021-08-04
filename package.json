@@ -26,7 +26,8 @@
     "worker-loader": "^3.0.8"
   },
   "scripts": {
-    "start": "webpack --mode development --watch "
+    "start": "webpack --mode development --watch ",
+    "build": "webpack"
   },
   "author": "",
   "license": "ISC"

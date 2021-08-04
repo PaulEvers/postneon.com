@@ -127,9 +127,7 @@ export default class ScrollManager {
     }
 
     scrollToNextProject(direction) {
-        console.log('ok');
         let project = this.app._three.getNextProject(direction);
-        console.log(project);
         let success = this.app._three.focusOn(project, 1000);
         if (success)
             this.app._gui.setProjectUI(project)

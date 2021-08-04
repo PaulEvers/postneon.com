@@ -59,9 +59,9 @@ export default class CursorManager {
                 this.app._gui.hideCursor()
             })
         } else {
-            window.addEventListener('touchstart', this.onCursorDown.bind(this), false);
+            this.DOM.scroll.addEventListener('touchstart', this.onCursorDown.bind(this), false);
             window.addEventListener('touchmove', this.onCursorMove.bind(this), false);
-            window.addEventListener('touchend', this.onCursorUp.bind(this), false);
+            this.DOM.scroll.addEventListener('touchend', this.onCursorUp.bind(this), false);
         }
 
     }
@@ -79,27 +79,25 @@ export default class CursorManager {
     }
 
     onCursorDown(event) {
-        if (this.app.__.info) return;
+        if (this.app.__.infoMode) return;
         if (!!this.__.focusBack) {
             clearTimeout(this.__.focusBack);
             this.__.focusBack = false;
         }
+        // document.querySelector('.log').innerHTML = JSON.stringify(event.target.classList) + performance.now();
+
+        // console.log('isdragging');
+        // document.querySelector('.log').innerHTML = performance.now();
         this.__.cursor.isDragging = true;
         this.__.cursor.now = this.getCursorPosition(event);
         this.__.cursor.timestamp = performance.now();
-
-        if (this.app.__.isMobile)
-            this.__.cursor.start = this.__.cursor.now;
+        this.__.cursor.start = this.__.cursor.now;
     }
 
     onCursorMove = (event) => {
         this.app.__.pause = false;
-        if (!this.__.throttle.mousemove) return;
-
-        this.__.throttle.mousemove = false;
 
         this.__.cursor.temp = this.getCursorPosition(event);
-
         this.app._gui.setCursorPosition(this.__.cursor.temp.x, this.__.cursor.temp.y)
         this.app._gui.showCursor();
 
@@ -110,6 +108,7 @@ export default class CursorManager {
         }
 
         if (this.__.cursor.isDragging && this.__.cursor.temp.x && this.app.__.menu.isOpen) {
+            // alert('drag');
             this.dragMenu(this.__.cursor.temp);
         }
 
@@ -123,45 +122,52 @@ export default class CursorManager {
             }
         }
         this.__.cursor.now = this.__.cursor.temp;
-
-        setTimeout(() => this.__.throttle.mousemove = true, 1000 / 60);
     }
 
     s_event = (type, data) => new CustomEvent("click", { detail: { type: type, ...data } });
 
     onCursorUp(event) {
         if (!this.__.cursor.isDragging) return;
+
         this.__.cursor.isDragging = false;
-
         this.__.intersection = this.getIntersects();
-
-        if (!this.__.intersection) {
-            if (!this.app.__.menu.isOpen)
-                this.app._three.tweenToMenu();
-            return;
-        }
-
 
         clearTimeout(this.__.hideTitle);
 
-        if (!this.app.__.isMobile || this.app.__.menu.isOpen) {
-            if (Math.abs(this.__.cursor.timestamp - performance.now()) < 200) {
+        let toMenu = true;
+
+        if (this.app.__.menu.isOpen) {
+            if (Math.abs(this.__.cursor.timestamp - performance.now()) < 200 &&
+                !!this.__.intersection) {
                 this.__.intersection.userData.project.click(this.__.cursor.now.x);
+                toMenu = false;
             }
         } else {
             if (this.app.__.orientation === 'landscape' &&
-                Math.abs(this.__.cursor.start.x - this.__.cursor.now.x) > 125) {
+                Math.abs(this.__.cursor.start.x - this.__.cursor.now.x) > 75) {
+
                 let direction = this.__.cursor.start.x > this.__.cursor.now.x ? -1 : 1;
-                this.scrollToNextProject(direction);
+                this.app._interaction.scrollToNextProject(direction);
+                toMenu = false;
 
             } else if (this.app.__.orientation === 'portrait' &&
-                Math.abs(this.__.cursor.start.y - this.__.cursor.now.y) > 125) {
+                Math.abs(this.__.cursor.start.y - this.__.cursor.now.y) > 75) {
                 let direction = this.__.cursor.start.y > this.__.cursor.now.y ? -1 : 1;
-                this.scrollToNextProject(direction);
-                return
-            } else if (Math.abs(this.__.cursor.timestamp - performance.now()) < 200) {
-                d_media.dispatchEvent(this.s_event('click'));
-            }
+                this.app._interaction.scrollToNextProject(direction);
+                toMenu = false;
+
+            } else
+                if (Math.abs(this.__.cursor.timestamp - performance.now()) < 200 &&
+                    !!this.__.intersection) {
+                    this.__.intersection.userData.project.click(this.__.cursor.now.x);
+                    toMenu = false;
+                }
+        }
+
+        if (!this.__.intersection && toMenu) {
+            if (!this.app.__.menu.isOpen)
+                this.app._three.tweenToMenu();
+            return;
         }
 
         this.__.cursor.start = this.__.cursor.now;
@@ -218,7 +224,7 @@ export default class CursorManager {
 
         } else {
             delta = this.__.cursor.now.y - cursor.y;
-            this.app._three._3d.projects.rotation.y += delta / 500;
+            this.app.__.menu.lerpTo += delta / -5000;
         }
         this.app.__.menu.direction = delta < 0 ? 1 : -1;
 

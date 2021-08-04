@@ -136,31 +136,41 @@ class GUIManager {
         this.DOM.project.title.classList.remove('hidden');
     }
 
-    tweenCanvas = () => {
-        console.log('TWEEEEEEEEEN');
+    updateTweenedCanvas = () => {
+        console.log(' this happens?');
+        const max = {
+            canvas: window.innerWidth < 600 ? 100 : 50,
+            projectTitle: window.innerWidth < 600 ? 150 : 75,
+            textContainer: window.innerWidth < 600 ? 100 : 50,
+        }
 
+        this.DOM.canvas.style.left = max.canvas + "vw";
+        this.DOM.canvas.children[0].style.transform = `translateX(-${max.canvas / 2}%)`;
+        this.DOM.project.title.style.left = max.projectTitle + "%";
+    }
+
+    tweenCanvas = () => {
 
         let tweener = this.app._tween.add(500);
         if (!tweener) return
 
         const max = {
             canvas: window.innerWidth < 600 ? 100 : 50,
-            projecTitle: window.innerWidth < 600 ? 100 : 75
+            projectTitle: window.innerWidth < 600 ? 150 : 75,
+            textContainer: window.innerWidth < 600 ? 100 : 50,
         }
 
-        let infoOpen = this.app.__.infoOpen;
-
+        let shouldOpen = this.app.__.infoMode;
         let canvas = {
-            now: infoOpen ? max.canvas : 0,
-            next: infoOpen ? 0 : max.canvas
+            now: shouldOpen ? 0 : max.canvas,
+            next: shouldOpen ? max.canvas : 0
         }
         let projectTitle = {
-            now: infoOpen ? max.projecTitle : 50,
-            next: infoOpen ? 50 : max.projecTitle
+            now: shouldOpen ? 50 : max.projectTitle,
+            next: shouldOpen ? max.projectTitle : 50
         }
 
         tweener.addEventListener('update', ({ detail }) => {
-            //console.log(detail);
             this.DOM.canvas.style.left = this.app._tween.lerp(canvas, detail) + "vw";
             this.DOM.canvas.children[0].style.transform = `translateX(-${this.app._tween.lerp(canvas, detail) / 2}%)`;
 
@@ -189,7 +199,10 @@ class GUIManager {
     }
 
     closeInfo = e => {
+        e.stopPropagation();
+        console.log("CLOSE INFO!!!!");
         this.app.__.infoMode = false;
+
         document.querySelector('.scroll-container').classList.remove('hidden');
         this.tweenCanvas();
         this.setCursorMode('pointer');
@@ -202,24 +215,35 @@ class GUIManager {
         }, 500)
 
         this.DOM.canvas.removeEventListener('mouseup', this.closeInfo);
+        window.removeEventListener('resize', this.updateTweenedCanvas);
+
         e.stopPropagation();
         e.preventDefault();
     }
 
+    openContact = () => {
+
+    }
+
     openInfo = () => {
+        console.log('open that info!');
         this.app.__.infoMode = true;
+        console.log(this.app.__.focus);
         this.setTopMenuMode('info');
         this.tweenCanvas();
+        window.addEventListener('resize', this.updateTweenedCanvas);
         document.querySelector('.scroll-container').classList.add('hidden');
         this.DOM.canvas.addEventListener('mouseup', this.closeInfo);
+        console.log('open that info ja!');
+
         /* if (this.app.__.isMobile && this.app.__.focus.media && this.app.__.focus.media.userData.type === 'video') {
             this.app.__.focus.media.material.map.image.pause();
         } */
     }
 
     init = () => {
-        this.DOM.buttons.back.addEventListener('mouseup', this.closeInfo)
-        this.DOM.buttons.menu.addEventListener('mouseup', (e) => {
+        this.DOM.buttons.back.addEventListener('click', this.closeInfo)
+        this.DOM.buttons.menu.addEventListener('click', (e) => {
             e.stopPropagation();
             //console.log('this?');
             this.app._three.tweenToMenu(false);
@@ -235,19 +259,21 @@ class GUIManager {
             })
         })
 
-        this.DOM.buttons.about.addEventListener('mouseup', (e) => {
+        this.DOM.buttons.about.addEventListener('click', (e) => {
             e.stopPropagation();
-            this.DOM.about.classList.remove('hidden');
-            this.DOM.info.container.classList.add('hidden');
+
+            this.DOM.info.container.classList.remove('hidden');
+            this.DOM.info.big.innerHTML = this.app.__.data.about.big;
+            this.DOM.info.small.innerHTML = this.app.__.data.about.small;
 
             this.openInfo();
         });
 
-        this.DOM.buttons.info.addEventListener('mouseup', (e) => {
+        this.DOM.buttons.info.addEventListener('click', (e) => {
             e.stopPropagation();
 
             this.DOM.info.container.classList.remove('hidden');
-            this.DOM.about.classList.add('hidden');
+            this.DOM.info.container.classList.add('contact');
 
             this.DOM.info.big.innerHTML = this.app.__.focus.__.info.big;
             this.DOM.info.small.innerHTML = this.app.__.focus.__.info.small;
@@ -256,8 +282,16 @@ class GUIManager {
         });
 
 
-        this.DOM.buttons.contact.addEventListener('mouseup', (e) => {
+        this.DOM.buttons.contact.addEventListener('click', (e) => {
             e.stopPropagation();
+
+            this.DOM.info.container.classList.remove('hidden');
+            // this.DOM.about.classList.add('hidden');
+
+            this.DOM.info.big.innerHTML = this.app.__.data.contact.big;
+            this.DOM.info.small.innerHTML = this.app.__.data.contact.small;
+
+            this.openInfo();
 
             if (this.app.__.menu.isOpen) {
                 this.app._three.resizeCanvas();
@@ -265,13 +299,16 @@ class GUIManager {
         })
 
         this.DOM.buttons.volume.addEventListener("mousedown", e => {
+            console.log(this.app.__.focus);
+
             if (this.__.isMuted) {
                 this.DOM.buttons.volume.innerHTML = "mute";
-                this.app.__.focus.media.material.map.image.volume = "1";
+                this.app.__.focus.setVolume(1);
                 this.__.isMuted = false;
             } else {
                 this.DOM.buttons.volume.innerHTML = "muted";
-                this.app.__.focus.media.material.map.image.volume = "0";
+                this.app.__.focus.setVolume(0);
+
                 this.__.isMuted = true;
             }
         });

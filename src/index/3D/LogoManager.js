@@ -27,7 +27,7 @@ export default class LogoManager {
             d_img.setAttribute("src", path);
             let logo = new CSS3DObject(d_container);
 
-            ratio = ratio / 3.75 * this.app._three.__.scale;
+            ratio = ratio * 0.0075;
 
             d_img.onload = () => {
                 logo.scale.set(ratio, ratio * d_img.height / d_img.width, 1);
@@ -39,17 +39,13 @@ export default class LogoManager {
         return new Promise((resolve) => {
             let promises = [];
 
-            if (this.app.__.isMobile) {
-                promises.push(this.createLogo("logo_h.png", 20, 2));
-                promises.push(this.createLogo("logo_m.png", 9, 2));
-                promises.push(this.createLogo("logo_v.png", 9, -7));
-            } else {
-                promises.push(this.createLogo("logo_h.png", 15, 2));
-                promises.push(this.createLogo("logo_m.png", 9, 2));
-                promises.push(this.createLogo("logo_v.png", 9, 0));
-            }
+            promises.push(this.createLogo("logo_h.png", 15, 2));
+            promises.push(this.createLogo("logo_m.png", 9, 2));
+            promises.push(this.createLogo("logo_v.png", 6, 0));
+
             Promise.all(promises).then((resolves) => {
                 resolves.forEach(logo => {
+
                     this.logos.add(logo);
                     logo.position.set(0, 0, 0);
                 })

@@ -11,5 +11,12 @@ export default class InteractionManager {
         this._scroll = new ScrollManager({ app });
         this.keyManager = new KeyManager({ app });
     }
+
+    scrollToNextProject(direction) {
+        let project = this.app._three.getNextProject(direction);
+        let success = this.app._three.focusOn(project, 1000);
+        if (success)
+            this.app._gui.setProjectUI(project)
+    }
 }
 

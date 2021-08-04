@@ -42,7 +42,7 @@ export default class Project {
             new THREE.PlaneGeometry(1, 1, 1, 1),
             new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide })
         );
-        this.collision.scale.set(2000, 2000, 1);
+        this.collision.scale.set(1000, 1000, 1);
         this.collision.userData.project = this;
 
         this.media.add(this.collision);
@@ -97,8 +97,24 @@ export default class Project {
             d_media = document.createElement('img')
         } else {
             d_media = document.createElement('video');
+            // d_media.playsinline = true;
+            d_media.setAttribute('playsinline', true);
+            d_media.addEventListener('loadedmetadata', () => {
+                // alert('ok'); 
+                d_media.volume = 0;
+                d_media.play();
+                setTimeout(() => {
+                    d_media.pause();
+
+                }, 10)
+            });
+
+
             d_media.volume = 0;
             d_media.loop = true;
+            d_media.onerror = () => {
+                alert('error video');
+            }
         }
 
         d_media.src = url;
@@ -117,7 +133,8 @@ export default class Project {
 
         let nextMedia = this.getNextMedia(direction);
         this.updateMedia(nextMedia);
-        this.setVideoUI(nextMedia.type === 'video');
+        if (!this.app.__.isMobile)
+            this.setVideoUI(nextMedia.type === 'video');
 
         let loadedMedia = [...this.media.element.children].find(v => v.src.includes(nextMedia.src));
         if (loadedMedia) {
@@ -131,11 +148,13 @@ export default class Project {
             d_media.classList.add('hidden');
             d_media.addEventListener(nextMedia.type === 'video' ? 'loadedmetadata' : 'load',
                 () => {
-                    this.hideOldMedia();
+                    setTimeout(() => {
+                        this.hideOldMedia();
+                        d_media.classList.remove('hidden');
+                    }, 5)
                     if (nextMedia.type === 'video') {
                         this.play(d_media);
                     }
-                    d_media.classList.remove('hidden');
                 }
             )
         }
@@ -179,7 +198,7 @@ export default class Project {
         let m_ratio = width / height;
         height = w_ratio > m_ratio ? height : height + (m_ratio * height - w_ratio * height) * 1 / w_ratio
 
-        let distance = (height) / Math.tan(this.app._three._3d.camera.fov * (Math.PI / 360));
+        let distance = (height / 2) / Math.tan(this.app._three._3d.camera.fov * (Math.PI / 360));
 
         this.media.getWorldQuaternion(quat);
         const normal = new THREE.Vector3(0, 0, 1).applyQuaternion(quat);
@@ -197,14 +216,16 @@ export default class Project {
 
         let scale = this.app._three.__.scale;
 
+        let volume = scale;
+        let width = Math.sqrt(volume * _m.ratio);
+        let height = width / _m.ratio;
+
         if (tween) {
-            _m.ratio < 1 ?
-                this.tweenScale(scale * _m.ratio, scale) :
-                this.tweenScale(scale, scale / _m.ratio);
+            this.tweenScale(width, height)
+
         } else {
-            _m.ratio < 1 ?
-                this.media.scale.set(scale * _m.ratio, scale, 1) :
-                this.media.scale.set(scale, scale / _m.ratio, 1);
+            this.media.scale.set(width, height, 1)
+
         }
 
     }
@@ -237,7 +258,7 @@ export default class Project {
         let tween = this.app._tween.add(1000, "sine_in");
 
         if (this.isPlaying(d_media)) return;
-        d_media.volume = 0
+        d_media.volume = this.app.__.isMobile ? 1 : 0;
         d_media.play();
         tween.addEventListener('update', ({ detail }) => {
             d_media.volume = Math.min(1, Math.max(0, detail));
@@ -257,7 +278,14 @@ export default class Project {
             return;
         }
 
+        let startVolume = d_media.volume;
+
         return new Promise((resolve) => {
+            if (startVolume == 0) {
+                d_media.pause();
+                resolve();
+                return;
+            }
             let tween = this.app._tween.add(500);
             tween.addEventListener('update', ({ detail }) => {
                 d_media.volume = Math.min(1, Math.max(0, 1 - detail));
@@ -268,6 +296,17 @@ export default class Project {
             })
         })
 
+    }
+
+    setVolume = (volume) => {
+        let d_media = this.getMediaDomFromSrc(this.__.medias[this.__.order].src);
+        let startVolume = d_media.volume;
+
+        let tween = this.app._tween.add(500);
+        tween.addEventListener('update', ({ detail }) => {
+            let _volume = startVolume * (1 - detail) + volume * detail;
+            d_media.volume = Math.min(1, Math.max(0, _volume));
+        })
     }
 
 }
