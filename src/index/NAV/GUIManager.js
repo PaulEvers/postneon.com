@@ -1,6 +1,7 @@
 class CursorModes {
   DOM = document.querySelector(".cursor");
   set = (mode) => {
+
     switch (mode) {
       case "pointer":
         this.DOM.classList.remove("cross-on");
