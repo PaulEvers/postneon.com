@@ -23,9 +23,9 @@ class Application {
         }
 
         const faviconAnimator = new FaviconAnimator();
-        setTimeout(() => {
-            faviconAnimator.changeFavicon(1);
-        }, 5000);
+        setInterval(() => {
+            faviconAnimator.changeFavicon();
+        }, 2000);
         const formatOptimizer = new FormatOptimizer();
 
         this.__.isMobile = formatOptimizer.isMobile;
@@ -82,22 +82,19 @@ class Application {
 }
 
 class FaviconAnimator {
-    constructor() {
-        this.characters = "postneon";
-    }
-    changeFavicon(index) {
-        let favoLinks = "postneon";
+    currentFaviconIndex = 0;
+    favicons = ['P', 'O', 'S', 'T', 'N', 'E', 'O', 'N'];
+
+    changeFavicon() {
         var link = document.createElement('link'),
             oldLink = document.getElementById('dynamic-favicon');
         link.id = 'dynamic-favicon';
         link.rel = 'shortcut icon';
-        link.href = "./favicons/favicon_" + this.characters[index] + ".png";
+        link.href = "./favicons/favicon_" + this.favicons[this.currentFaviconIndex] + ".png";
+        this.currentFaviconIndex === this.favicons.length -1 ? this.currentFaviconIndex = 0 : this.currentFaviconIndex++;
+
         if (oldLink) document.head.removeChild(oldLink);
         document.head.appendChild(link);
-        index = index++ % favoLinks.length;
-        setTimeout(() => {
-            this.changeFavicon(index);
-        }, 5000)
     }
 }
 
