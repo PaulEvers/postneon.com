@@ -357,7 +357,12 @@ button:active, button:focus {
     font-family: serifbabe;
     border: 0px;
     user-select: none;
+    width: fit-content;
 }
+
+input[type=text] {
+    color: red;
+ }
 
 input:focus {
     outline: none;
