@@ -357,12 +357,13 @@ button:active, button:focus {
     font-family: serifbabe;
     border: 0px;
     user-select: none;
-    width: fit-content;
+    width: 0px;
 }
 
-input[type=text] {
-    color: red;
- }
+a {
+    font-size: 16pt;
+    color: black;
+}
 
 input:focus {
     outline: none;

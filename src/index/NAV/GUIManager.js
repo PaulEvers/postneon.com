@@ -294,11 +294,11 @@ class GUIManager {
       this.DOM.info.big.innerHTML = this.app.__.data.contact.big;
       this.DOM.info.big.innerHTML = `
             <a href="https://instagram.com/post.neon" target="_blank" rel="noopener noreferrer">
-                <input onClick="this.setSelectionRange(0, this.value.length)" class="link" value="instagram.com/post.neon" readonly>
+                <input onClick="this.setSelectionRange(0, this.value.length)" class="link" readonly>instagram.com/post.neon</input>
             </a>
             <br>
             <a href="mailto:info@post-neon.com">
-                <input onClick="this.setSelectionRange(0, this.value.length)" class="link" value="info@post-neon.com" readonly>
+                <input onClick="this.setSelectionRange(0, this.value.length)" class="link" readonly>info@post-neon.com</input>
             </a>
             <br>
             `;
