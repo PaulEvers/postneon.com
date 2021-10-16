@@ -121,7 +121,8 @@ class ThreeManager {
         quat.next.copy(_vp.quat);
 
         tween.addEventListener('update', ({ detail }) => {
-            THREE.Quaternion.slerp(quat.now, quat.next, quat.tween, detail);
+            // THREE.Quaternion.slerp(quat.now, quat.next, quat.tween, detail);
+           quat.tween.slerpQuaternions(quat.now, quat.next, detail);
             pos.tween.lerpVectors(pos.now, pos.next, detail);
             this._3d.camera.quaternion.copy(quat.tween);
             this._3d.camera.position.copy(pos.tween);
@@ -150,7 +151,8 @@ class ThreeManager {
             tween: new THREE.Vector3()
         }
         tween.addEventListener('update', ({ detail }) => {
-            THREE.Quaternion.slerp(quat.now, quat.next, quat.tween, detail);
+            // THREE.Quaternion.slerp(quat.now, quat.next, quat.tween, detail);
+            quat.tween.slerpQuaternions(quat.now, quat.next, detail);
             this._3d.camera.quaternion.copy(quat.tween);
             pos.tween.lerpVectors(pos.now, pos.next, detail);
             this._3d.camera.position.copy(pos.tween);

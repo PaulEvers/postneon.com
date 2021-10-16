@@ -117,20 +117,6 @@
         { "src": "komu8vws.jpg", "ratio": 1, "type": "image" },
         { "src": "komu7n94.mp4", "ratio": 1, "type": "video" }
       ]
-    },
-    {
-      "title": "Age of Collectivity ",
-      "directory": "Age%20of%20Collectivity%20",
-      "info": {
-        "big": "The Age of Collectivity is a virtual scene which displays a gathering of characters coming from different views, backgrounds, and beliefs who put their differences aside to be part of the collective spirit. By celebrating the similarities instead of their differences, the characters act in unity. The viewer is encouraged to consciously think about the current state of affairs and the collective mindset which The Age of Collectivity is conveying. \n\nThe visitors of STRP are invited to participate and interact with the online artwork to join the festive ritual. They will be able to influence the visual composition and switch between various camera positions within the environment by typing in different key commands. The visual narrative is accompanied by a unique sonic experience formed by various international artists curated by Pim Boreel. \n\nPost Neon envisions a post-pandemic era where people develop a shared mindset and communal spirit that can be experienced during nightlife. Post Neon, is a new Amsterdam based creative studio that is known for surrealistic, autonomic work with a focus on scale, material and texture in 3D content creation and creative technologies.\n",
-        "small": "Audio Curator: Pim Boreel\nClient: STRP Festival \n"
-      },
-      "medias": [
-        { "src": "kq25i45m.mp4", "ratio": 1.7777777777777777, "type": "video" },
-        { "src": "kq25jrdu.jpg", "ratio": 1.7778846153846153, "type": "image" },
-        { "src": "kq25ocu4.jpg", "ratio": 1.7778846153846153, "type": "image" },
-        { "src": "kq25ojly.jpg", "ratio": 1.7778846153846153, "type": "image" }
-      ]
     }
   ]
 }
