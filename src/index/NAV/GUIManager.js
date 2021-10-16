@@ -313,18 +313,17 @@ class GUIManager {
     });
 
     this.DOM.buttons.volume.addEventListener("mousedown", (e) => {
-      console.log(this.app.__.focus);
-
       if (this.__.isMuted) {
         this.DOM.buttons.volume.innerHTML = "mute";
-        this.app.__.focus.setVolume(1);
         this.__.isMuted = false;
       } else {
         this.DOM.buttons.volume.innerHTML = "muted";
-        this.app.__.focus.setVolume(0);
-
         this.__.isMuted = true;
       }
+      const videos =  document.querySelectorAll("video");
+      videos.forEach(video => {
+        video.muted = this.__.isMuted;
+      });
     });
   };
 }
