@@ -4,12 +4,7 @@
   "description": "",
   "main": "index.js",
   "dependencies": {
-    "@tweenjs/tween.js": "^17.3.0",
-    "core-js": "^3.8.1",
-    "event-target-shim": "^5.0.1",
-    "iphone-inline-video": "^2.2.2",
-    "lodash": "^4.17.19",
-    "normalize-wheel": "^1.0.1",
+    "core-js": "^3.18.3",
     "regenerator-runtime": "^0.13.7",
     "three": "^0.124.0",
     "uniqid": "^5.2.0"
