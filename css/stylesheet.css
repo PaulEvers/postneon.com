@@ -360,10 +360,11 @@ button:active, button:focus {
     width: 0px;
 }
 
-a {
+.social-link {
     font-size: 16pt;
     color: black;
 }
+
 
 input:focus {
     outline: none;
