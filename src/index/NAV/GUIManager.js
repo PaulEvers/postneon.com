@@ -130,8 +130,7 @@ class GUIManager {
     this.DOM.cursor.style.opacity = "1";
   };
   setProjectUI = (project) => {
-    this.DOM.project.length.innerHTML = project.__.projectLength;
-    this.DOM.project.index.innerHTML = project.__.order + 1;
+    this.DOM.project.index.innerHTML = project.__.index + 1;
     this.DOM.project.title.innerHTML = project.__.name;
     this.DOM.project.title.classList.remove("hidden");
   };
@@ -294,11 +293,11 @@ class GUIManager {
       console.log(this.app.__.data);
       this.DOM.info.big.innerHTML = this.app.__.data.contact.big;
       this.DOM.info.big.innerHTML = `
-            <a href="https://instagram.com/post.neon" target="_blank" rel="noopener noreferrer">
+            <a href="https://instagram.com/post.neon" target="_blank" rel="noopener noreferrer" class="social-link">
                 <input onClick="this.setSelectionRange(0, this.value.length)" class="link" readonly>instagram.com/post.neon</input>
             </a>
             <br>
-            <a href="mailto:info@post-neon.com">
+            <a href="mailto:info@post-neon.com" class="social-link">
                 <input onClick="this.setSelectionRange(0, this.value.length)" class="link" readonly>info@post-neon.com</input>
             </a>
             <br>

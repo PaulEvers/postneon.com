@@ -280,6 +280,8 @@ class ThreeManager {
             .map((a) => a.value)
 
         let _amount = _data.projects.length;
+        const projectLengthElement = document.getElementsByClassName("project-length")[0];
+        projectLengthElement.innerHTML = _amount;
 
         _data.about.big = _data.about.big.replace(/\n/g, "<br>");
         _data.about.small = _data.about.small.replace(/\n/g, "<br>");
@@ -292,6 +294,7 @@ class ThreeManager {
         this.updateCameraRatio();
         let orientation = this.app.getOrientation();
         [..._data.projects].forEach(async (p, i) => {
+            p.index = i;
             let _p = new ProjectManager({ app: this.app, data: p });
             this._3d.projects.add(_p.project);
             this._3d.collisions.push(_p.media);

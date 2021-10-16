@@ -1,11 +1,12 @@
 
-import { CSS3DRenderer, CSS3DObject } from 'three/examples/jsm/renderers/CSS3DRenderer.js';
+import { CSS3DObject } from 'three/examples/jsm/renderers/CSS3DRenderer.js';
 import * as THREE from "three"
 
 
 export default class Project {
     constructor({ app, data }) {
         this.app = app;
+        console.log(data);
         this.__ = {
             projectLength: data.medias.length,
             order: 0,
@@ -16,6 +17,7 @@ export default class Project {
                 small: data.info.small ? data.info.small.replace(/\n/g, "<br>") : "",
             },
             medias: data.medias,
+            index: data.index
         }
         this.media = null;
         this.collision = null;
