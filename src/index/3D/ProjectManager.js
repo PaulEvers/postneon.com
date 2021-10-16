@@ -6,7 +6,6 @@ import * as THREE from "three"
 export default class Project {
     constructor({ app, data }) {
         this.app = app;
-        console.log(data);
         this.__ = {
             projectLength: data.medias.length,
             order: 0,
