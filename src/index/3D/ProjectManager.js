@@ -242,7 +242,6 @@ export default class Project {
         if (!media_dom) {
             media_dom = this.getMediaDomFromSrc(this.__.medias[this.__.order].src);
         }
-        console.log(media_dom);
 
         if (media_dom.tagName !== 'VIDEO') {
             console.log("ERRORR PLAY");
