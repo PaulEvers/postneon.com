@@ -369,8 +369,6 @@ class ThreeManager {
         const index = this.__.projects.findIndex(project => project.__.name === focusedProject.__.name)
         this.__.projects.unshift(focusedProject);
         this.__.projects.splice(index, 1);
-        console.log(this.__.projects);
-
     }
 
     focusProjectUrl = () => {
