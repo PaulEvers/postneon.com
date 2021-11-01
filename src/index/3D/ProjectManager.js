@@ -67,9 +67,9 @@ export default class Project {
     click = (x) => {
         if (this.app.__.focus != this) {
             this.app._three.focusOn(this);
+
             if (this.__.medias[0].type === 'video') {
                 setTimeout(() => {
-
                     this.play();
                 }, 500);
             }

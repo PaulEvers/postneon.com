@@ -1,4 +1,5 @@
 import RayCastManager from "../3D/RayCastManager.js";
+import { UrlManager } from "./UrlManager.js";
 
 export default class CursorManager {
   constructor({ app }) {
@@ -173,6 +174,7 @@ export default class CursorManager {
 
     if (!this.__.intersection && toMenu) {
       if (!this.app.__.menu.isOpen) this.app._three.tweenToMenu();
+      UrlManager.removeParams();
       return;
     }
 
