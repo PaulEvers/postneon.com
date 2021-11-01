@@ -153,14 +153,14 @@ export default class CursorManager {
         Math.abs(this.__.cursor.start.x - this.__.cursor.now.x) > 75
       ) {
         let direction = this.__.cursor.start.x > this.__.cursor.now.x ? -1 : 1;
-        this.app._interaction.scrollToNextProject(direction);
+        this.app._interaction.scrollToNextProject(direction * -1);
         toMenu = false;
       } else if (
         this.app.__.orientation === "portrait" &&
         Math.abs(this.__.cursor.start.y - this.__.cursor.now.y) > 75
       ) {
         let direction = this.__.cursor.start.y > this.__.cursor.now.y ? -1 : 1;
-        this.app._interaction.scrollToNextProject(direction);
+        this.app._interaction.scrollToNextProject(direction * -1);
         toMenu = false;
       } else if (
         Math.abs(this.__.cursor.timestamp - performance.now()) < 200 &&

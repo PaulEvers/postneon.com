@@ -1,6 +1,5 @@
 import CursorManager from "./CursorManager"
 import KeyManager from "./KeyManager"
-import GUIManager from "./GUIManager"
 import ScrollManager from "./ScrollManager"
 
 
