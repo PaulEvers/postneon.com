@@ -71,12 +71,12 @@ class GUIManager {
       canvas: document.querySelector("#threejs"),
       UIContainer: document.querySelector(".UI-container"),
       buttons: {
-        about: document.querySelector(".about-button"),
-        contact: document.querySelector(".contact-button"),
+        // about: document.querySelector(".about-button"),
+        // contact: document.querySelector(".contact-button"),
         volume: document.querySelector(".volume-button"),
-        back: document.querySelector(".back-button"),
-        menu: document.querySelector(".menu-button"),
-        info: document.querySelector(".info-button"),
+        // back: document.querySelector(".back-button"),
+        // menu: document.querySelector(".menu-button"),
+        // info: document.querySelector(".info-button"),
       },
       project: {
         length: document.querySelector(".project-length"),
@@ -281,13 +281,6 @@ class GUIManager {
   };
 
   init = () => {
-    this.DOM.buttons.back.addEventListener("click", this.closeInfo);
-    this.DOM.buttons.menu.addEventListener("click", (e) => {
-      e.stopPropagation();
-      //console.log('this?');
-      this.app._three.tweenToMenu(false);
-      this.setTopMenuMode("menu");
-    });
 
     document.querySelectorAll("button").forEach((b) => {
       b.addEventListener("mouseenter", () => {
@@ -296,29 +289,6 @@ class GUIManager {
       b.addEventListener("mouseout", () => {
         this.__.isHovering = false;
       });
-    });
-
-    this.DOM.buttons.about.addEventListener("click", (e) => {
-      e.stopPropagation();
-
-      this.openAbout();
-    });
-
-    this.DOM.buttons.info.addEventListener("click", (e) => {
-      e.stopPropagation();
-
-      this.DOM.info.container.classList.remove("hidden");
-      this.DOM.info.container.classList.add("contact");
-
-      this.DOM.info.big.innerHTML = this.app.__.focus.__.info.big;
-      this.DOM.info.small.innerHTML = this.app.__.focus.__.info.small;
-
-      this.openInfo();
-    });
-
-    this.DOM.buttons.contact.addEventListener("click", (e) => {
-      e.stopPropagation();
-      this.openContact();
     });
 
     this.DOM.buttons.volume.addEventListener("mousedown", (e) => {
