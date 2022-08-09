@@ -42,9 +42,23 @@ class Application {
 
         this._three.fetchScene('./JSON/data.json').then(data => {
             this.__.data = data;
+            this.openPage();
         });
 
+    }
 
+    openPage = () => {
+        const params = new URLSearchParams(window.location.search);
+        if (!params.has('page')) { return; }
+
+        const page = params.get('page');
+        if (page === 'about') {
+            this._gui.openAbout();
+        }
+
+        if (page === 'contact') {
+            this._gui.openContact();
+        }
     }
 
     getOrientation() {

@@ -1,3 +1,5 @@
+import { UrlManager } from "./UrlManager";
+
 class CursorModes {
   DOM = document.querySelector(".cursor");
   set = (mode) => {
@@ -205,6 +207,7 @@ class GUIManager {
 
   closeInfo = (e) => {
     e.stopPropagation();
+    UrlManager.removeParams();
     console.log("CLOSE INFO!!!!");
     this.app.__.infoMode = false;
 
@@ -226,7 +229,6 @@ class GUIManager {
     e.preventDefault();
   };
 
-  openContact = () => {};
 
   openInfo = () => {
     console.log("open that info!");
@@ -242,6 +244,40 @@ class GUIManager {
     /* if (this.app.__.isMobile && this.app.__.focus.media && this.app.__.focus.media.userData.type === 'video') {
             this.app.__.focus.media.material.map.image.pause();
         } */
+  };
+
+  openAbout = () => {
+      this.DOM.info.container.classList.remove("hidden");
+      this.DOM.info.big.innerHTML = this.app.__.data.about.big;
+      this.DOM.info.small.innerHTML = this.app.__.data.about.small;
+
+      this.openInfo();
+      UrlManager.setSearchParams('page', 'about');
+  }
+
+  openContact = () => {
+    this.DOM.info.container.classList.remove("hidden");
+
+    this.DOM.info.big.innerHTML = this.app.__.data.contact.big;
+    this.DOM.info.big.innerHTML = `
+          <a href="https://instagram.com/post.neon" target="_blank" rel="noopener noreferrer" class="social-link">
+              <input onClick="this.setSelectionRange(0, this.value.length)" class="link" readonly>instagram.com/post.neon</input>
+          </a>
+          <br>
+          <a href="mailto:info@post-neon.com" class="social-link">
+              <input onClick="this.setSelectionRange(0, this.value.length)" class="link" readonly>info@post-neon.com</input>
+          </a>
+          <br>
+          `;
+    this.DOM.info.small.innerHTML = this.app.__.data.contact.small;
+
+    this.openInfo();
+    UrlManager.setSearchParams('page', 'contact');
+
+
+    if (this.app.__.menu.isOpen) {
+      this.app._three.resizeCanvas();
+    }
   };
 
   init = () => {
@@ -265,11 +301,7 @@ class GUIManager {
     this.DOM.buttons.about.addEventListener("click", (e) => {
       e.stopPropagation();
 
-      this.DOM.info.container.classList.remove("hidden");
-      this.DOM.info.big.innerHTML = this.app.__.data.about.big;
-      this.DOM.info.small.innerHTML = this.app.__.data.about.small;
-
-      this.openInfo();
+      this.openAbout();
     });
 
     this.DOM.buttons.info.addEventListener("click", (e) => {
@@ -286,29 +318,7 @@ class GUIManager {
 
     this.DOM.buttons.contact.addEventListener("click", (e) => {
       e.stopPropagation();
-
-      this.DOM.info.container.classList.remove("hidden");
-      // this.DOM.about.classList.add('hidden');
-
-      console.log(this.app.__.data);
-      this.DOM.info.big.innerHTML = this.app.__.data.contact.big;
-      this.DOM.info.big.innerHTML = `
-            <a href="https://instagram.com/post.neon" target="_blank" rel="noopener noreferrer" class="social-link">
-                <input onClick="this.setSelectionRange(0, this.value.length)" class="link" readonly>instagram.com/post.neon</input>
-            </a>
-            <br>
-            <a href="mailto:info@post-neon.com" class="social-link">
-                <input onClick="this.setSelectionRange(0, this.value.length)" class="link" readonly>info@post-neon.com</input>
-            </a>
-            <br>
-            `;
-      this.DOM.info.small.innerHTML = this.app.__.data.contact.small;
-
-      this.openInfo();
-
-      if (this.app.__.menu.isOpen) {
-        this.app._three.resizeCanvas();
-      }
+      this.openContact();
     });
 
     this.DOM.buttons.volume.addEventListener("mousedown", (e) => {

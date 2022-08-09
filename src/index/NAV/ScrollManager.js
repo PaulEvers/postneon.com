@@ -25,14 +25,12 @@ export default class ScrollManager {
 
         }
         this.DOM.scroll.container.scrollTop = this.__.scroll.origin.y;
-        this.DOM.scroll.container.addEventListener('wheel', this.onWheel);
+        this.DOM.scroll.container.addEventListener('wheel', (e => {
+            if (!this.app.__.infoMode)
+                this.setScrolling(true);
+        }));
         this.resetScrollState();
         this.updateScroll();
-    }
-
-    onWheel(e) {
-        if (!this.app.__.infoMode)
-            this.setScrolling(true);
     }
 
     setScrolling(bool) {

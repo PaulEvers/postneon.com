@@ -6,6 +6,7 @@ import * as THREE from "three"
 import RayCastManager from './RayCastManager.js'
 import LogoManager from "./LogoManager.js"
 import ProjectManager from "./ProjectManager.js"
+import { UrlManager } from '../NAV/UrlManager.js';
 
 
 
@@ -97,13 +98,10 @@ class ThreeManager {
 
 
         return { quat, pos };
-
-
-
     }
 
     tweenToProject(project) {
-        let media = project.children[0];
+        // let media = project.children[0];
         let tween = this.app._tween.add(500, "sine_in");
         let pos = {
             now: this._3d.camera.position.clone(),
@@ -121,7 +119,8 @@ class ThreeManager {
         quat.next.copy(_vp.quat);
 
         tween.addEventListener('update', ({ detail }) => {
-            THREE.Quaternion.slerp(quat.now, quat.next, quat.tween, detail);
+            // THREE.Quaternion.slerp(quat.now, quat.next, quat.tween, detail);
+           quat.tween.slerpQuaternions(quat.now, quat.next, detail);
             pos.tween.lerpVectors(pos.now, pos.next, detail);
             this._3d.camera.quaternion.copy(quat.tween);
             this._3d.camera.position.copy(pos.tween);
@@ -150,7 +149,8 @@ class ThreeManager {
             tween: new THREE.Vector3()
         }
         tween.addEventListener('update', ({ detail }) => {
-            THREE.Quaternion.slerp(quat.now, quat.next, quat.tween, detail);
+            // THREE.Quaternion.slerp(quat.now, quat.next, quat.tween, detail);
+            quat.tween.slerpQuaternions(quat.now, quat.next, detail);
             this._3d.camera.quaternion.copy(quat.tween);
             pos.tween.lerpVectors(pos.now, pos.next, detail);
             this._3d.camera.position.copy(pos.tween);
@@ -171,8 +171,10 @@ class ThreeManager {
         if (project === this.app.__.focus) return;
         this.resetVideo();
 
+        // Update URL according to selected project
+        UrlManager.setSearchParams('project', project.__.name.toLowerCase().replace(/ /g, '-'));
 
-
+    
         let canTween = this.tweenToProject(project.project);
 
         this.app._gui.setTopMenuMode('project');
@@ -301,13 +303,17 @@ class ThreeManager {
             // this.addToScene(_p.media);
             _p.project.rotation.set(0, i * Math.PI * 2 / _data.projects.length, 0);
             this.__.projects.push(_p);
-
         });
+
+        this.orderByFocused();
+
         this.resizeCanvas();
 
         this.render();
 
         this.resizeCanvas();
+        
+        this.focusProjectUrl();
 
         return _data;
     }
@@ -339,6 +345,38 @@ class ThreeManager {
         this.app.__.menu.lerpTo = 0
         this._3d.scene.updateMatrixWorld();
 
+    }
+
+    
+
+    getFocusedProject = () => {
+        const params = new URLSearchParams(window.location.search);
+        if (!params.has('project')) { return; }
+        const projectName = params.get('project').toLowerCase().replace(/ /g, '-');
+
+        const focusedProject = this.__.projects.find(project => {
+            const name = project.__.name.toLowerCase().replace(/ /g, '-');
+            return name === projectName;
+        })
+
+        return focusedProject;
+    }
+
+    orderByFocused = () => {
+        const focusedProject = this.getFocusedProject();
+        if (!focusedProject) { return; }
+
+        const index = this.__.projects.findIndex(project => project.__.name === focusedProject.__.name)
+        this.__.projects.unshift(focusedProject);
+        this.__.projects.splice(index, 1);
+    }
+
+    focusProjectUrl = () => {
+        const project = this.getFocusedProject();
+
+        if (!project) { return; }
+
+        this.focusOn(project);
     }
 }
 

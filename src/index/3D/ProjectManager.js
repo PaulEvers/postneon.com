@@ -30,7 +30,6 @@ export default class Project {
     getMediaDomFromSrc = (src) => [...this.media.element.children].find(v => v.src.includes(src))
 
     init = (media_data) => {
-
         let media_dom = this.createMedia(media_data);
 
         let d_container = document.createElement('div');
@@ -68,6 +67,7 @@ export default class Project {
     click = (x) => {
         if (this.app.__.focus != this) {
             this.app._three.focusOn(this);
+
             if (this.__.medias[0].type === 'video') {
                 setTimeout(() => {
                     this.play();
@@ -93,7 +93,6 @@ export default class Project {
     createMedia = (mediaData) => {
         let media_dom;
         let url = this.getUrl(mediaData.type, mediaData.src);
-
         if (mediaData.type === "image") {
             media_dom = document.createElement('img')
         } else {
@@ -102,9 +101,12 @@ export default class Project {
             media_dom.addEventListener('loadedmetadata', () => {
                 media_dom.volume = 0;
                 media_dom.play();
-                setTimeout(() => {
-                    media_dom.pause();
-                }, 10)
+                media_dom.pause();
+
+                // setTimeout(() => {
+                //     console.log(' paused');
+                //     media_dom.pause();
+                // }, 10)
             });
             media_dom.volume = 0;
             media_dom.loop = true;
@@ -125,8 +127,8 @@ export default class Project {
     }
 
     changeMedia = (direction) => {
+        // this.play();
         if (this.__.medias.length <= 1) return
-
         let nextMedia = this.getNextMedia(direction);
         this.updateMedia(nextMedia);
         if (!this.app.__.isMobile)
@@ -143,13 +145,13 @@ export default class Project {
             this.media.element.appendChild(media_dom);
             media_dom.classList.add('hidden');
             media_dom.addEventListener(nextMedia.type === 'video' ? 'loadedmetadata' : 'load',
-                () => {
+                async () => {
                     setTimeout(() => {
                         this.hideOldMedia();
                         media_dom.classList.remove('hidden');
                     }, 5)
                     if (nextMedia.type === 'video') {
-                        this.play(media_dom);
+                        await this.play(media_dom);
                     }
                 }
             )
@@ -237,7 +239,6 @@ export default class Project {
     }
 
     play = (media_dom) => {
-
         if (!media_dom) {
             media_dom = this.getMediaDomFromSrc(this.__.medias[this.__.order].src);
         }

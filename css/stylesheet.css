@@ -198,6 +198,10 @@ svg {
     padding-right: 12pt;
 }
 
+.top-menu {
+    font-size: 22pt;
+}
+
 .small {
     font-size: 12pt;
     line-height: 5vh;
