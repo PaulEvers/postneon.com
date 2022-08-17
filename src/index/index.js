@@ -3,13 +3,15 @@ import ThreeManager from "./3D/ThreeManager"
 import InteractionManager from "./NAV/InteractionManager"
 import TweenManager from './TweenManager';
 import GUIManager from './NAV/GUIManager';
-
+import * as contentful from 'contentful';
 import * as THREE from "three"
 window.THREE = THREE;
+
 
 class Application {
 
     constructor() {
+
         this.__ = {
             hover_timestamp: performance.now(),
             menu: {
@@ -19,19 +21,26 @@ class Application {
             },
             focus: null,
             isMobile: null,
-            opt: null
+            opt: null,
+            contentfulClient: contentful.createClient({
+                // This is the space ID. A space is like a project folder in Contentful terms
+                space: "m4tb6or3md4l",
+                // This is the access token for this space. Normally you get both ID and the token in the Contentful web app
+                accessToken: "g_YuGiRoT8p4_ktfWQBZm3KoF-GSn8DQxB21n5iu748"
+              })
         }
 
-        const faviconAnimator = new FaviconAnimator();
-        setInterval(() => {
-            faviconAnimator.changeFavicon();
-        }, 2000);
         const formatOptimizer = new FormatOptimizer();
 
         this.__.isMobile = formatOptimizer.isMobile;
         this.__.opt = this.__.isMobile ? 'mobile' : 'desktop';
 
         this._three = new ThreeManager({ app: this });
+        this._three.fetchScene('./JSON/data.json').then(data => {
+            this.__.data = data;
+            this.openPage();
+        });
+
         this._tween = new TweenManager({ app: this });
         this._gui = new GUIManager({ app: this });
         this._interaction = new InteractionManager({ app: this });
@@ -40,10 +49,7 @@ class Application {
             this.animate(performance.now());
         })
 
-        this._three.fetchScene('./JSON/data.json').then(data => {
-            this.__.data = data;
-            this.openPage();
-        });
+
 
     }
 
@@ -92,23 +98,6 @@ class Application {
             this._interaction._cursor.hoverMenu();
             this.__.hover_timestamp = now;
         }
-    }
-}
-
-class FaviconAnimator {
-    currentFaviconIndex = 0;
-    favicons = ['P', 'O', 'S', 'T', 'N', 'E', 'O', 'N'];
-
-    changeFavicon() {
-        var link = document.createElement('link'),
-            oldLink = document.getElementById('dynamic-favicon');
-        link.id = 'dynamic-favicon';
-        link.rel = 'shortcut icon';
-        link.href = "./favicons/favicon_" + this.favicons[this.currentFaviconIndex] + ".png";
-        this.currentFaviconIndex === this.favicons.length -1 ? this.currentFaviconIndex = 0 : this.currentFaviconIndex++;
-
-        if (oldLink) document.head.removeChild(oldLink);
-        document.head.appendChild(link);
     }
 }
 

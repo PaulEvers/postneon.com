@@ -25,7 +25,7 @@ export default class Project {
         this.init(data.medias[0])
     }
     capitalize(str) { return str.charAt(0).toUpperCase() + str.slice(1) };
-    getUrl = (type, src) => `projects/${this.__.directory}/${this.capitalize(type)}/${this.app.__.opt}/${src}`;
+    getUrl = (type, src) => src;
     isPlaying = video => !!(video.currentTime > 0 && !video.paused && !video.ended && video.readyState > 2);
     getMediaDomFromSrc = (src) => [...this.media.element.children].find(v => v.src.includes(src))
 
@@ -203,7 +203,7 @@ export default class Project {
         return { quat, pos };
     }
 
-    updateMedia = (mediaData, tween = true) => {
+    updateMedia =  async (mediaData, tween = true) => {
         if (!mediaData) {
             console.log('errrrr', this.__.medias, this.__.order);
             return;
@@ -213,6 +213,7 @@ export default class Project {
         let scale = this.app._three.__.scale;
 
         let volume = scale;
+
         let width = Math.sqrt(volume * mediaData.ratio);
         let height = width / mediaData.ratio;
 
@@ -229,7 +230,6 @@ export default class Project {
     hideOldMedia = async () => {
         [...this.media.element.children].forEach(v => {
             if (!v.src.includes(this.__.medias[this.__.order].src)) {
-                console.log(v.src, v.tagName);
 
                 if (v.tagName === 'VIDEO')
                     this.pause(v);
