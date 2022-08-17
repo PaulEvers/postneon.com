@@ -354,8 +354,6 @@ class ThreeManager {
       newProjects.push(newProject);
     });
 
-    console.log(newProjects);
-
     let _data = await fetch(url, { method: "GET" }).then((res) => res.json());
 
     _data.projects = newProjects;

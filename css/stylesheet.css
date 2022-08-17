@@ -602,3 +602,17 @@ input::selection {
     background: red;
     color:black;
 }
+
+.back-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    color: white;
+    z-index: 100;
+    margin: 20px;
+}
+
+.back-container a {
+    color: white;
+    text-decoration: none;
+}
