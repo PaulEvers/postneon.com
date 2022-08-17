@@ -7,7 +7,6 @@ import * as THREE from "three";
 import RayCastManager from "./RayCastManager.js";
 import LogoManager from "./LogoManager.js";
 import ProjectManager from "./ProjectManager.js";
-import { UrlManager } from "../NAV/UrlManager.js";
 
 class ThreeManager {
   constructor({ app }) {
@@ -170,12 +169,6 @@ class ThreeManager {
   focusOn = (project, duration = false) => {
     if (project === this.app.__.focus) return;
     this.resetVideo();
-
-    // Update URL according to selected project
-    UrlManager.setSearchParams(
-      "project",
-      project.__.name.toLowerCase().replace(/ /g, "-")
-    );
 
     let canTween = this.tweenToProject(project.project);
 

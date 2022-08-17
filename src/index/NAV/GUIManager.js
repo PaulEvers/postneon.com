@@ -1,4 +1,3 @@
-import { UrlManager } from "./UrlManager";
 
 class CursorModes {
   DOM = document.querySelector(".cursor");
@@ -207,8 +206,6 @@ class GUIManager {
 
   closeInfo = (e) => {
     e.stopPropagation();
-    UrlManager.removeParams();
-    console.log("CLOSE INFO!!!!");
     this.app.__.infoMode = false;
 
     document.querySelector(".scroll-container").classList.remove("hidden");
@@ -252,7 +249,6 @@ class GUIManager {
       this.DOM.info.small.innerHTML = this.app.__.data.about.small;
 
       this.openInfo();
-      UrlManager.setSearchParams('page', 'about');
   }
 
   openContact = () => {
@@ -272,7 +268,6 @@ class GUIManager {
     this.DOM.info.small.innerHTML = this.app.__.data.contact.small;
 
     this.openInfo();
-    UrlManager.setSearchParams('page', 'contact');
 
 
     if (this.app.__.menu.isOpen) {
