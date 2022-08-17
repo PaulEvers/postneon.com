@@ -312,26 +312,25 @@ class ThreeManager {
     }
 
     // Get content from contentful
-    const gallery = await this.app.__.contentfulClient.getEntry(
+    const response = await this.app.__.contentfulClient.getEntry(
       "4BFfJ3Z6wauW39TdupnvtH"
     );
 
+    const panels = response.fields.panels;
+    
     const newProjects = [];
-    await gallery.fields.projects.forEach(async (project, i) => {
+    await panels.forEach(async (project, i) => {
       const medias = [];
-      project.fields.media.forEach(async (media) => {
-        const url = "https:" + media.fields.file.url;
+        const url = "https:" + project.fields.media.fields.file.url;
         const mediaType = getMediaType(url);
 
         const newMedia = {
           src: url,
-          alt: media.fields.description,
+          alt: project.fields.media.fields.description,
           type: mediaType,
-          ratio: 1.7777777777777777
-          // ratio: await getRatio(url, mediaType)
+          ratio: project.fields.ratio
         };
         medias.push(newMedia);
-      });
 
       // await medias.forEach(async (media) => {
       //   if (media.type === "image") {
@@ -350,7 +349,7 @@ class ThreeManager {
       // });
 
       const newProject = {
-        title: project.fields.title,
+        title: project.fields.panelName,
         index: i,
         medias,
         info: {
