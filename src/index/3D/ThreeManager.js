@@ -321,13 +321,14 @@ class ThreeManager {
       const medias = [];
       project.fields.media.forEach(async (media) => {
         const url = "https:" + media.fields.file.url;
-        const mediaType = await getMediaType(url);
+        const mediaType = getMediaType(url);
 
         const newMedia = {
           src: url,
           alt: media.fields.description,
           type: mediaType,
-          ratio: await getRatio(url, mediaType)
+          ratio: 1.7777777777777777
+          // ratio: await getRatio(url, mediaType)
         };
         medias.push(newMedia);
       });
@@ -366,11 +367,6 @@ class ThreeManager {
     let _data = await fetch(url, { method: "GET" }).then((res) => res.json());
 
     _data.projects = newProjects;
-
-    let _amount = _data.projects.length;
-    const projectLengthElement =
-      document.getElementsByClassName("project-length")[0];
-    projectLengthElement.innerHTML = _amount;
 
     _data.about.big = _data.about.big.replace(/\n/g, "<br>");
     _data.about.small = _data.about.small.replace(/\n/g, "<br>");

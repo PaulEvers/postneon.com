@@ -79,9 +79,9 @@ class GUIManager {
         // info: document.querySelector(".info-button"),
       },
       project: {
-        length: document.querySelector(".project-length"),
-        index: document.querySelector(".media-index"),
-        title: document.querySelector(".project-title"),
+        // length: document.querySelector(".project-length"),
+        // index: document.querySelector(".media-index"),
+        // title: document.querySelector(".project-title"),
       },
       about: document.querySelector(".about-container"),
       info: {
@@ -112,15 +112,15 @@ class GUIManager {
     this.__.topMenuMode.set(mode);
   };
   setProjectTitle = (project_name) => {
-    if (this.DOM.project.title.innerHTML != project_name) {
-      this.DOM.project.title.innerHTML = project_name;
-    }
-    if (this.DOM.project.title.classList.contains("hidden"))
-      this.DOM.project.title.classList.remove("hidden");
+    // if (this.DOM.project.title.innerHTML != project_name) {
+    //   this.DOM.project.title.innerHTML = project_name;
+    // }
+    // if (this.DOM.project.title.classList.contains("hidden"))
+    //   this.DOM.project.title.classList.remove("hidden");
   };
 
   hideProjectTitle = () => {
-    this.DOM.project.title.classList.add("hidden");
+    // this.DOM.project.title.classList.add("hidden");
   };
 
   hideCursor = () => {
@@ -132,9 +132,9 @@ class GUIManager {
     this.DOM.cursor.style.opacity = "1";
   };
   setProjectUI = (project) => {
-    this.DOM.project.index.innerHTML = project.__.index + 1;
-    this.DOM.project.title.innerHTML = project.__.name;
-    this.DOM.project.title.classList.remove("hidden");
+    // this.DOM.project.index.innerHTML = project.__.index + 1;
+    // this.DOM.project.title.innerHTML = project.__.name;
+    // this.DOM.project.title.classList.remove("hidden");
   };
 
   updateTweenedCanvas = () => {
@@ -149,7 +149,7 @@ class GUIManager {
     this.DOM.canvas.children[0].style.transform = `translateX(-${
       max.canvas / 2
     }%)`;
-    this.DOM.project.title.style.left = max.projectTitle + "%";
+    // this.DOM.project.title.style.left = max.projectTitle + "%";
   };
 
   tweenCanvas = () => {
@@ -178,8 +178,8 @@ class GUIManager {
         this.app._tween.lerp(canvas, detail) / 2
       }%)`;
 
-      this.DOM.project.title.style.left =
-        this.app._tween.lerp(projectTitle, detail) + "%";
+      // this.DOM.project.title.style.left =
+      //   this.app._tween.lerp(projectTitle, detail) + "%";
     });
     tweener.addEventListener("complete", ({ detail }) => {
       //console.log("COMPLETE!!!");
