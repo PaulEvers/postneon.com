@@ -7,7 +7,7 @@
     "contentful": "^9.1.33",
     "core-js": "^3.19.0",
     "regenerator-runtime": "^0.13.9",
-    "three": "^0.134.0",
+    "three": "^0.148.0",
     "uniqid": "^5.4.0"
   },
   "devDependencies": {
