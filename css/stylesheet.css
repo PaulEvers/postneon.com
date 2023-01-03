@@ -610,9 +610,15 @@ input::selection {
     color: white;
     z-index: 100;
     margin: 20px;
+
+    transition: transform .3s;
 }
 
 .back-container a {
     color: white;
     text-decoration: none;
+}
+
+.back-container:hover {
+    transform: scale(1.3);
 }
